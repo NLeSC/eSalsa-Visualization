@@ -89,7 +89,7 @@ public class ImauTimedPlayer implements Runnable {
         for (int i = 1; i < fixedPoints.size(); i++) {
             VecF3 newPoint = fixedPoints.get(i);
 
-            VecF3[] bezierPointsTemp = VectorFMath.bezierCurve(
+            VecF3[] bezierPointsTemp = VectorFMath.degreesBezierCurve(
                     bezierSteps.get(i - 1), lastPoint, still, still, newPoint);
 
             for (int j = 1; j < bezierPointsTemp.length; j++) {

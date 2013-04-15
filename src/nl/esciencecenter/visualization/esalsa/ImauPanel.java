@@ -744,8 +744,8 @@ public class ImauPanel extends ESightInterfacePanel {
 
     protected void handleFile(File file1, File file2) {
         if (file1 != null && file2 != null
-                && NetCDFUtil.isAcceptableFile(file1)
-                && NetCDFUtil.isAcceptableFile(file2)) {
+                && NetCDFUtil.isAcceptableFile(file1, new String[] { ".nc" })
+                && NetCDFUtil.isAcceptableFile(file2, new String[] { ".nc" })) {
             if (timer.isInitialized()) {
                 timer.close();
             }
@@ -777,7 +777,8 @@ public class ImauPanel extends ESightInterfacePanel {
     }
 
     protected void handleFile(File file) {
-        if (file != null && NetCDFUtil.isAcceptableFile(file)) {
+        if (file != null
+                && NetCDFUtil.isAcceptableFile(file, new String[] { ".nc" })) {
             if (timer.isInitialized()) {
                 timer.close();
             }
