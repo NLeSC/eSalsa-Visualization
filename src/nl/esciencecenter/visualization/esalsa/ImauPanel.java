@@ -54,8 +54,7 @@ public class ImauPanel extends ESightInterfacePanel {
     }
 
     private final ImauSettings settings = ImauSettings.getInstance();
-    private final static Logger logger = LoggerFactory
-            .getLogger(ImauPanel.class);
+    private final static Logger logger = LoggerFactory.getLogger(ImauPanel.class);
 
     private static final long serialVersionUID = 1L;
 
@@ -74,6 +73,8 @@ public class ImauPanel extends ESightInterfacePanel {
     private ArrayList<String> variables;
 
     protected GLCanvas glCanvas;
+
+    private final boolean demomode = false;
 
     public ImauPanel(String path, String cmdlnfileName, String cmdlnfileName2) {
         setLayout(new BorderLayout(0, 0));
@@ -129,89 +130,88 @@ public class ImauPanel extends ESightInterfacePanel {
         // });
         // options.add(makeMovie);
 
-        final JMenu options = new JMenu("Options");
-        final JMenuItem showDataTweakPanel = new JMenuItem(
-                "Show data configuration panel.");
-        showDataTweakPanel.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) {
-                setTweakState(TweakState.DATA);
-            }
-        });
-        options.add(showDataTweakPanel);
+        if (!demomode) {
 
-        // final JMenuItem showVisualTweakPanel = new JMenuItem(
-        // "Show visual configuration panel.");
-        // showVisualTweakPanel.addActionListener(new ActionListener() {
-        // @Override
-        // public void actionPerformed(ActionEvent arg0) {
-        // setTweakState(TweakState.VISUAL);
-        // }
-        // });
-        // options.add(showVisualTweakPanel);
-        //
-        // // a group of radio button menu items, to control output options
-        // options.addSeparator();
-        //
-        // JRadioButtonMenuItem rbMenuItem;
-        // ButtonGroup screenCountGroup = new ButtonGroup();
-        //
-        // rbMenuItem = new JRadioButtonMenuItem("2x2");
-        // rbMenuItem.setSelected(true);
-        // screenCountGroup.add(rbMenuItem);
-        // rbMenuItem.addActionListener(new ActionListener() {
-        // @Override
-        // public void actionPerformed(ActionEvent e) {
-        // JRadioButtonMenuItem item = (JRadioButtonMenuItem) e
-        // .getSource();
-        // item.setSelected(true);
-        //
-        // settings.setNumberOfScreens(2, 2);
-        // dataConfig.setVisible(false);
-        // createDataTweakPanel();
-        // dataConfig.setVisible(true);
-        // }
-        // });
-        // options.add(rbMenuItem);
-        //
-        // rbMenuItem = new JRadioButtonMenuItem("3x3");
-        // screenCountGroup.add(rbMenuItem);
-        // rbMenuItem.addActionListener(new ActionListener() {
-        // @Override
-        // public void actionPerformed(ActionEvent e) {
-        // JRadioButtonMenuItem item = (JRadioButtonMenuItem) e
-        // .getSource();
-        // item.setSelected(true);
-        //
-        // settings.setNumberOfScreens(3, 3);
-        // dataConfig.setVisible(false);
-        // createDataTweakPanel();
-        // dataConfig.setVisible(true);
-        // }
-        // });
-        // options.add(rbMenuItem);
+            final JMenu options = new JMenu("Options");
+            final JMenuItem showDataTweakPanel = new JMenuItem("Show data configuration panel.");
+            showDataTweakPanel.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent arg0) {
+                    setTweakState(TweakState.DATA);
+                }
+            });
+            options.add(showDataTweakPanel);
+            // final JMenuItem showVisualTweakPanel = new JMenuItem(
+            // "Show visual configuration panel.");
+            // showVisualTweakPanel.addActionListener(new ActionListener() {
+            // @Override
+            // public void actionPerformed(ActionEvent arg0) {
+            // setTweakState(TweakState.VISUAL);
+            // }
+            // });
+            // options.add(showVisualTweakPanel);
+            //
+            // // a group of radio button menu items, to control output options
+            // options.addSeparator();
+            //
+            // JRadioButtonMenuItem rbMenuItem;
+            // ButtonGroup screenCountGroup = new ButtonGroup();
+            //
+            // rbMenuItem = new JRadioButtonMenuItem("2x2");
+            // rbMenuItem.setSelected(true);
+            // screenCountGroup.add(rbMenuItem);
+            // rbMenuItem.addActionListener(new ActionListener() {
+            // @Override
+            // public void actionPerformed(ActionEvent e) {
+            // JRadioButtonMenuItem item = (JRadioButtonMenuItem) e
+            // .getSource();
+            // item.setSelected(true);
+            //
+            // settings.setNumberOfScreens(2, 2);
+            // dataConfig.setVisible(false);
+            // createDataTweakPanel();
+            // dataConfig.setVisible(true);
+            // }
+            // });
+            // options.add(rbMenuItem);
+            //
+            // rbMenuItem = new JRadioButtonMenuItem("3x3");
+            // screenCountGroup.add(rbMenuItem);
+            // rbMenuItem.addActionListener(new ActionListener() {
+            // @Override
+            // public void actionPerformed(ActionEvent e) {
+            // JRadioButtonMenuItem item = (JRadioButtonMenuItem) e
+            // .getSource();
+            // item.setSelected(true);
+            //
+            // settings.setNumberOfScreens(3, 3);
+            // dataConfig.setVisible(false);
+            // createDataTweakPanel();
+            // dataConfig.setVisible(true);
+            // }
+            // });
+            // options.add(rbMenuItem);
 
-        menuBar.add(options);
+            menuBar.add(options);
 
-        menuBar.add(Box.createHorizontalGlue());
+            menuBar.add(Box.createHorizontalGlue());
+        }
 
         final JMenuBar menuBar2 = new JMenuBar();
 
-        ImageIcon nlescIcon = GoggleSwing.createResizedImageIcon(
-                "images/ESCIENCE_logo.png", "eScienceCenter Logo", 50, 28);
+        ImageIcon nlescIcon = GoggleSwing.createResizedImageIcon("images/ESCIENCE_logo.png", "eScienceCenter Logo", 50,
+                28);
         JLabel nlesclogo = new JLabel(nlescIcon);
         nlesclogo.setMinimumSize(new Dimension(300, 20));
         nlesclogo.setMaximumSize(new Dimension(311, 28));
 
-        ImageIcon saraIcon = GoggleSwing.createResizedImageIcon(
-                "images/logo_sara.png", "SARA Logo", 50, 28);
+        ImageIcon saraIcon = GoggleSwing.createResizedImageIcon("images/logo_sara.png", "SARA Logo", 50, 28);
         JLabel saralogo = new JLabel(saraIcon);
         saralogo.setMinimumSize(new Dimension(40, 20));
         saralogo.setMaximumSize(new Dimension(41, 28));
         menuBar2.add(Box.createHorizontalStrut(3));
 
-        ImageIcon imauIcon = GoggleSwing.createResizedImageIcon(
-                "images/logo_imau.png", "IMAU Logo", 50, 28);
+        ImageIcon imauIcon = GoggleSwing.createResizedImageIcon("images/logo_imau.png", "IMAU Logo", 50, 28);
         JLabel imaulogo = new JLabel(imauIcon);
         imaulogo.setMinimumSize(new Dimension(50, 20));
         imaulogo.setMaximumSize(new Dimension(52, 28));
@@ -233,7 +233,9 @@ public class ImauPanel extends ESightInterfacePanel {
         Container menuContainer = new Container();
         menuContainer.setLayout(new BoxLayout(menuContainer, BoxLayout.Y_AXIS));
 
-        menuContainer.add(menuBar);
+        if (!demomode) {
+            menuContainer.add(menuBar);
+        }
         menuContainer.add(menuBar2);
 
         add(menuContainer, BorderLayout.NORTH);
@@ -297,14 +299,12 @@ public class ImauPanel extends ESightInterfacePanel {
         bottomPanel.setFocusCycleRoot(true);
         bottomPanel.setFocusTraversalPolicy(new FocusTraversalPolicy() {
             @Override
-            public Component getComponentAfter(Container aContainer,
-                    Component aComponent) {
+            public Component getComponentAfter(Container aContainer, Component aComponent) {
                 return null;
             }
 
             @Override
-            public Component getComponentBefore(Container aContainer,
-                    Component aComponent) {
+            public Component getComponentBefore(Container aContainer, Component aComponent) {
                 return null;
             }
 
@@ -326,20 +326,15 @@ public class ImauPanel extends ESightInterfacePanel {
             }
         });
 
-        final JButton oneForwardButton = GoggleSwing.createImageButton(
-                "images/media-playback-oneforward.png", "Next", null);
-        final JButton oneBackButton = GoggleSwing.createImageButton(
-                "images/media-playback-onebackward.png", "Previous", null);
-        final JButton rewindButton = GoggleSwing.createImageButton(
-                "images/media-playback-rewind.png", "Rewind", null);
-        final JButton screenshotButton = GoggleSwing.createImageButton(
-                "images/camera.png", "Screenshot", null);
-        final JButton playButton = GoggleSwing.createImageButton(
-                "images/media-playback-start.png", "Start", null);
-        final ImageIcon playIcon = GoggleSwing.createImageIcon(
-                "images/media-playback-start.png", "Start");
-        final ImageIcon stopIcon = GoggleSwing.createImageIcon(
-                "images/media-playback-stop.png", "Start");
+        final JButton oneForwardButton = GoggleSwing.createImageButton("images/media-playback-oneforward.png", "Next",
+                null);
+        final JButton oneBackButton = GoggleSwing.createImageButton("images/media-playback-onebackward.png",
+                "Previous", null);
+        final JButton rewindButton = GoggleSwing.createImageButton("images/media-playback-rewind.png", "Rewind", null);
+        final JButton screenshotButton = GoggleSwing.createImageButton("images/camera.png", "Screenshot", null);
+        final JButton playButton = GoggleSwing.createImageButton("images/media-playback-start.png", "Start", null);
+        final ImageIcon playIcon = GoggleSwing.createImageIcon("images/media-playback-start.png", "Start");
+        final ImageIcon stopIcon = GoggleSwing.createImageIcon("images/media-playback-stop.png", "Start");
 
         bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.Y_AXIS));
         final JPanel bottomPanel1 = new JPanel();
@@ -354,12 +349,10 @@ public class ImauPanel extends ESightInterfacePanel {
         stepSizeField.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent e) {
-                final JFormattedTextField source = (JFormattedTextField) e
-                        .getSource();
+                final JFormattedTextField source = (JFormattedTextField) e.getSource();
                 if (source.hasFocus()) {
                     if (source == stepSizeField) {
-                        settings.setTimestep((Integer) ((Number) source
-                                .getValue()));
+                        settings.setTimestep((Integer) ((Number) source.getValue()));
                     }
                 }
             }
@@ -435,15 +428,11 @@ public class ImauPanel extends ESightInterfacePanel {
         frameCounter.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent e) {
-                final JFormattedTextField source = (JFormattedTextField) e
-                        .getSource();
+                final JFormattedTextField source = (JFormattedTextField) e.getSource();
                 if (source.hasFocus()) {
                     if (source == frameCounter) {
                         if (timer.isInitialized()) {
-                            timer.setFrame(
-                                    ((Number) frameCounter.getValue())
-                                            .intValue() - timeBar.getMinimum(),
-                                    false);
+                            timer.setFrame(((Number) frameCounter.getValue()).intValue() - timeBar.getMinimum(), false);
                         }
                         playButton.setIcon(playIcon);
                         playButton.invalidate();
@@ -459,8 +448,7 @@ public class ImauPanel extends ESightInterfacePanel {
             public void stateChanged(ChangeEvent e) {
                 final JSlider source = (JSlider) e.getSource();
                 if (source.hasFocus()) {
-                    timer.setFrame(timeBar.getValue() - timeBar.getMinimum(),
-                            false);
+                    timer.setFrame(timeBar.getValue() - timeBar.getMinimum(), false);
                     playButton.setIcon(playIcon);
                     playButton.invalidate();
                 }
@@ -492,39 +480,31 @@ public class ImauPanel extends ESightInterfacePanel {
                 timer.redraw();
             }
         };
-        movieConfig.add(GoggleSwing.checkboxBox(
-                "",
-                new GoggleSwing.CheckBoxItem("Rotation", settings
-                        .getMovieRotate(), checkBoxListener)));
+        movieConfig.add(GoggleSwing.checkboxBox("", new GoggleSwing.CheckBoxItem("Rotation", settings.getMovieRotate(),
+                checkBoxListener)));
 
-        final JLabel rotationSetting = new JLabel(""
-                + settings.getMovieRotationSpeedDef());
+        final JLabel rotationSetting = new JLabel("" + settings.getMovieRotationSpeedDef());
         final ChangeListener movieRotationSpeedListener = new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
                 final JSlider source = (JSlider) e.getSource();
                 if (source.hasFocus()) {
                     settings.setMovieRotationSpeed(source.getValue() * .25f);
-                    rotationSetting.setText(""
-                            + settings.getMovieRotationSpeedDef());
+                    rotationSetting.setText("" + settings.getMovieRotationSpeedDef());
                 }
             }
         };
-        movieConfig.add(GoggleSwing.sliderBox("Rotation Speed",
-                movieRotationSpeedListener,
-                (int) (settings.getMovieRotationSpeedMin() * 4f),
-                (int) (settings.getMovieRotationSpeedMax() * 4f), 1,
-                (int) (settings.getMovieRotationSpeedDef() * 4f),
-                rotationSetting));
+        movieConfig.add(GoggleSwing.sliderBox("Rotation Speed", movieRotationSpeedListener,
+                (int) (settings.getMovieRotationSpeedMin() * 4f), (int) (settings.getMovieRotationSpeedMax() * 4f), 1,
+                (int) (settings.getMovieRotationSpeedDef() * 4f), rotationSetting));
 
-        movieConfig.add(GoggleSwing.buttonBox("",
-                new GoggleSwing.ButtonBoxItem("Start Recording",
-                        new ActionListener() {
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                timer.movieMode();
-                            }
-                        })));
+        movieConfig.add(GoggleSwing.buttonBox("", new GoggleSwing.ButtonBoxItem("Start Recording",
+                new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        timer.movieMode();
+                    }
+                })));
     }
 
     private void createDataTweakPanel() {
@@ -538,20 +518,21 @@ public class ImauPanel extends ESightInterfacePanel {
         };
         dataConfig.add(GoggleSwing.titleBox("Configuration", listener));
 
-        final JLabel depthSetting = new JLabel("" + settings.getDepthDef());
-        final ChangeListener depthListener = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                final JSlider source = (JSlider) e.getSource();
-                if (source.hasFocus()) {
-                    settings.setDepth(source.getValue());
-                    depthSetting.setText("" + settings.getDepthDef());
+        if (!demomode) {
+            final JLabel depthSetting = new JLabel("" + settings.getDepthDef());
+            final ChangeListener depthListener = new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    final JSlider source = (JSlider) e.getSource();
+                    if (source.hasFocus()) {
+                        settings.setDepth(source.getValue());
+                        depthSetting.setText("" + settings.getDepthDef());
+                    }
                 }
-            }
-        };
-        dataConfig.add(GoggleSwing.sliderBox("Depth setting", depthListener,
-                settings.getDepthMin(), settings.getDepthMax(), 1,
-                settings.getDepthDef(), depthSetting));
+            };
+            dataConfig.add(GoggleSwing.sliderBox("Depth setting", depthListener, settings.getDepthMin(),
+                    settings.getDepthMax(), 1, settings.getDepthDef(), depthSetting));
+        }
 
         final ArrayList<Component> vcomponents = new ArrayList<Component>();
         JLabel windowlabel = new JLabel("Window Selection");
@@ -561,11 +542,9 @@ public class ImauPanel extends ESightInterfacePanel {
         vcomponents.add(windowlabel);
         vcomponents.add(Box.createHorizontalGlue());
 
-        String[] screenSelection = new String[1 + settings.getNumScreensRows()
-                * settings.getNumScreensCols()];
+        String[] screenSelection = new String[1 + settings.getNumScreensRows() * settings.getNumScreensCols()];
         screenSelection[0] = "All Screens";
-        for (int i = 0; i < settings.getNumScreensRows()
-                * settings.getNumScreensCols(); i++) {
+        for (int i = 0; i < settings.getNumScreensRows() * settings.getNumScreensCols(); i++) {
             screenSelection[i + 1] = "Screen Number " + i;
         }
 
@@ -587,8 +566,7 @@ public class ImauPanel extends ESightInterfacePanel {
 
         final String[] colorMaps = ColormapInterpreter.getColormapNames();
 
-        for (int i = 0; i < settings.getNumScreensRows()
-                * settings.getNumScreensCols(); i++) {
+        for (int i = 0; i < settings.getNumScreensRows() * settings.getNumScreensCols(); i++) {
             final int currentScreen = i;
 
             final ArrayList<Component> screenVcomponents = new ArrayList<Component>();
@@ -596,8 +574,7 @@ public class ImauPanel extends ESightInterfacePanel {
             JLabel screenLabel = new JLabel("Screen " + currentScreen);
             screenVcomponents.add(screenLabel);
 
-            SurfaceTextureDescription selectionDescription = settings
-                    .getSurfaceDescription(currentScreen);
+            SurfaceTextureDescription selectionDescription = settings.getSurfaceDescription(currentScreen);
 
             final ArrayList<Component> screenHcomponents = new ArrayList<Component>();
 
@@ -618,50 +595,40 @@ public class ImauPanel extends ESightInterfacePanel {
                 }
             };
             dataModeComboBox.addActionListener(al);
-            dataModeComboBox.setSelectedIndex(selectionDescription
-                    .getDataModeIndex());
+            dataModeComboBox.setSelectedIndex(selectionDescription.getDataModeIndex());
             dataModeComboBox.setMinimumSize(new Dimension(50, 25));
             dataModeComboBox.setMaximumSize(new Dimension(100, 25));
             screenHcomponents.add(dataModeComboBox);
 
-            final JComboBox variablesComboBox = new JComboBox(
-                    variables.toArray(new String[0]));
-            variablesComboBox
-                    .setSelectedItem(selectionDescription.getVarName());
+            final JComboBox variablesComboBox = new JComboBox(variables.toArray(new String[0]));
+            variablesComboBox.setSelectedItem(selectionDescription.getVarName());
             variablesComboBox.setMinimumSize(new Dimension(50, 25));
             variablesComboBox.setMaximumSize(new Dimension(100, 25));
             screenHcomponents.add(variablesComboBox);
 
-            screenVcomponents.add(GoggleSwing.hBoxedComponents(
-                    screenHcomponents, true));
+            screenVcomponents.add(GoggleSwing.hBoxedComponents(screenHcomponents, true));
 
-            final JComboBox colorMapsComboBox = ColormapInterpreter
-                    .getLegendJComboBox(new Dimension(200, 25));
-            colorMapsComboBox.setSelectedItem(ColormapInterpreter
-                    .getIndexOfColormap(selectionDescription.getColorMap()));
+            final JComboBox colorMapsComboBox = ColormapInterpreter.getLegendJComboBox(new Dimension(200, 25));
+            colorMapsComboBox
+                    .setSelectedItem(ColormapInterpreter.getIndexOfColormap(selectionDescription.getColorMap()));
             colorMapsComboBox.setMinimumSize(new Dimension(100, 25));
             colorMapsComboBox.setMaximumSize(new Dimension(200, 25));
             screenVcomponents.add(colorMapsComboBox);
 
             final RangeSlider selectionLegendSlider = new RangeSlider();
-            ((RangeSliderUI) selectionLegendSlider.getUI())
-                    .setRangeColorMap(selectionDescription.getColorMap());
+            ((RangeSliderUI) selectionLegendSlider.getUI()).setRangeColorMap(selectionDescription.getColorMap());
             selectionLegendSlider.setMinimum(0);
             selectionLegendSlider.setMaximum(100);
-            selectionLegendSlider.setValue(settings
-                    .getRangeSliderLowerValue(currentScreen));
-            selectionLegendSlider.setUpperValue(settings
-                    .getRangeSliderUpperValue(currentScreen));
+            selectionLegendSlider.setValue(settings.getRangeSliderLowerValue(currentScreen));
+            selectionLegendSlider.setUpperValue(settings.getRangeSliderUpperValue(currentScreen));
 
             colorMapsComboBox.addItemListener(new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent e) {
-                    settings.setColorMap(currentScreen,
-                            colorMaps[colorMapsComboBox.getSelectedIndex()]);
+                    settings.setColorMap(currentScreen, colorMaps[colorMapsComboBox.getSelectedIndex()]);
 
-                    ((RangeSliderUI) selectionLegendSlider.getUI())
-                            .setRangeColorMap(colorMaps[colorMapsComboBox
-                                    .getSelectedIndex()]);
+                    ((RangeSliderUI) selectionLegendSlider.getUI()).setRangeColorMap(colorMaps[colorMapsComboBox
+                            .getSelectedIndex()]);
                     selectionLegendSlider.invalidate();
                 }
             });
@@ -670,33 +637,27 @@ public class ImauPanel extends ESightInterfacePanel {
                 @Override
                 public void stateChanged(ChangeEvent e) {
                     RangeSlider slider = (RangeSlider) e.getSource();
-                    SurfaceTextureDescription texDesc = settings
-                            .getSurfaceDescription(currentScreen);
+                    SurfaceTextureDescription texDesc = settings.getSurfaceDescription(currentScreen);
 
                     String var = texDesc.getVarName();
-                    settings.setVariableRange(currentScreen, var,
-                            slider.getValue(), slider.getUpperValue());
+                    settings.setVariableRange(currentScreen, var, slider.getValue(), slider.getUpperValue());
                 }
             });
 
             variablesComboBox.addItemListener(new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent e) {
-                    String var = (String) ((JComboBox) e.getSource())
-                            .getSelectedItem();
+                    String var = (String) ((JComboBox) e.getSource()).getSelectedItem();
 
                     settings.setVariable(currentScreen, var);
-                    selectionLegendSlider.setValue(settings
-                            .getRangeSliderLowerValue(currentScreen));
-                    selectionLegendSlider.setUpperValue(settings
-                            .getRangeSliderUpperValue(currentScreen));
+                    selectionLegendSlider.setValue(settings.getRangeSliderLowerValue(currentScreen));
+                    selectionLegendSlider.setUpperValue(settings.getRangeSliderUpperValue(currentScreen));
                 }
             });
 
             screenVcomponents.add(selectionLegendSlider);
 
-            dataConfig.add(GoggleSwing
-                    .vBoxedComponents(screenVcomponents, true));
+            dataConfig.add(GoggleSwing.vBoxedComponents(screenVcomponents, true));
         }
         dataConfig.add(Box.createVerticalGlue());
     }
@@ -705,23 +666,19 @@ public class ImauPanel extends ESightInterfacePanel {
         visualConfig.removeAll();
 
         final float heightDistortionSpacing = 0.001f;
-        final JLabel heightDistortionSetting = new JLabel(""
-                + settings.getHeightDistortion());
+        final JLabel heightDistortionSetting = new JLabel("" + settings.getHeightDistortion());
         final ChangeListener heightDistortionListener = new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
                 final JSlider source = (JSlider) e.getSource();
                 if (source.hasFocus()) {
-                    settings.setHeightDistortion(source.getValue()
-                            * heightDistortionSpacing);
-                    heightDistortionSetting.setText(""
-                            + settings.getHeightDistortion());
+                    settings.setHeightDistortion(source.getValue() * heightDistortionSpacing);
+                    heightDistortionSetting.setText("" + settings.getHeightDistortion());
                 }
             }
         };
-        visualConfig.add(GoggleSwing.sliderBox("Height Distortion",
-                heightDistortionListener, settings.getHeightDistortionMin(),
-                settings.getHeightDistortionMax(), heightDistortionSpacing,
+        visualConfig.add(GoggleSwing.sliderBox("Height Distortion", heightDistortionListener,
+                settings.getHeightDistortionMin(), settings.getHeightDistortionMax(), heightDistortionSpacing,
                 settings.getHeightDistortion(), heightDistortionSetting));
 
         // final ItemListener checkBoxListener = new ItemListener() {
@@ -743,8 +700,7 @@ public class ImauPanel extends ESightInterfacePanel {
     }
 
     protected void handleFile(File file1, File file2) {
-        if (file1 != null && file2 != null
-                && NetCDFUtil.isAcceptableFile(file1, new String[] { ".nc" })
+        if (file1 != null && file2 != null && NetCDFUtil.isAcceptableFile(file1, new String[] { ".nc" })
                 && NetCDFUtil.isAcceptableFile(file2, new String[] { ".nc" })) {
             if (timer.isInitialized()) {
                 timer.close();
@@ -777,8 +733,7 @@ public class ImauPanel extends ESightInterfacePanel {
     }
 
     protected void handleFile(File file) {
-        if (file != null
-                && NetCDFUtil.isAcceptableFile(file, new String[] { ".nc" })) {
+        if (file != null && NetCDFUtil.isAcceptableFile(file, new String[] { ".nc" })) {
             if (timer.isInitialized()) {
                 timer.close();
             }

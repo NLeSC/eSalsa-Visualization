@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import nl.esciencecenter.esight.io.netcdf.NetCDFNoSuchVariableException;
+import nl.esciencecenter.esight.exceptions.NetCDFNoSuchVariableException;
 import nl.esciencecenter.esight.io.netcdf.NetCDFUtil;
 import nl.esciencecenter.visualization.esalsa.ImauSettings;
 
@@ -17,8 +17,7 @@ import ucar.ma2.Array;
 import ucar.nc2.NetcdfFile;
 
 public class ImauDatasetManager {
-    private final static Logger logger = LoggerFactory
-            .getLogger(ImauDatasetManager.class);
+    private final static Logger logger = LoggerFactory.getLogger(ImauDatasetManager.class);
     private final ImauSettings settings = ImauSettings.getInstance();
 
     private final ArrayList<Integer> availableFrameSequenceNumbers;
@@ -70,10 +69,8 @@ public class ImauDatasetManager {
                 // the pool could leak threads
                 try {
                     netCDFArray.run();
-                    CPUJobExecute(new SurfaceTextureBuilder(texStorage,
-                            netCDFArray, imageHeight, blankRows));
-                    CPUJobExecute(new LegendTextureBuilder(texStorage,
-                            netCDFArray));
+                    CPUJobExecute(new SurfaceTextureBuilder(texStorage, netCDFArray, imageHeight, blankRows));
+                    CPUJobExecute(new LegendTextureBuilder(texStorage, netCDFArray));
                 } catch (RuntimeException e) {
                     // You might want to log something here
                 }
@@ -116,14 +113,11 @@ public class ImauDatasetManager {
         }
     }
 
-    public ImauDatasetManager(File file1, File file2, int numIOThreads,
-            int numCPUThreads) {
+    public ImauDatasetManager(File file1, File file2, int numIOThreads, int numCPUThreads) {
         if (file2 == null) {
-            logger.debug("Opening dataset with initial file: "
-                    + file1.getAbsolutePath());
+            logger.debug("Opening dataset with initial file: " + file1.getAbsolutePath());
         } else {
-            logger.debug("Opening dataset with initial files: "
-                    + file1.getAbsolutePath() + " and "
+            logger.debug("Opening dataset with initial files: " + file1.getAbsolutePath() + " and "
                     + file2.getAbsolutePath());
         }
         this.file1 = file1;
@@ -188,36 +182,28 @@ public class ImauDatasetManager {
         NetcdfFile ncFile1 = NetCDFUtil.open(file1);
 
         try {
-            ArrayList<String> latQualifiers1 = NetCDFUtil
-                    .getUsedDimensionNamesBySubstring(ncFile1,
-                            settings.getHeightSubstring());
-            ArrayList<String> lonQualifiers1 = NetCDFUtil
-                    .getUsedDimensionNamesBySubstring(ncFile1,
-                            settings.getWidthSubstring());
+            ArrayList<String> latQualifiers1 = NetCDFUtil.getUsedDimensionNamesBySubstring(ncFile1,
+                    settings.getHeightSubstring());
+            ArrayList<String> lonQualifiers1 = NetCDFUtil.getUsedDimensionNamesBySubstring(ncFile1,
+                    settings.getWidthSubstring());
 
-            ArrayList<String> varQualifiers1 = NetCDFUtil.getVarNames(ncFile1,
-                    latQualifiers1, lonQualifiers1);
+            ArrayList<String> varQualifiers1 = NetCDFUtil.getVarNames(ncFile1, latQualifiers1, lonQualifiers1);
 
             if (file2 != null) {
                 NetcdfFile ncFile2 = NetCDFUtil.open(file2);
 
-                ArrayList<String> latQualifiers2 = NetCDFUtil
-                        .getUsedDimensionNamesBySubstring(ncFile2,
-                                settings.getHeightSubstring());
-                ArrayList<String> lonQualifiers2 = NetCDFUtil
-                        .getUsedDimensionNamesBySubstring(ncFile2,
-                                settings.getWidthSubstring());
+                ArrayList<String> latQualifiers2 = NetCDFUtil.getUsedDimensionNamesBySubstring(ncFile2,
+                        settings.getHeightSubstring());
+                ArrayList<String> lonQualifiers2 = NetCDFUtil.getUsedDimensionNamesBySubstring(ncFile2,
+                        settings.getWidthSubstring());
 
-                ArrayList<String> varQualifiers2 = NetCDFUtil.getVarNames(
-                        ncFile2, latQualifiers2, lonQualifiers2);
+                ArrayList<String> varQualifiers2 = NetCDFUtil.getVarNames(ncFile2, latQualifiers2, lonQualifiers2);
 
                 for (String s : varQualifiers1) {
                     if (varQualifiers2.contains(s)) {
                         availableVariables.add(s);
-                        variableUnits.put(s,
-                                NetCDFUtil.getFancyVarUnits(ncFile1, s));
-                        variableFancyNames.put(s,
-                                NetCDFUtil.getFancyVarName(ncFile1, s));
+                        variableUnits.put(s, NetCDFUtil.getFancyVarUnits(ncFile1, s));
+                        variableFancyNames.put(s, NetCDFUtil.getFancyVarName(ncFile1, s));
                     }
                 }
 
@@ -225,10 +211,8 @@ public class ImauDatasetManager {
             } else {
                 for (String s : varQualifiers1) {
                     availableVariables.add(s);
-                    variableUnits.put(s,
-                            NetCDFUtil.getFancyVarUnits(ncFile1, s));
-                    variableFancyNames.put(s,
-                            NetCDFUtil.getFancyVarName(ncFile1, s));
+                    variableUnits.put(s, NetCDFUtil.getFancyVarUnits(ncFile1, s));
+                    variableFancyNames.put(s, NetCDFUtil.getFancyVarName(ncFile1, s));
                 }
             }
         } catch (NetCDFNoSuchVariableException e1) {
@@ -244,19 +228,16 @@ public class ImauDatasetManager {
         float latMin = -90f;
         float latMax = 90f;
         try {
-            ArrayList<String> latQualifiers1 = NetCDFUtil
-                    .getUsedDimensionNamesBySubstring(ncFile1,
-                            settings.getHeightSubstring());
-            ArrayList<String> lonQualifiers1 = NetCDFUtil
-                    .getUsedDimensionNamesBySubstring(ncFile1,
-                            settings.getWidthSubstring());
+            ArrayList<String> latQualifiers1 = NetCDFUtil.getUsedDimensionNamesBySubstring(ncFile1,
+                    settings.getHeightSubstring());
+            ArrayList<String> lonQualifiers1 = NetCDFUtil.getUsedDimensionNamesBySubstring(ncFile1,
+                    settings.getWidthSubstring());
 
             int i = 0;
 
             latArraySize = 0;
             while (latArraySize == 0) {
-                Array t_lat = NetCDFUtil
-                        .getData(ncFile1, latQualifiers1.get(i));
+                Array t_lat = NetCDFUtil.getData(ncFile1, latQualifiers1.get(i));
                 latArraySize = (int) t_lat.getSize();
 
                 latMin = t_lat.getFloat(0) + 90f;
@@ -268,8 +249,7 @@ public class ImauDatasetManager {
             i = 0;
             lonArraySize = 0;
             while (lonArraySize == 0) {
-                Array t_lon = NetCDFUtil
-                        .getData(ncFile1, lonQualifiers1.get(i));
+                Array t_lon = NetCDFUtil.getData(ncFile1, lonQualifiers1.get(i));
                 lonArraySize = (int) t_lon.getSize();
                 i++;
             }
@@ -279,45 +259,37 @@ public class ImauDatasetManager {
 
         NetCDFUtil.close(ncFile1);
 
-        imageHeight = (int) Math.floor((180f / (latMax - latMin))
-                * latArraySize);
+        imageHeight = (int) Math.floor((180f / (latMax - latMin)) * latArraySize);
         blankRows = (int) Math.floor(180f / latMax);
 
-        this.texStorage = new TextureStorage(this, settings.getNumScreensRows()
-                * settings.getNumScreensCols(), lonArraySize, imageHeight);
+        this.texStorage = new TextureStorage(this, settings.getNumScreensRows() * settings.getNumScreensCols(),
+                lonArraySize, imageHeight);
     }
 
     public void buildImages(SurfaceTextureDescription desc) {
         int frameNumber = desc.getFrameNumber();
 
         if (frameNumber < 0
-                || frameNumber >= availableFrameSequenceNumbers
-                        .get(availableFrameSequenceNumbers.size() - 1)) {
-            logger.debug("buildImages : Requested frameNumber  " + frameNumber
-                    + " out of range.");
+                || frameNumber >= availableFrameSequenceNumbers.get(availableFrameSequenceNumbers.size() - 1)) {
+            logger.debug("buildImages : Requested frameNumber  " + frameNumber + " out of range.");
         }
 
         NetcdfFile frameFile1;
         try {
             if (!desc.isDiff()) {
                 if (desc.secondSet && file2 != null) {
-                    frameFile1 = NetCDFUtil.open(NetCDFUtil.getSeqFile(file2,
-                            frameNumber));
+                    frameFile1 = NetCDFUtil.open(NetCDFUtil.getSeqFile(file2, frameNumber));
                 } else {
-                    frameFile1 = NetCDFUtil.open(NetCDFUtil.getSeqFile(file1,
-                            frameNumber));
+                    frameFile1 = NetCDFUtil.open(NetCDFUtil.getSeqFile(file1, frameNumber));
                 }
                 IOJobExecute(new ImauDataArray(frameFile1, desc));
             } else {
-                frameFile1 = NetCDFUtil.open(NetCDFUtil.getSeqFile(file1,
-                        frameNumber));
-                NetcdfFile frameFile2 = NetCDFUtil.open(NetCDFUtil.getSeqFile(
-                        file2, frameNumber));
+                frameFile1 = NetCDFUtil.open(NetCDFUtil.getSeqFile(file1, frameNumber));
+                NetcdfFile frameFile2 = NetCDFUtil.open(NetCDFUtil.getSeqFile(file2, frameNumber));
                 IOJobExecute(new ImauDataArray(frameFile1, frameFile2, desc));
             }
         } catch (IOException e) {
-            logger.error("buildImages : Requested frameNumber " + frameNumber
-                    + " resulted in IOException.");
+            logger.error("buildImages : Requested frameNumber " + frameNumber + " resulted in IOException.");
             e.printStackTrace();
         }
     }
@@ -337,8 +309,7 @@ public class ImauDatasetManager {
     public int getPreviousFrameNumber(int frameNumber) throws IOException {
         int nextNumber = getIndexOfFrameNumber(frameNumber) - 1;
 
-        if (nextNumber >= 0
-                && nextNumber < availableFrameSequenceNumbers.size()) {
+        if (nextNumber >= 0 && nextNumber < availableFrameSequenceNumbers.size()) {
             return getFrameNumberOfIndex(nextNumber);
         } else {
             throw new IOException("Frame number not available: " + nextNumber);
@@ -348,8 +319,7 @@ public class ImauDatasetManager {
     public int getNextFrameNumber(int frameNumber) throws IOException {
         int nextNumber = getIndexOfFrameNumber(frameNumber) + 1;
 
-        if (nextNumber >= 0
-                && nextNumber < availableFrameSequenceNumbers.size()) {
+        if (nextNumber >= 0 && nextNumber < availableFrameSequenceNumbers.size()) {
             return getFrameNumberOfIndex(nextNumber);
         } else {
             throw new IOException("Frame number not available: " + nextNumber);
