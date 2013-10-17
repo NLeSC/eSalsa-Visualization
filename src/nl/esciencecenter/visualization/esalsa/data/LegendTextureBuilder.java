@@ -2,17 +2,16 @@ package nl.esciencecenter.visualization.esalsa.data;
 
 import java.nio.ByteBuffer;
 
-import nl.esciencecenter.esight.swing.ColormapInterpreter;
-import nl.esciencecenter.esight.swing.ColormapInterpreter.Color;
-import nl.esciencecenter.esight.swing.ColormapInterpreter.Dimensions;
+import nl.esciencecenter.neon.swing.ColormapInterpreter;
+import nl.esciencecenter.neon.swing.ColormapInterpreter.Color;
+import nl.esciencecenter.neon.swing.ColormapInterpreter.Dimensions;
 import nl.esciencecenter.visualization.esalsa.ImauSettings;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LegendTextureBuilder implements Runnable {
-    private final static Logger logger = LoggerFactory
-            .getLogger(LegendTextureBuilder.class);
+    private final static Logger logger = LoggerFactory.getLogger(LegendTextureBuilder.class);
     private final ImauSettings settings = ImauSettings.getInstance();
 
     protected SurfaceTextureDescription description;
@@ -21,8 +20,7 @@ public class LegendTextureBuilder implements Runnable {
     private final TextureStorage texStore;
     private boolean initialized;
 
-    public LegendTextureBuilder(TextureStorage texStore,
-            ImauDataArray inputArray) {
+    public LegendTextureBuilder(TextureStorage texStore, ImauDataArray inputArray) {
         this.texStore = texStore;
         this.inputArray = inputArray;
         this.description = inputArray.getDescription();
@@ -39,15 +37,14 @@ public class LegendTextureBuilder implements Runnable {
 
             for (int row = height - 1; row >= 0; row--) {
                 float index = row / (float) height;
-                float var = (index * dims.getDiff()) + dims.min;
+                float var = (index * dims.getDiff()) + dims.getMin();
 
-                Color c = ColormapInterpreter.getColor(
-                        description.getColorMap(), dims, var);
+                Color c = ColormapInterpreter.getColor(description.getColorMap(), dims, var);
 
                 for (int col = 0; col < width; col++) {
-                    outBuf.put((byte) (255 * c.red));
-                    outBuf.put((byte) (255 * c.green));
-                    outBuf.put((byte) (255 * c.blue));
+                    outBuf.put((byte) (255 * c.getRed()));
+                    outBuf.put((byte) (255 * c.getGreen()));
+                    outBuf.put((byte) (255 * c.getBlue()));
                     outBuf.put((byte) 1);
                 }
             }

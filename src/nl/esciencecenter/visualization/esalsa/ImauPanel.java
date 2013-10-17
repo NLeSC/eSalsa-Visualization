@@ -35,20 +35,20 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicSliderUI;
 
-import nl.esciencecenter.esight.ESightInterfacePanel;
-import nl.esciencecenter.esight.io.netcdf.NetCDFUtil;
-import nl.esciencecenter.esight.swing.ColormapInterpreter;
-import nl.esciencecenter.esight.swing.CustomJSlider;
-import nl.esciencecenter.esight.swing.GoggleSwing;
-import nl.esciencecenter.esight.swing.RangeSlider;
-import nl.esciencecenter.esight.swing.RangeSliderUI;
+import nl.esciencecenter.neon.NeonInterfacePanel;
+import nl.esciencecenter.neon.swing.ColormapInterpreter;
+import nl.esciencecenter.neon.swing.CustomJSlider;
+import nl.esciencecenter.neon.swing.GoggleSwing;
+import nl.esciencecenter.neon.swing.RangeSlider;
+import nl.esciencecenter.neon.swing.RangeSliderUI;
 import nl.esciencecenter.visualization.esalsa.data.ImauTimedPlayer;
+import nl.esciencecenter.visualization.esalsa.data.NetCDFUtil;
 import nl.esciencecenter.visualization.esalsa.data.SurfaceTextureDescription;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ImauPanel extends ESightInterfacePanel {
+public class ImauPanel extends NeonInterfacePanel {
     public static enum TweakState {
         NONE, DATA, VISUAL, MOVIE
     }
