@@ -3,8 +3,7 @@ package nl.esciencecenter.visualization.esalsa.data;
 import java.io.IOException;
 import java.util.List;
 
-import nl.esciencecenter.esight.exceptions.UninitializedException;
-import nl.esciencecenter.esight.io.netcdf.NetCDFUtil;
+import nl.esciencecenter.neon.exceptions.UninitializedException;
 import ucar.ma2.Array;
 import ucar.ma2.InvalidRangeException;
 import ucar.nc2.Dimension;
@@ -20,16 +19,15 @@ public class ImauDataArray implements Runnable {
     private int width;
     private int height;
 
-    public ImauDataArray(NetcdfFile frameFile,
-            SurfaceTextureDescription description) throws IOException {
+    public ImauDataArray(NetcdfFile frameFile, SurfaceTextureDescription description) throws IOException {
         this.description = description;
 
         this.ncFile1 = frameFile;
         this.ncFile2 = null;
     }
 
-    public ImauDataArray(NetcdfFile frameFile1, NetcdfFile frameFile2,
-            SurfaceTextureDescription description) throws IOException {
+    public ImauDataArray(NetcdfFile frameFile1, NetcdfFile frameFile2, SurfaceTextureDescription description)
+            throws IOException {
         this.description = description;
 
         this.ncFile1 = frameFile1;
@@ -42,11 +40,9 @@ public class ImauDataArray implements Runnable {
             Variable ncdfVar1 = ncFile1.findVariable(description.getVarName());
             List<Dimension> dims = ncdfVar1.getDimensions();
             for (Dimension d : dims) {
-                if (d.getName().compareTo("t_lat") == 0
-                        || d.getName().compareTo("u_lat") == 0) {
+                if (d.getFullName().compareTo("t_lat") == 0 || d.getFullName().compareTo("u_lat") == 0) {
                     height = d.getLength();
-                } else if (d.getName().compareTo("t_lon") == 0
-                        || d.getName().compareTo("u_lon") == 0) {
+                } else if (d.getFullName().compareTo("t_lon") == 0 || d.getFullName().compareTo("u_lon") == 0) {
                     width = d.getLength();
                 }
             }
@@ -64,14 +60,12 @@ public class ImauDataArray implements Runnable {
                 try {
                     Array ncdfArray2D;
                     if (dims.size() > 2) {
-                        ncdfArray2D = ncdfVar1.slice(depthDim,
-                                description.getDepth()).read();
+                        ncdfArray2D = ncdfVar1.slice(depthDim, description.getDepth()).read();
                     } else {
                         ncdfArray2D = ncdfVar1.read();
                     }
 
-                    float[] result = (float[]) ncdfArray2D
-                            .get1DJavaArray(float.class);
+                    float[] result = (float[]) ncdfArray2D.get1DJavaArray(float.class);
 
                     data = result;
 
@@ -86,24 +80,19 @@ public class ImauDataArray implements Runnable {
 
             } else {
                 try {
-                    Variable ncdfVar2 = ncFile2.findVariable(description
-                            .getVarName());
+                    Variable ncdfVar2 = ncFile2.findVariable(description.getVarName());
 
                     Array ncdfArray2D1, ncdfArray2D2;
                     if (dims.size() > 2) {
-                        ncdfArray2D1 = ncdfVar1.slice(depthDim,
-                                description.getDepth()).read();
-                        ncdfArray2D2 = ncdfVar2.slice(depthDim,
-                                description.getDepth()).read();
+                        ncdfArray2D1 = ncdfVar1.slice(depthDim, description.getDepth()).read();
+                        ncdfArray2D2 = ncdfVar2.slice(depthDim, description.getDepth()).read();
                     } else {
                         ncdfArray2D1 = ncdfVar1.read();
                         ncdfArray2D2 = ncdfVar2.read();
                     }
 
-                    float[] result1 = (float[]) ncdfArray2D1
-                            .get1DJavaArray(float.class);
-                    float[] result2 = (float[]) ncdfArray2D2
-                            .get1DJavaArray(float.class);
+                    float[] result1 = (float[]) ncdfArray2D1.get1DJavaArray(float.class);
+                    float[] result2 = (float[]) ncdfArray2D2.get1DJavaArray(float.class);
 
                     float[] result = new float[result1.length];
                     for (int i = 0; i < result.length; i++) {

@@ -6,8 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import nl.esciencecenter.esight.exceptions.NetCDFNoSuchVariableException;
-import nl.esciencecenter.esight.io.netcdf.NetCDFUtil;
+import nl.esciencecenter.neon.exceptions.NetCDFNoSuchVariableException;
 import nl.esciencecenter.visualization.esalsa.ImauSettings;
 
 import org.slf4j.Logger;

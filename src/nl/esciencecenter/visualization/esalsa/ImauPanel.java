@@ -35,20 +35,21 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicSliderUI;
 
-import nl.esciencecenter.esight.ESightInterfacePanel;
-import nl.esciencecenter.esight.io.netcdf.NetCDFUtil;
-import nl.esciencecenter.esight.swing.ColormapInterpreter;
-import nl.esciencecenter.esight.swing.CustomJSlider;
-import nl.esciencecenter.esight.swing.GoggleSwing;
-import nl.esciencecenter.esight.swing.RangeSlider;
-import nl.esciencecenter.esight.swing.RangeSliderUI;
+import nl.esciencecenter.neon.NeonInterfacePanel;
+import nl.esciencecenter.neon.swing.ColormapInterpreter;
+import nl.esciencecenter.neon.swing.CustomJSlider;
+import nl.esciencecenter.neon.swing.GoggleSwing;
+import nl.esciencecenter.neon.swing.RangeSlider;
+import nl.esciencecenter.neon.swing.RangeSliderUI;
+import nl.esciencecenter.neon.swing.SimpleImageIcon;
 import nl.esciencecenter.visualization.esalsa.data.ImauTimedPlayer;
+import nl.esciencecenter.visualization.esalsa.data.NetCDFUtil;
 import nl.esciencecenter.visualization.esalsa.data.SurfaceTextureDescription;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ImauPanel extends ESightInterfacePanel {
+public class ImauPanel extends NeonInterfacePanel {
     public static enum TweakState {
         NONE, DATA, VISUAL, MOVIE
     }
@@ -548,7 +549,7 @@ public class ImauPanel extends ESightInterfacePanel {
             screenSelection[i + 1] = "Screen Number " + i;
         }
 
-        final JComboBox comboBox = new JComboBox(screenSelection);
+        final JComboBox<String> comboBox = new JComboBox<String>(screenSelection);
         comboBox.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
@@ -578,19 +579,23 @@ public class ImauPanel extends ESightInterfacePanel {
 
             final ArrayList<Component> screenHcomponents = new ArrayList<Component>();
 
-            JComboBox dataModeComboBox = new JComboBox(dataModes);
+            JComboBox<String> dataModeComboBox = new JComboBox<String>(dataModes);
             ActionListener al = new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    JComboBox cb = (JComboBox) e.getSource();
-                    int selection = cb.getSelectedIndex();
+                    if (e != null && e.getSource() instanceof JComboBox
+                            && e.getSource().getClass().getComponentType() == String.class) {
+                        @SuppressWarnings("unchecked")
+                        JComboBox<String> cb = (JComboBox<String>) e.getSource();
+                        int selection = cb.getSelectedIndex();
 
-                    if (selection == 1) {
-                        settings.setDataMode(currentScreen, false, false, true);
-                    } else if (selection == 2) {
-                        settings.setDataMode(currentScreen, false, true, false);
-                    } else {
-                        settings.setDataMode(currentScreen, false, false, false);
+                        if (selection == 1) {
+                            settings.setDataMode(currentScreen, false, false, true);
+                        } else if (selection == 2) {
+                            settings.setDataMode(currentScreen, false, true, false);
+                        } else {
+                            settings.setDataMode(currentScreen, false, false, false);
+                        }
                     }
                 }
             };
@@ -600,7 +605,7 @@ public class ImauPanel extends ESightInterfacePanel {
             dataModeComboBox.setMaximumSize(new Dimension(100, 25));
             screenHcomponents.add(dataModeComboBox);
 
-            final JComboBox variablesComboBox = new JComboBox(variables.toArray(new String[0]));
+            final JComboBox<String> variablesComboBox = new JComboBox<String>(variables.toArray(new String[0]));
             variablesComboBox.setSelectedItem(selectionDescription.getVarName());
             variablesComboBox.setMinimumSize(new Dimension(50, 25));
             variablesComboBox.setMaximumSize(new Dimension(100, 25));
@@ -608,9 +613,10 @@ public class ImauPanel extends ESightInterfacePanel {
 
             screenVcomponents.add(GoggleSwing.hBoxedComponents(screenHcomponents, true));
 
-            final JComboBox colorMapsComboBox = ColormapInterpreter.getLegendJComboBox(new Dimension(200, 25));
-            colorMapsComboBox
-                    .setSelectedItem(ColormapInterpreter.getIndexOfColormap(selectionDescription.getColorMap()));
+            final JComboBox<SimpleImageIcon> colorMapsComboBox = ColormapInterpreter.getLegendJComboBox(new Dimension(
+                    200, 25));
+            colorMapsComboBox.setSelectedItem(colorMapsComboBox.getItemAt(ColormapInterpreter
+                    .getIndexOfColormap(selectionDescription.getColorMap())));
             colorMapsComboBox.setMinimumSize(new Dimension(100, 25));
             colorMapsComboBox.setMaximumSize(new Dimension(200, 25));
             screenVcomponents.add(colorMapsComboBox);

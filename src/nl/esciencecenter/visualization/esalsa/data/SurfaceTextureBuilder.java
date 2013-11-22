@@ -2,18 +2,17 @@ package nl.esciencecenter.visualization.esalsa.data;
 
 import java.nio.ByteBuffer;
 
-import nl.esciencecenter.esight.exceptions.UninitializedException;
-import nl.esciencecenter.esight.swing.ColormapInterpreter;
-import nl.esciencecenter.esight.swing.ColormapInterpreter.Color;
-import nl.esciencecenter.esight.swing.ColormapInterpreter.Dimensions;
+import nl.esciencecenter.neon.exceptions.UninitializedException;
+import nl.esciencecenter.neon.swing.ColormapInterpreter;
+import nl.esciencecenter.neon.swing.ColormapInterpreter.Color;
+import nl.esciencecenter.neon.swing.ColormapInterpreter.Dimensions;
 import nl.esciencecenter.visualization.esalsa.ImauSettings;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SurfaceTextureBuilder implements Runnable {
-    private final static Logger logger = LoggerFactory
-            .getLogger(SurfaceTextureBuilder.class);
+    private final static Logger logger = LoggerFactory.getLogger(SurfaceTextureBuilder.class);
     private final ImauSettings settings = ImauSettings.getInstance();
 
     protected SurfaceTextureDescription description;
@@ -24,8 +23,7 @@ public class SurfaceTextureBuilder implements Runnable {
     private final int imageHeight;
     private final int blankRows;
 
-    public SurfaceTextureBuilder(TextureStorage texStore,
-            ImauDataArray inputArray, int imageHeight, int blankRows) {
+    public SurfaceTextureBuilder(TextureStorage texStore, ImauDataArray inputArray, int imageHeight, int blankRows) {
         this.texStore = texStore;
         this.inputArray = inputArray;
         this.description = inputArray.getDescription();
@@ -62,14 +60,13 @@ public class SurfaceTextureBuilder implements Runnable {
                 float[] data = inputArray.getData();
 
                 for (int row = dsHeight - 1; row >= 0; row--) {
-                    for (int col = 0; col < dsWidth; col++) {
+                    for (int col = dsWidth - 1; col >= 0; col--) {
                         int i = (row * dsWidth + col);
-                        Color c = ColormapInterpreter.getColor(mapName, dims,
-                                data[i]);
+                        Color c = ColormapInterpreter.getColor(mapName, dims, data[i]);
 
-                        outBuf.put((byte) (255 * c.red));
-                        outBuf.put((byte) (255 * c.green));
-                        outBuf.put((byte) (255 * c.blue));
+                        outBuf.put((byte) (255 * c.getRed()));
+                        outBuf.put((byte) (255 * c.getGreen()));
+                        outBuf.put((byte) (255 * c.getBlue()));
                         outBuf.put((byte) 0);
                     }
                 }

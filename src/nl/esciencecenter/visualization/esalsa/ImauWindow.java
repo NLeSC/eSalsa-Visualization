@@ -13,28 +13,28 @@ import javax.media.opengl.GLContext;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLException;
 
-import nl.esciencecenter.esight.datastructures.FBO;
-import nl.esciencecenter.esight.datastructures.IntPBO;
-import nl.esciencecenter.esight.exceptions.CompilationFailedException;
-import nl.esciencecenter.esight.exceptions.UninitializedException;
-import nl.esciencecenter.esight.input.InputHandler;
-import nl.esciencecenter.esight.math.Color4;
-import nl.esciencecenter.esight.math.MatF4;
-import nl.esciencecenter.esight.math.MatrixFMath;
-import nl.esciencecenter.esight.math.Point4;
-import nl.esciencecenter.esight.math.VecF2;
-import nl.esciencecenter.esight.math.VecF3;
-import nl.esciencecenter.esight.math.VecF4;
-import nl.esciencecenter.esight.models.GeoSphere;
-import nl.esciencecenter.esight.models.Model;
-import nl.esciencecenter.esight.models.Quad;
-import nl.esciencecenter.esight.shaders.ShaderProgram;
-import nl.esciencecenter.esight.shaders.ShaderProgramLoader;
-import nl.esciencecenter.esight.text.MultiColorText;
-import nl.esciencecenter.esight.text.jogampExperimental.Font;
-import nl.esciencecenter.esight.text.jogampExperimental.FontFactory;
-import nl.esciencecenter.esight.textures.ByteBufferTexture;
-import nl.esciencecenter.esight.textures.Texture2D;
+import nl.esciencecenter.neon.datastructures.FrameBufferObject;
+import nl.esciencecenter.neon.datastructures.IntPixelBufferObject;
+import nl.esciencecenter.neon.exceptions.CompilationFailedException;
+import nl.esciencecenter.neon.exceptions.UninitializedException;
+import nl.esciencecenter.neon.input.InputHandler;
+import nl.esciencecenter.neon.math.Color4;
+import nl.esciencecenter.neon.math.Float2Vector;
+import nl.esciencecenter.neon.math.Float3Vector;
+import nl.esciencecenter.neon.math.Float4Matrix;
+import nl.esciencecenter.neon.math.Float4Vector;
+import nl.esciencecenter.neon.math.FloatMatrixMath;
+import nl.esciencecenter.neon.math.Point4;
+import nl.esciencecenter.neon.models.GeoSphere;
+import nl.esciencecenter.neon.models.Model;
+import nl.esciencecenter.neon.models.Quad;
+import nl.esciencecenter.neon.shaders.ShaderProgram;
+import nl.esciencecenter.neon.shaders.ShaderProgramLoader;
+import nl.esciencecenter.neon.text.MultiColorText;
+import nl.esciencecenter.neon.text.jogampexperimental.Font;
+import nl.esciencecenter.neon.text.jogampexperimental.FontFactory;
+import nl.esciencecenter.neon.textures.ByteBufferTexture;
+import nl.esciencecenter.neon.textures.Texture2D;
 import nl.esciencecenter.visualization.esalsa.data.ImauTimedPlayer;
 import nl.esciencecenter.visualization.esalsa.data.SurfaceTextureDescription;
 import nl.esciencecenter.visualization.esalsa.jni.SageInterface;
@@ -52,13 +52,14 @@ public class ImauWindow implements GLEventListener {
     protected final InputHandler inputHandler;
 
     private ShaderProgram shaderProgram_Sphere, shaderProgram_Legend, shaderProgram_Atmosphere,
-            shaderProgram_GaussianBlur, shaderProgram_FlattenLayers, shaderProgram_PostProcess, shaderProgram_Text;
+            shaderProgram_GaussianBlur, shaderProgram_FlattenLayers, shaderProgram_PostProcess, shaderProgram_Text,
+            shaderProgram_EdgeDetection;
 
     private Model sphereModel, legendModel, atmModel;
 
-    private FBO atmosphereFBO, hudTextFBO, legendTextureFBO, sphereTextureFBO;
+    private FrameBufferObject atmosphereFBO, hudTextFBO, legendTextureFBO, sphereTextureFBO;
 
-    private IntPBO finalPBO;
+    private IntPixelBufferObject finalPBO;
 
     private final BufferedImage currentImage = null;
 
@@ -69,7 +70,7 @@ public class ImauWindow implements GLEventListener {
     private boolean reshaped = false;
 
     private SurfaceTextureDescription[] cachedTextureDescriptions;
-    private FBO[] cachedFBOs;
+    private FrameBufferObject[] cachedFBOs;
     private MultiColorText[] varNames;
     private MultiColorText[] legendTextsMin;
     private MultiColorText[] legendTextsMax;
@@ -101,7 +102,7 @@ public class ImauWindow implements GLEventListener {
         cachedScreens = settings.getNumScreensRows() * settings.getNumScreensCols();
 
         cachedTextureDescriptions = new SurfaceTextureDescription[cachedScreens];
-        cachedFBOs = new FBO[cachedScreens];
+        cachedFBOs = new FrameBufferObject[cachedScreens];
         varNames = new MultiColorText[cachedScreens];
         legendTextsMin = new MultiColorText[cachedScreens];
         legendTextsMax = new MultiColorText[cachedScreens];
@@ -141,10 +142,10 @@ public class ImauWindow implements GLEventListener {
         if (timer.isInitialized()) {
             this.timer = timer;
 
-            VecF2 clickCoords = null;
+            Float2Vector clickCoords = null;
 
             // try {
-            // VecF2 selection = this.inputHandler.getSelection();
+            // Float2Vector selection = this.inputHandler.getSelection();
             // float x, y;
             // if (settings.getWindowSelection() == 0) {
             // x = selection.get(0);
@@ -248,7 +249,7 @@ public class ImauWindow implements GLEventListener {
         contextOff(drawable);
     }
 
-    private void displayContext(ImauTimedPlayer timer, VecF2 clickCoords) {
+    private void displayContext(ImauTimedPlayer timer, Float2Vector clickCoords) {
         final int width = GLContext.getCurrent().getGLDrawable().getWidth();
         final int height = GLContext.getCurrent().getGLDrawable().getHeight();
         aspect = (float) width / (float) height;
@@ -258,14 +259,14 @@ public class ImauWindow implements GLEventListener {
         gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
 
         final Point4 eye = new Point4((float) (radius * Math.sin(ftheta) * Math.cos(phi)), (float) (radius
-                * Math.sin(ftheta) * Math.sin(phi)), (float) (radius * Math.cos(ftheta)), 1.0f);
-        final Point4 at = new Point4(0.0f, 0.0f, 0.0f, 1.0f);
-        final VecF4 up = new VecF4(0.0f, 1.0f, 0.0f, 0.0f);
+                * Math.sin(ftheta) * Math.sin(phi)), (float) (radius * Math.cos(ftheta)));
+        final Point4 at = new Point4(0.0f, 0.0f, 0.0f);
+        final Float4Vector up = new Float4Vector(0.0f, 1.0f, 0.0f, 0.0f);
 
-        MatF4 mv = MatrixFMath.lookAt(eye, at, up);
-        mv = mv.mul(MatrixFMath.translate(new VecF3(0f, 0f, inputHandler.getViewDist())));
-        mv = mv.mul(MatrixFMath.rotationX(inputHandler.getRotation().get(0)));
-        mv = mv.mul(MatrixFMath.rotationY(inputHandler.getRotation().get(1)));
+        Float4Matrix mv = FloatMatrixMath.lookAt(eye, at, up);
+        mv = mv.mul(FloatMatrixMath.translate(new Float3Vector(0f, 0f, inputHandler.getViewDist())));
+        mv = mv.mul(FloatMatrixMath.rotationX(inputHandler.getRotation().getX()));
+        mv = mv.mul(FloatMatrixMath.rotationY(inputHandler.getRotation().getY()));
 
         drawAtmosphere(gl, mv, atmosphereFBO);
         // blur(gl, atmosphereFBO, fsq, 1, 2, 4);
@@ -282,7 +283,7 @@ public class ImauWindow implements GLEventListener {
                 String fancyName = timer.getVariableFancyName(variableName);
                 String units = timer.getVariableUnits(variableName);
                 fancyName += " in " + units;
-                varNames[i].setString(gl, fancyName, Color4.white, fontSize);
+                varNames[i].setString(gl, fancyName, Color4.WHITE, fontSize);
 
                 String min, max;
                 if (currentDesc.isDiff()) {
@@ -292,10 +293,10 @@ public class ImauWindow implements GLEventListener {
                     min = Float.toString(settings.getCurrentVarMin(currentDesc.getVarName()));
                     max = Float.toString(settings.getCurrentVarMax(currentDesc.getVarName()));
                 }
-                dates[i].setString(gl, settings.getFancyDate(currentDesc.getFrameNumber()), Color4.white, fontSize);
-                dataSets[i].setString(gl, currentDesc.verbalizeDataMode(), Color4.white, fontSize);
-                legendTextsMin[i].setString(gl, min, Color4.white, fontSize);
-                legendTextsMax[i].setString(gl, max, Color4.white, fontSize);
+                dates[i].setString(gl, settings.getFancyDate(currentDesc.getFrameNumber()), Color4.WHITE, fontSize);
+                dataSets[i].setString(gl, currentDesc.verbalizeDataMode(), Color4.WHITE, fontSize);
+                legendTextsMin[i].setString(gl, min, Color4.WHITE, fontSize);
+                legendTextsMax[i].setString(gl, max, Color4.WHITE, fontSize);
 
                 cachedTextureDescriptions[i] = currentDesc;
             }
@@ -318,9 +319,10 @@ public class ImauWindow implements GLEventListener {
         renderTexturesToScreen(gl, width, height);
     }
 
-    private void drawSingleWindow(final int width, final int height, final GL3 gl, MatF4 mv, Texture2D legend,
+    private void drawSingleWindow(final int width, final int height, final GL3 gl, Float4Matrix mv, Texture2D legend,
             Texture2D globe, MultiColorText varNameText, MultiColorText dateText, MultiColorText datasetText,
-            MultiColorText legendTextMin, MultiColorText legendTextMax, FBO target, VecF2 clickCoords) {
+            MultiColorText legendTextMin, MultiColorText legendTextMax, FrameBufferObject target,
+            Float2Vector clickCoords) {
         logger.debug("Drawing Text");
         drawHUDText(gl, width, height, varNameText, dateText, datasetText, legendTextMin, legendTextMax, hudTextFBO);
 
@@ -335,7 +337,8 @@ public class ImauWindow implements GLEventListener {
     }
 
     private void drawHUDText(GL3 gl, int width, int height, MultiColorText varNameText, MultiColorText dateText,
-            MultiColorText datasetText, MultiColorText legendTextMin, MultiColorText legendTextMax, FBO target) {
+            MultiColorText datasetText, MultiColorText legendTextMin, MultiColorText legendTextMax,
+            FrameBufferObject target) {
         try {
             target.bind(gl);
             gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
@@ -343,19 +346,21 @@ public class ImauWindow implements GLEventListener {
             // Draw text
             int textLength = varNameText.toString().length() * fontSize;
 
-            varNameText.draw(gl, shaderProgram_Text, width, height, 2 * width - textLength - 150, 40);
+            varNameText.drawHudRelative(gl, shaderProgram_Text, width, height, 2 * width - textLength - 150, 40);
 
             textLength = datasetText.toString().length() * fontSize;
-            datasetText.draw(gl, shaderProgram_Text, width, height, 10, 1.9f * height);
+            datasetText.drawHudRelative(gl, shaderProgram_Text, width, height, 10, 1.9f * height);
 
             textLength = dateText.toString().length() * fontSize;
-            dateText.draw(gl, shaderProgram_Text, width, height, 10, 40);
+            dateText.drawHudRelative(gl, shaderProgram_Text, width, height, 10, 40);
 
             textLength = legendTextMin.toString().length() * fontSize;
-            legendTextMin.draw(gl, shaderProgram_Text, width, height, 2 * width - textLength - 100, .2f * height);
+            legendTextMin.drawHudRelative(gl, shaderProgram_Text, width, height, 2 * width - textLength - 100,
+                    .2f * height);
 
             textLength = legendTextMax.toString().length() * fontSize;
-            legendTextMax.draw(gl, shaderProgram_Text, width, height, 2 * width - textLength - 100, 1.75f * height);
+            legendTextMax.drawHudRelative(gl, shaderProgram_Text, width, height, 2 * width - textLength - 100,
+                    1.75f * height);
 
             target.unBind(gl);
         } catch (UninitializedException e) {
@@ -363,15 +368,15 @@ public class ImauWindow implements GLEventListener {
         }
     }
 
-    private void drawHUDLegend(GL3 gl, int width, int height, Texture2D legendTexture, FBO target) {
+    private void drawHUDLegend(GL3 gl, int width, int height, Texture2D legendTexture, FrameBufferObject target) {
         try {
             target.bind(gl);
             gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
 
             // Draw legend texture
             shaderProgram_Legend.setUniform("texture_map", legendTexture.getMultitexNumber());
-            shaderProgram_Legend.setUniformMatrix("MVMatrix", new MatF4());
-            shaderProgram_Legend.setUniformMatrix("PMatrix", new MatF4());
+            shaderProgram_Legend.setUniformMatrix("MVMatrix", new Float4Matrix());
+            shaderProgram_Legend.setUniformMatrix("PMatrix", new Float4Matrix());
 
             shaderProgram_Legend.use(gl);
             legendModel.draw(gl, shaderProgram_Legend);
@@ -382,16 +387,17 @@ public class ImauWindow implements GLEventListener {
         }
     }
 
-    private void drawSphere(GL3 gl, MatF4 mv, Texture2D surfaceTexture, FBO target, VecF2 clickCoords) {
+    private void drawSphere(GL3 gl, Float4Matrix mv, Texture2D surfaceTexture, FrameBufferObject target,
+            Float2Vector clickCoords) {
         try {
             target.bind(gl);
             gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
 
-            final MatF4 p = MatrixFMath.perspective(fovy, aspect, zNear, zFar);
+            final Float4Matrix p = FloatMatrixMath.perspective(fovy, aspect, zNear, zFar);
 
             // try {
-            // MatF4 inv_p = MatrixFMath.inverse(p);
-            // MatF4 inv_mv = MatrixFMath.inverse(mv);
+            // Float4Matrix inv_p = FloatMatrixMath.inverse(p);
+            // Float4Matrix inv_mv = FloatMatrixMath.inverse(mv);
             //
             // // // Receive buffer
             // // gl.glBindBufferBase(GL3.GL_TRANSFORM_FEEDBACK_BUFFER, 0,
@@ -415,17 +421,19 @@ public class ImauWindow implements GLEventListener {
             // logger.debug("Inverse Matrix could not be calculated.");
             // }
 
-            shaderProgram_Sphere.setUniformMatrix("MVMatrix", mv.clone());
-            shaderProgram_Sphere.setUniformMatrix("PMatrix", p);
+            shaderProgram_EdgeDetection.setUniformMatrix("MVMatrix", new Float4Matrix(mv));
+            shaderProgram_EdgeDetection.setUniformMatrix("PMatrix", p);
 
             // shaderProgram_Sphere.setUniform("height_distortion_intensity",
             // settings.getHeightDistortion());
-            shaderProgram_Sphere.setUniform("texture_map", surfaceTexture.getMultitexNumber());
+            shaderProgram_EdgeDetection.setUniform("texture_map", surfaceTexture.getMultitexNumber());
+            shaderProgram_EdgeDetection.setUniform("width", surfaceTexture.getWidth());
+            shaderProgram_EdgeDetection.setUniform("height", surfaceTexture.getHeight());
             // shaderProgram_Sphere.setUniform("height_map",
             // surfaceTexture.getMultitexNumber());
 
-            shaderProgram_Sphere.use(gl);
-            sphereModel.draw(gl, shaderProgram_Sphere);
+            shaderProgram_EdgeDetection.use(gl);
+            sphereModel.draw(gl, shaderProgram_EdgeDetection);
 
             target.unBind(gl);
         } catch (UninitializedException e) {
@@ -433,15 +441,15 @@ public class ImauWindow implements GLEventListener {
         }
     }
 
-    private void drawAtmosphere(GL3 gl, MatF4 mv, FBO target) {
+    private void drawAtmosphere(GL3 gl, Float4Matrix mv, FrameBufferObject target) {
         try {
             target.bind(gl);
             gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
 
-            final MatF4 p = MatrixFMath.perspective(fovy, aspect, zNear, zFar);
-            shaderProgram_Atmosphere.setUniformMatrix("MVMatrix", mv.clone());
+            final Float4Matrix p = FloatMatrixMath.perspective(fovy, aspect, zNear, zFar);
+            shaderProgram_Atmosphere.setUniformMatrix("MVMatrix", new Float4Matrix(mv));
             shaderProgram_Atmosphere.setUniformMatrix("PMatrix", p);
-            shaderProgram_Atmosphere.setUniformMatrix("NormalMatrix", MatrixFMath.getNormalMatrix(mv));
+            shaderProgram_Atmosphere.setUniformMatrix("NormalMatrix", FloatMatrixMath.getNormalMatrix(mv));
 
             shaderProgram_Atmosphere.use(gl);
             atmModel.draw(gl, shaderProgram_Atmosphere);
@@ -452,8 +460,9 @@ public class ImauWindow implements GLEventListener {
         }
     }
 
-    private void flattenLayers(GL3 gl, int width, int height, FBO hudTextFBO, FBO hudLegendFBO, FBO sphereTextureFBO,
-            FBO atmosphereFBO, FBO target) {
+    private void flattenLayers(GL3 gl, int width, int height, FrameBufferObject hudTextFBO,
+            FrameBufferObject hudLegendFBO, FrameBufferObject sphereTextureFBO, FrameBufferObject atmosphereFBO,
+            FrameBufferObject target) {
         try {
             target.bind(gl);
             gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
@@ -463,8 +472,8 @@ public class ImauWindow implements GLEventListener {
             shaderProgram_FlattenLayers.setUniform("dataTex", sphereTextureFBO.getTexture().getMultitexNumber());
             shaderProgram_FlattenLayers.setUniform("atmosphereTex", atmosphereFBO.getTexture().getMultitexNumber());
 
-            shaderProgram_FlattenLayers.setUniformMatrix("MVMatrix", new MatF4());
-            shaderProgram_FlattenLayers.setUniformMatrix("PMatrix", new MatF4());
+            shaderProgram_FlattenLayers.setUniformMatrix("MVMatrix", new Float4Matrix());
+            shaderProgram_FlattenLayers.setUniformMatrix("PMatrix", new Float4Matrix());
 
             shaderProgram_FlattenLayers.setUniform("scrWidth", width);
             shaderProgram_FlattenLayers.setUniform("scrHeight", height);
@@ -478,12 +487,12 @@ public class ImauWindow implements GLEventListener {
         }
     }
 
-    private void blur(GL3 gl, FBO target, Quad fullScreenQuad, int passes, int blurType, float blurSize) {
+    private void blur(GL3 gl, FrameBufferObject target, Quad fullScreenQuad, int passes, int blurType, float blurSize) {
 
         shaderProgram_GaussianBlur.setUniform("Texture", target.getTexture().getMultitexNumber());
 
-        shaderProgram_GaussianBlur.setUniformMatrix("PMatrix", new MatF4());
-        shaderProgram_GaussianBlur.setUniformMatrix("MVMatrix", new MatF4());
+        shaderProgram_GaussianBlur.setUniformMatrix("PMatrix", new Float4Matrix());
+        shaderProgram_GaussianBlur.setUniformMatrix("MVMatrix", new Float4Matrix());
 
         shaderProgram_GaussianBlur.setUniform("scrWidth", target.getTexture().getWidth());
         shaderProgram_GaussianBlur.setUniform("scrHeight", target.getTexture().getHeight());
@@ -518,6 +527,28 @@ public class ImauWindow implements GLEventListener {
         }
     }
 
+    private void edgeDetect(GL3 gl, FrameBufferObject target, Quad fullScreenQuad) {
+        shaderProgram_EdgeDetection.setUniform("tex", target.getTexture().getMultitexNumber());
+
+        shaderProgram_EdgeDetection.setUniformMatrix("PMatrix", new Float4Matrix());
+        shaderProgram_EdgeDetection.setUniformMatrix("MVMatrix", new Float4Matrix());
+
+        shaderProgram_EdgeDetection.setUniform("scrWidth", target.getTexture().getWidth());
+        shaderProgram_EdgeDetection.setUniform("scrHeight", target.getTexture().getHeight());
+
+        try {
+            target.bind(gl);
+            gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
+
+            shaderProgram_EdgeDetection.use(gl);
+            fullScreenQuad.draw(gl, shaderProgram_EdgeDetection);
+
+            target.unBind(gl);
+        } catch (final UninitializedException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void renderTexturesToScreen(GL3 gl, int width, int height) {
         try {
             gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
@@ -527,8 +558,8 @@ public class ImauWindow implements GLEventListener {
                         .getMultitexNumber());
             }
 
-            shaderProgram_PostProcess.setUniformMatrix("MVMatrix", new MatF4());
-            shaderProgram_PostProcess.setUniformMatrix("PMatrix", new MatF4());
+            shaderProgram_PostProcess.setUniformMatrix("MVMatrix", new Float4Matrix());
+            shaderProgram_PostProcess.setUniformMatrix("PMatrix", new Float4Matrix());
 
             shaderProgram_PostProcess.setUniform("scrWidth", width);
             shaderProgram_PostProcess.setUniform("scrHeight", height);
@@ -550,7 +581,7 @@ public class ImauWindow implements GLEventListener {
         cachedScreens = settings.getNumScreensRows() * settings.getNumScreensCols();
 
         cachedTextureDescriptions = new SurfaceTextureDescription[cachedScreens];
-        cachedFBOs = new FBO[cachedScreens];
+        cachedFBOs = new FrameBufferObject[cachedScreens];
         varNames = new MultiColorText[cachedScreens];
         legendTextsMin = new MultiColorText[cachedScreens];
         legendTextsMax = new MultiColorText[cachedScreens];
@@ -563,7 +594,7 @@ public class ImauWindow implements GLEventListener {
             if (cachedFBOs[i] != null) {
                 cachedFBOs[i].delete(gl);
             }
-            cachedFBOs[i] = new FBO(canvasWidth, canvasHeight, (GL.GL_TEXTURE6 + i));
+            cachedFBOs[i] = new FrameBufferObject(canvasWidth, canvasHeight, (GL.GL_TEXTURE6 + i));
             cachedFBOs[i].init(gl);
 
             varNames[i] = new MultiColorText(font);
@@ -608,10 +639,10 @@ public class ImauWindow implements GLEventListener {
         legendTextureFBO.delete(gl);
         sphereTextureFBO.delete(gl);
 
-        atmosphereFBO = new FBO(canvasWidth, canvasHeight, GL.GL_TEXTURE0);
-        hudTextFBO = new FBO(canvasWidth, canvasHeight, GL.GL_TEXTURE1);
-        legendTextureFBO = new FBO(canvasWidth, canvasHeight, GL.GL_TEXTURE2);
-        sphereTextureFBO = new FBO(canvasWidth, canvasHeight, GL.GL_TEXTURE3);
+        atmosphereFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE0);
+        hudTextFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE1);
+        legendTextureFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE2);
+        sphereTextureFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE3);
 
         // if (settings.isIMAGE_STREAM_OUTPUT()) {
         // finalPBO.delete(gl);
@@ -695,10 +726,10 @@ public class ImauWindow implements GLEventListener {
 
         logger.debug("W: " + canvasWidth + ", H: " + canvasHeight);
 
-        atmosphereFBO = new FBO(canvasWidth, canvasHeight, GL.GL_TEXTURE0);
-        hudTextFBO = new FBO(canvasWidth, canvasHeight, GL.GL_TEXTURE1);
-        legendTextureFBO = new FBO(canvasWidth, canvasHeight, GL.GL_TEXTURE2);
-        sphereTextureFBO = new FBO(canvasWidth, canvasHeight, GL.GL_TEXTURE3);
+        atmosphereFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE0);
+        hudTextFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE1);
+        legendTextureFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE2);
+        sphereTextureFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE3);
 
         // if (settings.isIMAGE_STREAM_OUTPUT()) {
         // finalPBO = new IntPBO(canvasWidth, canvasHeight);
@@ -710,7 +741,7 @@ public class ImauWindow implements GLEventListener {
         legendTextureFBO.init(gl);
         sphereTextureFBO.init(gl);
 
-        fsq = new Quad(2, 2, new VecF3(0, 0, 0.1f));
+        fsq = new Quad(2, 2, new Float3Vector(0, 0, 0.1f));
         fsq.init(gl);
 
         // sphereModel = new GeoSphereCut(Material.random(), 120, 120, 50f,
@@ -721,7 +752,7 @@ public class ImauWindow implements GLEventListener {
         // cutModel = new GeoSphereCutEdge(Material.random(), 120, 50f);
         // cutModel.init(gl);
 
-        legendModel = new Quad(1.5f, .1f, new VecF3(1, 0, 0.1f));
+        legendModel = new Quad(1.5f, .1f, new Float3Vector(1, 0, 0.1f));
         legendModel.init(gl);
 
         Color4 atmosphereColor = new Color4(0.0f, 1.0f, 1.0f, 0.005f);
@@ -771,6 +802,9 @@ public class ImauWindow implements GLEventListener {
 
             shaderProgram_FlattenLayers = loader.createProgram(gl, "shaderProgram_FlattenLayers", new File(
                     "shaders/vs_flatten3.vp"), new File("shaders/fs_flatten3.fp"));
+
+            shaderProgram_EdgeDetection = loader.createProgram(gl, "shaderProgram_EdgeDetection", new File(
+                    "shaders/vs_edgeDetection.vp"), new File("shaders/fs_edgeDetection.fp"));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (CompilationFailedException e) {
