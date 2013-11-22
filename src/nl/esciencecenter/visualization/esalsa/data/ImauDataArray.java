@@ -40,9 +40,9 @@ public class ImauDataArray implements Runnable {
             Variable ncdfVar1 = ncFile1.findVariable(description.getVarName());
             List<Dimension> dims = ncdfVar1.getDimensions();
             for (Dimension d : dims) {
-                if (d.getName().compareTo("t_lat") == 0 || d.getName().compareTo("u_lat") == 0) {
+                if (d.getFullName().compareTo("t_lat") == 0 || d.getFullName().compareTo("u_lat") == 0) {
                     height = d.getLength();
-                } else if (d.getName().compareTo("t_lon") == 0 || d.getName().compareTo("u_lon") == 0) {
+                } else if (d.getFullName().compareTo("t_lon") == 0 || d.getFullName().compareTo("u_lon") == 0) {
                     width = d.getLength();
                 }
             }

@@ -309,7 +309,7 @@ public class NetCDFUtil {
         boolean success = false;
         while (!success) {
             for (Dimension d : dims) {
-                if (d.getName().compareTo(current) == 0) {
+                if (d.getFullName().compareTo(current) == 0) {
                     success = true;
                     break;
                 }
@@ -353,8 +353,8 @@ public class NetCDFUtil {
 
         ArrayList<String> result = new ArrayList<String>();
         for (Dimension d : dims) {
-            if (d.getName().contains(subString)) {
-                result.add(d.getName());
+            if (d.getFullName().contains(subString)) {
+                result.add(d.getFullName());
             }
         }
 
@@ -385,7 +385,7 @@ public class NetCDFUtil {
             List<String> availableDimNames = new ArrayList<String>();
 
             for (Dimension d : availableDims) {
-                availableDimNames.add(d.getName());
+                availableDimNames.add(d.getFullName());
             }
 
             boolean successLat = false;
@@ -493,7 +493,7 @@ public class NetCDFUtil {
 
         ArrayList<Dimension> result = new ArrayList<Dimension>();
         for (Dimension d : dims) {
-            if (d.getName().contains(subString)) {
+            if (d.getFullName().contains(subString)) {
                 result.add(d);
             }
         }
@@ -565,7 +565,7 @@ public class NetCDFUtil {
         ArrayList<String> result = new ArrayList<String>();
         for (String current : permutations) {
             for (Dimension d : dims) {
-                if (d.getName().compareTo(current) == 0) {
+                if (d.getFullName().compareTo(current) == 0) {
                     result.add(current);
                 }
             }
@@ -596,7 +596,7 @@ public class NetCDFUtil {
             List<String> availableDimNames = new ArrayList<String>();
 
             for (Dimension d : availableDims) {
-                availableDimNames.add(d.getName());
+                availableDimNames.add(d.getFullName());
             }
 
             for (String name : mandatoryDims) {
@@ -639,7 +639,7 @@ public class NetCDFUtil {
             List<String> availableDimNames = new ArrayList<String>();
 
             for (Dimension d : availableDims) {
-                availableDimNames.add(d.getName());
+                availableDimNames.add(d.getFullName());
             }
 
             boolean successLat = false;

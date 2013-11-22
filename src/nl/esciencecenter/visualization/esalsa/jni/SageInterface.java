@@ -3,7 +3,8 @@ package nl.esciencecenter.visualization.esalsa.jni;
 import java.nio.ByteBuffer;
 
 public class SageInterface {
-    // public native int swapBuffers(int[] rgb);
+    public native int swapBuffers(int[] rgb);
+
     public native int setup(int width, int height, int fps);
 
     public native int start(ByteBuffer rgb);
@@ -22,8 +23,8 @@ public class SageInterface {
             System.exit(1);
         }
 
-        System.out.println("Libraries loaded, sending " + (width * height)
-                + " pixels in WxH: " + width + "x" + height + ".");
+        System.out.println("Libraries loaded, sending " + (width * height) + " pixels in WxH: " + width + "x" + height
+                + ".");
         setup(width, height, fps);
     }
 
