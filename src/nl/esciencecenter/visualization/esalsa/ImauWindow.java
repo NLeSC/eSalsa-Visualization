@@ -1,10 +1,10 @@
 package nl.esciencecenter.visualization.esalsa;
 
-import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.List;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL3;
@@ -33,7 +33,6 @@ import nl.esciencecenter.neon.shaders.ShaderProgramLoader;
 import nl.esciencecenter.neon.text.MultiColorText;
 import nl.esciencecenter.neon.text.jogampexperimental.Font;
 import nl.esciencecenter.neon.text.jogampexperimental.FontFactory;
-import nl.esciencecenter.neon.textures.ByteBufferTexture;
 import nl.esciencecenter.neon.textures.Texture2D;
 import nl.esciencecenter.visualization.esalsa.data.ImauTimedPlayer;
 import nl.esciencecenter.visualization.esalsa.data.SurfaceTextureDescription;
@@ -136,7 +135,13 @@ public class ImauWindow implements GLEventListener {
         contextOn(drawable);
 
         final GL3 gl = drawable.getContext().getGL().getGL3();
-        gl.glViewport(0, 0, canvasWidth, canvasHeight);
+
+        // Check if the shape is still correct (if we have missed a reshape
+        // event this might not be the case).
+        if (canvasWidth != GLContext.getCurrent().getGLDrawable().getWidth()
+                || canvasHeight != GLContext.getCurrent().getGLDrawable().getHeight()) {
+            doReshape(gl);
+        }
 
         ImauTimedPlayer timer = ImauPanel.getTimer();
         if (timer.isInitialized()) {
@@ -173,6 +178,12 @@ public class ImauWindow implements GLEventListener {
             }
 
             displayContext(timer, clickCoords);
+        }
+
+        if (timer.isScreenshotNeeded()) {
+            finalPBO.makeScreenshotPNG(gl, timer.getScreenshotFileName());
+
+            timer.setScreenshotNeeded(false);
         }
 
         // try {
@@ -276,8 +287,16 @@ public class ImauWindow implements GLEventListener {
 
         for (int i = 0; i < cachedScreens; i++) {
             currentDesc = settings.getSurfaceDescription(i);
+
+            surface = timer.getTextureStorage().getSurfaceImage(i);
+            legend = timer.getTextureStorage().getLegendImage(i);
+
             if (!currentDesc.equals(cachedTextureDescriptions[i]) || reshaped) {
-                timer.getTextureStorage().requestNewConfiguration(i, currentDesc);
+                List<Texture2D> oldTextures = timer.getTextureStorage().requestNewConfiguration(i, currentDesc);
+                // Remove all of the (now unused) textures
+                for (Texture2D tex : oldTextures) {
+                    tex.delete(gl);
+                }
 
                 String variableName = currentDesc.getVarName();
                 String fancyName = timer.getVariableFancyName(variableName);
@@ -299,20 +318,13 @@ public class ImauWindow implements GLEventListener {
                 legendTextsMax[i].setString(gl, max, Color4.WHITE, fontSize);
 
                 cachedTextureDescriptions[i] = currentDesc;
+
+                surface.init(gl);
+                legend.init(gl);
             }
-
-            surface = new ByteBufferTexture(GL3.GL_TEXTURE4, timer.getTextureStorage().getSurfaceImage(i),
-                    timer.getImageWidth(), timer.getImageHeight());
-            surface.init(gl);
-
-            legend = new ByteBufferTexture(GL3.GL_TEXTURE5, timer.getTextureStorage().getLegendImage(i), 1, 500);
-            legend.init(gl);
 
             drawSingleWindow(width, height, gl, mv, legend, surface, varNames[i], dates[i], dataSets[i],
                     legendTextsMin[i], legendTextsMax[i], cachedFBOs[i], clickCoords);
-
-            surface.delete(gl);
-            legend.delete(gl);
         }
 
         logger.debug("Tiling windows");
@@ -374,6 +386,7 @@ public class ImauWindow implements GLEventListener {
             gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
 
             // Draw legend texture
+            legendTexture.use(gl);
             shaderProgram_Legend.setUniform("texture_map", legendTexture.getMultitexNumber());
             shaderProgram_Legend.setUniformMatrix("MVMatrix", new Float4Matrix());
             shaderProgram_Legend.setUniformMatrix("PMatrix", new Float4Matrix());
@@ -426,6 +439,7 @@ public class ImauWindow implements GLEventListener {
 
             // shaderProgram_Sphere.setUniform("height_distortion_intensity",
             // settings.getHeightDistortion());
+            surfaceTexture.use(gl);
             shaderProgram_EdgeDetection.setUniform("texture_map", surfaceTexture.getMultitexNumber());
             shaderProgram_EdgeDetection.setUniform("width", surfaceTexture.getWidth());
             shaderProgram_EdgeDetection.setUniform("height", surfaceTexture.getHeight());
@@ -629,10 +643,17 @@ public class ImauWindow implements GLEventListener {
         contextOn(drawable);
 
         GL3 gl = drawable.getGL().getGL3();
-        gl.glViewport(0, 0, w, h);
 
-        canvasWidth = w;
-        canvasHeight = h;
+        doReshape(gl);
+
+        contextOff(drawable);
+    }
+
+    private void doReshape(GL3 gl) {
+        canvasWidth = GLContext.getCurrent().getGLDrawable().getWidth();
+        canvasHeight = GLContext.getCurrent().getGLDrawable().getHeight();
+
+        gl.glViewport(0, 0, canvasWidth, canvasHeight);
 
         atmosphereFBO.delete(gl);
         hudTextFBO.delete(gl);
@@ -657,9 +678,11 @@ public class ImauWindow implements GLEventListener {
 
         initDatastores(gl);
 
-        reshaped = true;
+        finalPBO.delete(gl);
+        finalPBO = new IntPixelBufferObject(canvasWidth, canvasHeight);
+        finalPBO.init(gl);
 
-        contextOff(drawable);
+        reshaped = true;
     }
 
     @Override
@@ -684,6 +707,8 @@ public class ImauWindow implements GLEventListener {
         for (int i = 0; i < cachedScreens; i++) {
             cachedFBOs[i].delete(gl);
         }
+
+        finalPBO.delete(gl);
 
         contextOff(drawable);
     }
@@ -811,16 +836,21 @@ public class ImauWindow implements GLEventListener {
             e.printStackTrace();
         }
 
-        System.out.println("window sage init? :" + (settings.isIMAGE_STREAM_OUTPUT() ? "true" : "false"));
-        if (settings.isIMAGE_STREAM_OUTPUT()) {
-            Dimension frameDim = ImauApp.getFrameSize();
+        // System.out.println("window sage init? :" +
+        // (settings.isIMAGE_STREAM_OUTPUT() ? "true" : "false"));
+        // if (settings.isIMAGE_STREAM_OUTPUT()) {
+        // Dimension frameDim = ImauApp.getFrameSize();
+        //
+        // if (settings.isIMAGE_STREAM_GL_ONLY()) {
+        // frameDim = new Dimension(canvasWidth, canvasHeight);
+        // }
+        //
+        // sage = new SageInterface(frameDim.width, frameDim.height,
+        // settings.getSageFramesPerSecond());
+        // }
 
-            if (settings.isIMAGE_STREAM_GL_ONLY()) {
-                frameDim = new Dimension(canvasWidth, canvasHeight);
-            }
-
-            sage = new SageInterface(frameDim.width, frameDim.height, settings.getSageFramesPerSecond());
-        }
+        finalPBO = new IntPixelBufferObject(canvasWidth, canvasHeight);
+        finalPBO.init(gl);
 
         contextOff(drawable);
     }

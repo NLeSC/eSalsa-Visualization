@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import javax.media.opengl.GL3;
+
 import nl.esciencecenter.neon.exceptions.NetCDFNoSuchVariableException;
 import nl.esciencecenter.visualization.esalsa.ImauSettings;
 
@@ -32,7 +34,7 @@ public class ImauDatasetManager {
     private final File file1;
     private final File file2;
 
-    private final TextureStorage texStorage;
+    private final EfficientTextureStorage texStorage;
 
     private final int imageHeight;
     private final int blankRows;
@@ -261,8 +263,14 @@ public class ImauDatasetManager {
         imageHeight = (int) Math.floor((180f / (latMax - latMin)) * latArraySize);
         blankRows = (int) Math.floor(180f / latMax);
 
-        this.texStorage = new TextureStorage(this, settings.getNumScreensRows() * settings.getNumScreensCols(),
-                lonArraySize, imageHeight);
+        this.texStorage = new EfficientTextureStorage(this,
+                settings.getNumScreensRows() * settings.getNumScreensCols(), lonArraySize, imageHeight,
+                GL3.GL_TEXTURE4, GL3.GL_TEXTURE5);
+
+        // Database testing stuff
+        // JDBCConnector connector = new JDBCConnector();
+        // connector.readTestData();
+        // connector.closeConnection();
     }
 
     public void buildImages(SurfaceTextureDescription desc) {
@@ -293,7 +301,7 @@ public class ImauDatasetManager {
         }
     }
 
-    public TextureStorage getTextureStorage() {
+    public EfficientTextureStorage getTextureStorage() {
         return texStorage;
     }
 

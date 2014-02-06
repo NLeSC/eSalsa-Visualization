@@ -17,10 +17,10 @@ public class LegendTextureBuilder implements Runnable {
     protected SurfaceTextureDescription description;
 
     private final ImauDataArray inputArray;
-    private final TextureStorage texStore;
+    private final EfficientTextureStorage texStore;
     private boolean initialized;
 
-    public LegendTextureBuilder(TextureStorage texStore, ImauDataArray inputArray) {
+    public LegendTextureBuilder(EfficientTextureStorage texStore, ImauDataArray inputArray) {
         this.texStore = texStore;
         this.inputArray = inputArray;
         this.description = inputArray.getDescription();

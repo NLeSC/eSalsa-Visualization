@@ -39,7 +39,7 @@ public class ImauTimedPlayer implements Runnable {
     private final InputHandler inputHandler;
 
     private ImauDatasetManager dsManager;
-    private TextureStorage texStorage;
+    private EfficientTextureStorage texStorage;
 
     private boolean needsScreenshot = false;
     private String screenshotFilename = "";
@@ -209,6 +209,8 @@ public class ImauTimedPlayer implements Runnable {
                     + rotation.getY() + " , viewDist: " + viewDist);
 
             screenshotFilename = settings.getScreenshotPath() + String.format("%05d", (frameNumber)) + ".png";
+
+            System.out.println("Screenshot filename: " + screenshotFilename);
         }
         needsScreenshot = value;
     }
@@ -334,7 +336,7 @@ public class ImauTimedPlayer implements Runnable {
         }
     }
 
-    public TextureStorage getTextureStorage() {
+    public EfficientTextureStorage getTextureStorage() {
         return texStorage;
     }
 
