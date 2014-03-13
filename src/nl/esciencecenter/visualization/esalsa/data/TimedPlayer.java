@@ -16,8 +16,8 @@ import nl.esciencecenter.visualization.esalsa.ImauSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ImauTimedPlayer implements Runnable {
-    private final static Logger logger = LoggerFactory.getLogger(ImauTimedPlayer.class);
+public class TimedPlayer implements Runnable {
+    private final static Logger logger = LoggerFactory.getLogger(TimedPlayer.class);
 
     public static enum states {
         UNOPENED, UNINITIALIZED, INITIALIZED, STOPPED, REDRAWING, SNAPSHOTTING, MOVIEMAKING, CLEANUP, WAITINGONFRAME, PLAYING
@@ -38,21 +38,20 @@ public class ImauTimedPlayer implements Runnable {
 
     private final InputHandler inputHandler;
 
-    private ImauDatasetManager dsManager;
-    private EfficientTextureStorage texStorage;
+    private DatasetManager dsManager;
+    private EfficientTextureStorage effTexStorage;
 
     private boolean needsScreenshot = false;
     private String screenshotFilename = "";
 
-    private long waittime = settings.getWaittimeMovie();
+    private final long waittime = settings.getWaittimeMovie();
 
     private final ArrayList<Float3Vector> bezierPoints, fixedPoints;
     private final ArrayList<Integer> bezierSteps;
 
     private File fileDS1;
-    private File fileDS2;
 
-    public ImauTimedPlayer(CustomJSlider timeBar2, JFormattedTextField frameCounter) {
+    public TimedPlayer(CustomJSlider timeBar2, JFormattedTextField frameCounter) {
         this.timeBar = timeBar2;
         this.frameCounter = frameCounter;
         this.inputHandler = InputHandler.getInstance();
@@ -106,47 +105,17 @@ public class ImauTimedPlayer implements Runnable {
         timeBar.setMaximum(0);
     }
 
-    public void init(File fileDS1) {
-        this.fileDS1 = fileDS1;
-        this.fileDS2 = null;
-        this.dsManager = new ImauDatasetManager(fileDS1, null, 1, 4);
-        this.texStorage = dsManager.getTextureStorage();
+    public void init(File[] files) {
+        this.dsManager = new DatasetManager(files);
+        this.effTexStorage = dsManager.getEfficientTextureStorage();
 
         frameNumber = dsManager.getFrameNumberOfIndex(0);
-        final int initialMaxBar = dsManager.getNumFiles() - 1;
+        final int initialMaxBar = dsManager.getNumFrames() - 1;
 
         timeBar.setMaximum(initialMaxBar);
         timeBar.setMinimum(0);
 
-        updateFrame(frameNumber, true);
-
         initialized = true;
-    }
-
-    public void init(File fileDS1, File fileDS2) {
-        this.fileDS1 = fileDS1;
-        this.fileDS2 = fileDS2;
-        this.dsManager = new ImauDatasetManager(fileDS1, fileDS2, 1, 4);
-        this.texStorage = dsManager.getTextureStorage();
-
-        frameNumber = dsManager.getFrameNumberOfIndex(0);
-        final int initialMaxBar = dsManager.getNumFiles() - 1;
-
-        timeBar.setMaximum(initialMaxBar);
-        timeBar.setMinimum(0);
-
-        this.waittime = waittime * 2;
-
-        updateFrame(frameNumber, true);
-
-        initialized = true;
-    }
-
-    public void reinitializeDatastores() {
-        this.dsManager = new ImauDatasetManager(fileDS1, fileDS2, 1, 4);
-        this.texStorage = dsManager.getTextureStorage();
-
-        updateFrame(frameNumber, true);
     }
 
     public boolean isInitialized() {
@@ -269,7 +238,10 @@ public class ImauTimedPlayer implements Runnable {
                             int newFrameNumber;
                             try {
                                 newFrameNumber = dsManager.getNextFrameNumber(frameNumber);
-                                if (texStorage.doneWithLastRequest()) {
+                                // if (texStorage.doneWithLastRequest()) {
+                                // updateFrame(newFrameNumber, false);
+                                // }
+                                if (effTexStorage.doneWithLastRequest()) {
                                     updateFrame(newFrameNumber, false);
                                 }
                             } catch (IOException e) {
@@ -336,20 +308,28 @@ public class ImauTimedPlayer implements Runnable {
         }
     }
 
-    public EfficientTextureStorage getTextureStorage() {
-        return texStorage;
+    // public TextureStorage getTextureStorage() {
+    // return texStorage;
+    // }
+
+    public EfficientTextureStorage getEfficientTextureStorage() {
+        return effTexStorage;
     }
 
     public ArrayList<String> getVariables() {
         return dsManager.getVariables();
     }
 
-    public String getVariableFancyName(String varName) {
-        return dsManager.getVariableFancyName(varName);
-    }
-
     public String getVariableUnits(String varName) {
         return dsManager.getVariableUnits(varName);
+    }
+
+    public float getMinValueContainedInDataset(String varName) {
+        return dsManager.getMinValueContainedInDataset(varName);
+    }
+
+    public float getMaxValueContainedInDataset(String varName) {
+        return dsManager.getMaxValueContainedInDataset(varName);
     }
 
     public int getImageWidth() {

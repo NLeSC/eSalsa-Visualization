@@ -34,8 +34,8 @@ import nl.esciencecenter.neon.text.MultiColorText;
 import nl.esciencecenter.neon.text.jogampexperimental.Font;
 import nl.esciencecenter.neon.text.jogampexperimental.FontFactory;
 import nl.esciencecenter.neon.textures.Texture2D;
-import nl.esciencecenter.visualization.esalsa.data.ImauTimedPlayer;
 import nl.esciencecenter.visualization.esalsa.data.SurfaceTextureDescription;
+import nl.esciencecenter.visualization.esalsa.data.TimedPlayer;
 import nl.esciencecenter.visualization.esalsa.jni.SageInterface;
 
 import org.slf4j.Logger;
@@ -78,7 +78,7 @@ public class ImauWindow implements GLEventListener {
 
     private int cachedScreens = 1;
 
-    private ImauTimedPlayer timer;
+    private TimedPlayer timer;
     private float aspect;
 
     protected int fontSet = FontFactory.UBUNTU;
@@ -92,6 +92,9 @@ public class ImauWindow implements GLEventListener {
     protected final float fovy = 45.0f;
     protected final float zNear = 0.1f;
     protected final float zFar = 3000.0f;
+
+    private final Texture2D[] cachedSurfaceTextures;
+    private final Texture2D[] cachedLegendTextures;
 
     public ImauWindow(InputHandler inputHandler) {
         this.loader = new ShaderProgramLoader();
@@ -107,6 +110,9 @@ public class ImauWindow implements GLEventListener {
         legendTextsMax = new MultiColorText[cachedScreens];
         dates = new MultiColorText[cachedScreens];
         dataSets = new MultiColorText[cachedScreens];
+
+        cachedSurfaceTextures = new Texture2D[cachedScreens];
+        cachedLegendTextures = new Texture2D[cachedScreens];
     }
 
     public static void contextOn(GLAutoDrawable drawable) {
@@ -143,38 +149,15 @@ public class ImauWindow implements GLEventListener {
             doReshape(gl);
         }
 
-        ImauTimedPlayer timer = ImauPanel.getTimer();
+        TimedPlayer timer = ImauPanel.getTimer();
         if (timer.isInitialized()) {
             this.timer = timer;
 
             Float2Vector clickCoords = null;
 
-            // try {
-            // Float2Vector selection = this.inputHandler.getSelection();
-            // float x, y;
-            // if (settings.getWindowSelection() == 0) {
-            // x = selection.get(0);
-            // y = selection.get(1);
-            // } else {
-            // x = selection.get(0) / settings.getNumScreensCols();
-            // y = selection.get(1) / settings.getNumScreensRows();
-            // }
-            //
-            // clickCoords = ClickCoordinateCalculator.calc(
-            // settings.getNumScreensCols(),
-            // settings.getNumScreensRows(), canvasWidth,
-            // canvasHeight, x, y);
-            //
-            // System.out.println("X/Y: " + clickCoords);
-            //
-            // } catch (NoSelectionException e) {
-            // // No problem
-            // }
-
             int currentScreens = settings.getNumScreensRows() * settings.getNumScreensCols();
             if (currentScreens != cachedScreens) {
                 initDatastores(gl);
-                timer.reinitializeDatastores();
             }
 
             displayContext(timer, clickCoords);
@@ -186,81 +169,12 @@ public class ImauWindow implements GLEventListener {
             timer.setScreenshotNeeded(false);
         }
 
-        // try {
-        // if (settings.isIMAGE_STREAM_OUTPUT()) {
-        // try {
-        // finalPBO.copyToPBO(gl);
-        // ByteBuffer bb = finalPBO.getBuffer();
-        // sage.display(bb);
-        //
-        // finalPBO.unBind(gl);
-        // } catch (UninitializedException e) {
-        // e.printStackTrace();
-        // }
-        // }
-        //
-        // if (timer.isScreenshotNeeded()) {
-        // try {
-        // finalPBO.copyToPBO(gl);
-        // ByteBuffer bb = finalPBO.getBuffer();
-        // bb.rewind();
-        //
-        // int pixels = canvasWidth * canvasHeight;
-        // int[] array = new int[pixels];
-        // IntBuffer ib = IntBuffer.wrap(array);
-        //
-        // for (int i = 0; i < (pixels * 4); i += 4) {
-        // int b = bb.get(i) & 0xFF;
-        // int g = bb.get(i + 1) & 0xFF;
-        // int r = bb.get(i + 2) & 0xFF;
-        // int a = bb.get(i + 3) & 0xFF;
-        //
-        // int argb = (r << 16) | (g << 8) | b;
-        // ib.put(argb);
-        // }
-        // ib.rewind();
-        //
-        // int[] destArray = new int[pixels];
-        // IntBuffer dest = IntBuffer.wrap(destArray);
-        //
-        // int[] rowPix = new int[canvasWidth];
-        // for (int row = 0; row < canvasHeight; row++) {
-        // ib.get(rowPix);
-        // dest.position((canvasHeight - row - 1) * canvasWidth);
-        // dest.put(rowPix);
-        // }
-        //
-        // BufferedImage bufIm = new BufferedImage(canvasWidth,
-        // canvasHeight, BufferedImage.TYPE_INT_RGB);
-        // bufIm.setRGB(0, 0, canvasWidth, canvasHeight, dest.array(),
-        // 0, canvasWidth);
-        // try {
-        //
-        // ImageIO.write(bufIm, "png",
-        // new File(timer.getScreenshotFileName()));
-        // } catch (IOException e2) {
-        // // TODO Auto-generated catch block
-        // e2.printStackTrace();
-        // }
-        //
-        // finalPBO.unBind(gl);
-        // } catch (UninitializedException e) {
-        // e.printStackTrace();
-        // }
-        //
-        // timer.setScreenshotNeeded(false);
-        // }
-        // drawable.getContext().release();
-        // } catch (final GLException e) {
-        // e.printStackTrace();
-        // }
-
         reshaped = false;
 
         contextOff(drawable);
     }
 
-    private void displayContext(ImauTimedPlayer timer, Float2Vector clickCoords) {
+    private void displayContext(TimedPlayer timer, Float2Vector clickCoords) {
         final int width = GLContext.getCurrent().getGLDrawable().getWidth();
         final int height = GLContext.getCurrent().getGLDrawable().getHeight();
         aspect = (float) width / (float) height;
@@ -280,7 +194,6 @@ public class ImauWindow implements GLEventListener {
         mv = mv.mul(FloatMatrixMath.rotationY(inputHandler.getRotation().getY()));
 
         drawAtmosphere(gl, mv, atmosphereFBO);
-        // blur(gl, atmosphereFBO, fsq, 1, 2, 4);
 
         SurfaceTextureDescription currentDesc;
         Texture2D surface, legend;
@@ -288,18 +201,19 @@ public class ImauWindow implements GLEventListener {
         for (int i = 0; i < cachedScreens; i++) {
             currentDesc = settings.getSurfaceDescription(i);
 
-            surface = timer.getTextureStorage().getSurfaceImage(i);
-            legend = timer.getTextureStorage().getLegendImage(i);
+            // surface = timer.getEfficientTextureStorage().getSurfaceImage(i);
+            // legend = timer.getEfficientTextureStorage().getLegendImage(i);
 
-            if (!currentDesc.equals(cachedTextureDescriptions[i]) || reshaped) {
-                List<Texture2D> oldTextures = timer.getTextureStorage().requestNewConfiguration(i, currentDesc);
+            if (currentDesc != null && !currentDesc.equals(cachedTextureDescriptions[i]) || reshaped) {
+                List<Texture2D> oldTextures = timer.getEfficientTextureStorage()
+                        .requestNewConfiguration(i, currentDesc);
                 // Remove all of the (now unused) textures
                 for (Texture2D tex : oldTextures) {
                     tex.delete(gl);
                 }
 
                 String variableName = currentDesc.getVarName();
-                String fancyName = timer.getVariableFancyName(variableName);
+                String fancyName = variableName;
                 String units = timer.getVariableUnits(variableName);
                 fancyName += " in " + units;
                 varNames[i].setString(gl, fancyName, Color4.WHITE, fontSize);
@@ -319,12 +233,20 @@ public class ImauWindow implements GLEventListener {
 
                 cachedTextureDescriptions[i] = currentDesc;
 
-                surface.init(gl);
-                legend.init(gl);
+                // surface.init(gl);
+                // legend.init(gl);
+
+                cachedSurfaceTextures[i] = timer.getEfficientTextureStorage().getSurfaceImage(i);
+                cachedLegendTextures[i] = timer.getEfficientTextureStorage().getLegendImage(i);
+
+                cachedSurfaceTextures[i].init(gl);
+                cachedLegendTextures[i].init(gl);
             }
 
-            drawSingleWindow(width, height, gl, mv, legend, surface, varNames[i], dates[i], dataSets[i],
-                    legendTextsMin[i], legendTextsMax[i], cachedFBOs[i], clickCoords);
+            if (cachedLegendTextures[i] != null && cachedSurfaceTextures[i] != null) {
+                drawSingleWindow(width, height, gl, mv, cachedLegendTextures[i], cachedSurfaceTextures[i], varNames[i],
+                        dates[i], dataSets[i], legendTextsMin[i], legendTextsMax[i], cachedFBOs[i], clickCoords);
+            }
         }
 
         logger.debug("Tiling windows");
@@ -407,32 +329,6 @@ public class ImauWindow implements GLEventListener {
             gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
 
             final Float4Matrix p = FloatMatrixMath.perspective(fovy, aspect, zNear, zFar);
-
-            // try {
-            // Float4Matrix inv_p = FloatMatrixMath.inverse(p);
-            // Float4Matrix inv_mv = FloatMatrixMath.inverse(mv);
-            //
-            // // // Receive buffer
-            // // gl.glBindBufferBase(GL3.GL_TRANSFORM_FEEDBACK_BUFFER, 0,
-            // // ReceiverID);
-            // // gl.glBeginTransformFeedback(GL3.GL_POINTS);
-            // // // disable rasterization
-            // // gl.glEnable(GL3.GL_RASTERIZER_DISCARD);
-            // // // begin query for geometry shader outed primitive
-            // // gl.glBeginQuery(GL3.GL_PRIMITIVES_GENERATED, QueryID);
-            // // ...
-            // // Rendering
-            // // ...
-            // // // read back query results
-            // // gl.glEndQuery( GL3.GL_PRIMITIVES_GENERATED);
-            // // gl.glGetQueryObjectuiv(QueryID, GL3.GL_QUERY_RESULT,
-            // // @PointOutNumber);
-            // // // enable rasterization
-            // // gl.glDisable(GL3.GL_RASTERIZER_DISCARD);
-            //
-            // } catch (InverseNotAvailableException e) {
-            // logger.debug("Inverse Matrix could not be calculated.");
-            // }
 
             shaderProgram_EdgeDetection.setUniformMatrix("MVMatrix", new Float4Matrix(mv));
             shaderProgram_EdgeDetection.setUniformMatrix("PMatrix", p);

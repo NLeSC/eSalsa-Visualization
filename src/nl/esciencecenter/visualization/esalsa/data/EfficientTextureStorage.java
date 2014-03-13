@@ -25,7 +25,7 @@ public class EfficientTextureStorage {
     private HashMap<SurfaceTextureDescription, Texture2D> surfaceStorage;
     private HashMap<SurfaceTextureDescription, Texture2D> legendStorage;
 
-    private final ImauDatasetManager manager;
+    private final DatasetManager manager;
 
     private final ByteBufferTexture EMPTY_SURFACE_BUFFER;
     private final ByteBufferTexture EMPTY_LEGEND_BUFFER;
@@ -35,8 +35,8 @@ public class EfficientTextureStorage {
     private final int surfaceMultiTexUnit;
     private final int legendMultiTexUnit;
 
-    public EfficientTextureStorage(ImauDatasetManager manager, int screens, int width, int height,
-            int surfaceMultiTexUnit, int legendMultiTexUnit) {
+    public EfficientTextureStorage(DatasetManager manager, int screens, int width, int height, int surfaceMultiTexUnit,
+            int legendMultiTexUnit) {
         this.width = width;
         this.height = height;
         this.surfaceMultiTexUnit = surfaceMultiTexUnit;

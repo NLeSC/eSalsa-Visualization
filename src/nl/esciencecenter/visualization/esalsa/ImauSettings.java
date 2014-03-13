@@ -1,7 +1,9 @@
 package nl.esciencecenter.visualization.esalsa;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
+import nl.esciencecenter.neon.swing.ColormapInterpreter;
 import nl.esciencecenter.neon.util.TypedProperties;
 import nl.esciencecenter.visualization.esalsa.data.SurfaceTextureDescription;
 
@@ -88,6 +90,8 @@ public class ImauSettings {
     private final HashMap<String, Float> currentDiffMinValues;
     private final HashMap<String, Float> currentMaxValues;
     private final HashMap<String, Float> currentDiffMaxValues;
+    private final HashMap<String, String> currentColormap;
+    private final HashMap<String, Boolean> logarithmicScale;
 
     private int DEPTH_MIN = 0;
     private int DEPTH_DEF = 0;
@@ -115,6 +119,8 @@ public class ImauSettings {
     private int number_of_screens_col = 2;
     private int number_of_screens_row = 2;
 
+    private CacheFileManager cacheFileManager;
+
     private ImauSettings() {
         super();
         minValues = new HashMap<String, Float>();
@@ -125,6 +131,8 @@ public class ImauSettings {
         diffMaxValues = new HashMap<String, Float>();
         currentDiffMinValues = new HashMap<String, Float>();
         currentDiffMaxValues = new HashMap<String, Float>();
+        currentColormap = new HashMap<String, String>();
+        logarithmicScale = new HashMap<String, Boolean>();
 
         try {
             final TypedProperties props = new TypedProperties();
@@ -190,6 +198,7 @@ public class ImauSettings {
             diffMaxValues.put("SSH", props.getFloatProperty("DIFF_MAX_SSH"));
             currentDiffMinValues.put("SSH", props.getFloatProperty("SET_DIFF_MIN_SSH"));
             currentDiffMaxValues.put("SSH", props.getFloatProperty("SET_DIFF_MAX_SSH"));
+
             minValues.put("SHF", props.getFloatProperty("MIN_SHF"));
             maxValues.put("SHF", props.getFloatProperty("MAX_SHF"));
             currentMinValues.put("SHF", props.getFloatProperty("SET_MIN_SHF"));
@@ -198,6 +207,7 @@ public class ImauSettings {
             diffMaxValues.put("SHF", props.getFloatProperty("DIFF_MAX_SHF"));
             currentDiffMinValues.put("SHF", props.getFloatProperty("SET_DIFF_MIN_SHF"));
             currentDiffMaxValues.put("SHF", props.getFloatProperty("SET_DIFF_MAX_SHF"));
+
             minValues.put("SFWF", props.getFloatProperty("MIN_SFWF"));
             maxValues.put("SFWF", props.getFloatProperty("MAX_SFWF"));
             currentMinValues.put("SFWF", props.getFloatProperty("SET_MIN_SFWF"));
@@ -206,6 +216,7 @@ public class ImauSettings {
             diffMaxValues.put("SFWF", props.getFloatProperty("DIFF_MAX_SFWF"));
             currentDiffMinValues.put("SFWF", props.getFloatProperty("SET_DIFF_MIN_SFWF"));
             currentDiffMaxValues.put("SFWF", props.getFloatProperty("SET_DIFF_MAX_SFWF"));
+
             minValues.put("HMXL", props.getFloatProperty("MIN_HMXL"));
             maxValues.put("HMXL", props.getFloatProperty("MAX_HMXL"));
             currentMinValues.put("HMXL", props.getFloatProperty("SET_MIN_HMXL"));
@@ -214,6 +225,7 @@ public class ImauSettings {
             diffMaxValues.put("HMXL", props.getFloatProperty("DIFF_MAX_HMXL"));
             currentDiffMinValues.put("HMXL", props.getFloatProperty("SET_DIFF_MIN_HMXL"));
             currentDiffMaxValues.put("HMXL", props.getFloatProperty("SET_DIFF_MAX_HMXL"));
+
             minValues.put("XMXL", props.getFloatProperty("MIN_XMXL"));
             maxValues.put("XMXL", props.getFloatProperty("MAX_XMXL"));
             currentMinValues.put("XMXL", props.getFloatProperty("SET_MIN_XMXL"));
@@ -222,6 +234,7 @@ public class ImauSettings {
             diffMaxValues.put("XMXL", props.getFloatProperty("DIFF_MAX_XMXL"));
             currentDiffMinValues.put("XMXL", props.getFloatProperty("SET_DIFF_MIN_XMXL"));
             currentDiffMaxValues.put("XMXL", props.getFloatProperty("SET_DIFF_MAX_XMXL"));
+
             minValues.put("TMXL", props.getFloatProperty("MIN_TMXL"));
             maxValues.put("TMXL", props.getFloatProperty("MAX_TMXL"));
             currentMinValues.put("TMXL", props.getFloatProperty("SET_MIN_TMXL"));
@@ -230,6 +243,7 @@ public class ImauSettings {
             diffMaxValues.put("TMXL", props.getFloatProperty("DIFF_MAX_TMXL"));
             currentDiffMinValues.put("TMXL", props.getFloatProperty("SET_DIFF_MIN_TMXL"));
             currentDiffMaxValues.put("TMXL", props.getFloatProperty("SET_DIFF_MAX_TMXL"));
+
             minValues.put("SALT", props.getFloatProperty("MIN_SALT"));
             maxValues.put("SALT", props.getFloatProperty("MAX_SALT"));
             currentMinValues.put("SALT", props.getFloatProperty("SET_MIN_SALT"));
@@ -238,6 +252,7 @@ public class ImauSettings {
             diffMaxValues.put("SALT", props.getFloatProperty("DIFF_MAX_SALT"));
             currentDiffMinValues.put("SALT", props.getFloatProperty("SET_DIFF_MIN_SALT"));
             currentDiffMaxValues.put("SALT", props.getFloatProperty("SET_DIFF_MAX_SALT"));
+
             minValues.put("TEMP", props.getFloatProperty("MIN_TEMP"));
             maxValues.put("TEMP", props.getFloatProperty("MAX_TEMP"));
             currentMinValues.put("TEMP", props.getFloatProperty("SET_MIN_TEMP"));
@@ -246,6 +261,7 @@ public class ImauSettings {
             diffMaxValues.put("TEMP", props.getFloatProperty("DIFF_MAX_TEMP"));
             currentDiffMinValues.put("TEMP", props.getFloatProperty("SET_DIFF_MIN_TEMP"));
             currentDiffMaxValues.put("TEMP", props.getFloatProperty("SET_DIFF_MAX_TEMP"));
+
             minValues.put("UVEL", props.getFloatProperty("MIN_UVEL"));
             maxValues.put("UVEL", props.getFloatProperty("MAX_UVEL"));
             currentMinValues.put("UVEL", props.getFloatProperty("SET_MIN_UVEL"));
@@ -254,6 +270,7 @@ public class ImauSettings {
             diffMaxValues.put("UVEL", props.getFloatProperty("DIFF_MAX_UVEL"));
             currentDiffMinValues.put("UVEL", props.getFloatProperty("SET_DIFF_MIN_UVEL"));
             currentDiffMaxValues.put("UVEL", props.getFloatProperty("SET_DIFF_MAX_UVEL"));
+
             minValues.put("VVEL", props.getFloatProperty("MIN_VVEL"));
             maxValues.put("VVEL", props.getFloatProperty("MAX_VVEL"));
             currentMinValues.put("VVEL", props.getFloatProperty("SET_MIN_VVEL"));
@@ -262,6 +279,7 @@ public class ImauSettings {
             diffMaxValues.put("VVEL", props.getFloatProperty("DIFF_MAX_VVEL"));
             currentDiffMinValues.put("VVEL", props.getFloatProperty("SET_DIFF_MIN_VVEL"));
             currentDiffMaxValues.put("VVEL", props.getFloatProperty("SET_DIFF_MAX_VVEL"));
+
             minValues.put("KE", props.getFloatProperty("MIN_KE"));
             maxValues.put("KE", props.getFloatProperty("MAX_KE"));
             currentMinValues.put("KE", props.getFloatProperty("SET_MIN_KE"));
@@ -270,6 +288,7 @@ public class ImauSettings {
             diffMaxValues.put("KE", props.getFloatProperty("DIFF_MAX_KE"));
             currentDiffMinValues.put("KE", props.getFloatProperty("SET_DIFF_MIN_KE"));
             currentDiffMaxValues.put("KE", props.getFloatProperty("SET_DIFF_MAX_KE"));
+
             minValues.put("PD", props.getFloatProperty("MIN_PD"));
             maxValues.put("PD", props.getFloatProperty("MAX_PD"));
             currentMinValues.put("PD", props.getFloatProperty("SET_MIN_PD"));
@@ -278,6 +297,7 @@ public class ImauSettings {
             diffMaxValues.put("PD", props.getFloatProperty("DIFF_MAX_PD"));
             currentDiffMinValues.put("PD", props.getFloatProperty("SET_DIFF_MIN_PD"));
             currentDiffMaxValues.put("PD", props.getFloatProperty("SET_DIFF_MAX_PD"));
+
             minValues.put("TAUX", props.getFloatProperty("MIN_TAUX"));
             maxValues.put("TAUX", props.getFloatProperty("MAX_TAUX"));
             currentMinValues.put("TAUX", props.getFloatProperty("SET_MIN_TAUX"));
@@ -286,6 +306,7 @@ public class ImauSettings {
             diffMaxValues.put("TAUX", props.getFloatProperty("DIFF_MAX_TAUX"));
             currentDiffMinValues.put("TAUX", props.getFloatProperty("SET_DIFF_MIN_TAUX"));
             currentDiffMaxValues.put("TAUX", props.getFloatProperty("SET_DIFF_MAX_TAUX"));
+
             minValues.put("TAUY", props.getFloatProperty("MIN_TAUY"));
             maxValues.put("TAUY", props.getFloatProperty("MAX_TAUY"));
             currentMinValues.put("TAUY", props.getFloatProperty("SET_MIN_TAUY"));
@@ -294,6 +315,7 @@ public class ImauSettings {
             diffMaxValues.put("TAUY", props.getFloatProperty("DIFF_MAX_TAUY"));
             currentDiffMinValues.put("TAUY", props.getFloatProperty("SET_DIFF_MIN_TAUY"));
             currentDiffMaxValues.put("TAUY", props.getFloatProperty("SET_DIFF_MAX_TAUY"));
+
             minValues.put("H2", props.getFloatProperty("MIN_H2"));
             maxValues.put("H2", props.getFloatProperty("MAX_H2"));
             currentMinValues.put("H2", props.getFloatProperty("SET_MIN_H2"));
@@ -317,25 +339,6 @@ public class ImauSettings {
 
     private void initializeScreenDescriptions() {
         screenDescriptions = new SurfaceTextureDescription[number_of_screens_col * number_of_screens_row];
-
-        for (int i = 0; i < number_of_screens_col * number_of_screens_row; i++) {
-            if (i == 0) {
-                screenDescriptions[i] = new SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, "TEMP", "realistic",
-                        false, false, false, currentMinValues.get("TEMP"), currentMaxValues.get("TEMP"));
-            } else if (i == 1) {
-                screenDescriptions[i] = new SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, "KE", "hotres",
-                        false, false, false, currentMinValues.get("KE"), currentMaxValues.get("KE"));
-            } else if (i == 2) {
-                screenDescriptions[i] = new SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, "SALT", "inv_diff",
-                        false, false, false, currentMinValues.get("SALT"), currentMaxValues.get("SALT"));
-            } else if (i == 3) {
-                screenDescriptions[i] = new SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, "SSH", "default",
-                        false, false, false, currentMinValues.get("SSH"), currentMaxValues.get("SSH"));
-            } else {
-                screenDescriptions[i] = new SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, "TEMP", "realistic",
-                        false, false, false, currentMinValues.get("TEMP"), currentMaxValues.get("TEMP"));
-            }
-        }
     }
 
     public void setWaittimeBeforeRetry(long value) {
@@ -398,36 +401,12 @@ public class ImauSettings {
         PREPROCESSING_AMOUNT = value;
     }
 
-    public float getVarMax(String var) {
-        return maxValues.get(var);
-    }
-
     public float getVarDiffMax(String var) {
         return diffMaxValues.get(var);
     }
 
-    public float getVarMin(String var) {
-        return minValues.get(var);
-    }
-
     public float getVarDiffMin(String var) {
         return diffMinValues.get(var);
-    }
-
-    public float getCurrentVarMax(String var) {
-        return currentMaxValues.get(var);
-    }
-
-    public float getCurrentVarDiffMax(String var) {
-        return currentDiffMaxValues.get(var);
-    }
-
-    public float getCurrentVarMin(String var) {
-        return currentMinValues.get(var);
-    }
-
-    public float getCurrentVarDiffMin(String var) {
-        return currentDiffMinValues.get(var);
     }
 
     public int getDepthMin() {
@@ -448,7 +427,7 @@ public class ImauSettings {
             screenDescriptions[i] = new SurfaceTextureDescription(value, currentState.getDepth(),
                     currentState.getVarName(), currentState.getColorMap(), currentState.isDynamicDimensions(),
                     currentState.isDiff(), currentState.isSecondSet(), currentState.getLowerBound(),
-                    currentState.getUpperBound());
+                    currentState.getUpperBound(), currentState.isLogScale());
         }
     }
 
@@ -458,7 +437,7 @@ public class ImauSettings {
             screenDescriptions[i] = new SurfaceTextureDescription(currentState.getFrameNumber(), value,
                     currentState.getVarName(), currentState.getColorMap(), currentState.isDynamicDimensions(),
                     currentState.isDiff(), currentState.isSecondSet(), currentState.getLowerBound(),
-                    currentState.getUpperBound());
+                    currentState.getUpperBound(), currentState.isLogScale());
         }
 
         DEPTH_DEF = value;
@@ -498,23 +477,17 @@ public class ImauSettings {
         SurfaceTextureDescription state = screenDescriptions[screenNumber];
 
         SurfaceTextureDescription result;
-        // if (diff == false) {
         result = new SurfaceTextureDescription(state.getFrameNumber(), state.getDepth(), state.getVarName(),
-                state.getColorMap(), dynamic, diff, secondSet, state.getLowerBound(), state.getUpperBound());
-        // } else {
-        // result = new SurfaceTextureDescription(
-        // state.getFrameNumber(), state.getDepth(), state.getVarName(),
-        // "inv_diff", dynamic, diff, secondSet,
-        // state.getLowerBound(), state.getUpperBound());
-        // }
+                state.getColorMap(), dynamic, diff, secondSet, state.getLowerBound(), state.getUpperBound(),
+                state.isLogScale());
         screenDescriptions[screenNumber] = result;
     }
 
     public synchronized void setVariable(int screenNumber, String variable) {
         SurfaceTextureDescription state = screenDescriptions[screenNumber];
         SurfaceTextureDescription result = new SurfaceTextureDescription(state.getFrameNumber(), state.getDepth(),
-                variable, state.getColorMap(), state.isDynamicDimensions(), state.isDiff(), state.isSecondSet(),
-                state.getLowerBound(), state.getUpperBound());
+                variable, getCurrentColormap(variable), state.isDynamicDimensions(), state.isDiff(),
+                state.isSecondSet(), state.getLowerBound(), state.getUpperBound(), state.isLogScale());
         screenDescriptions[screenNumber] = result;
     }
 
@@ -526,8 +499,13 @@ public class ImauSettings {
         SurfaceTextureDescription state = screenDescriptions[screenNumber];
         SurfaceTextureDescription result = new SurfaceTextureDescription(state.getFrameNumber(), state.getDepth(),
                 state.getVarName(), selectedColorMap, state.isDynamicDimensions(), state.isDiff(), state.isSecondSet(),
-                state.getLowerBound(), state.getUpperBound());
+                state.getLowerBound(), state.getUpperBound(), state.isLogScale());
         screenDescriptions[screenNumber] = result;
+        currentColormap.put(state.getVarName(), selectedColorMap);
+
+        if (cacheFileManager != null) {
+            cacheFileManager.writeColormap(state.getVarName(), selectedColorMap);
+        }
     }
 
     public boolean isIMAGE_STREAM_OUTPUT() {
@@ -757,18 +735,17 @@ public class ImauSettings {
     }
 
     public void setVariableRange(int screenNumber, String varName, int sliderLowerValue, int sliderUpperValue) {
+        float diff = getVarMax(varName) - getVarMin(varName);
 
-        float diff = (maxValues.get(varName) - minValues.get(varName));
-
-        currentMinValues.put(varName, (sliderLowerValue / 100f) * diff + minValues.get(varName));
-        currentMaxValues.put(varName, (sliderUpperValue / 100f) * diff + minValues.get(varName));
-        float minFloatValue = currentMinValues.get(varName);
-        float maxFloatValue = currentMaxValues.get(varName);
+        currentMinValues.put(varName, (sliderLowerValue / 100f) * diff + getVarMin(varName));
+        currentMaxValues.put(varName, (sliderUpperValue / 100f) * diff + getVarMin(varName));
+        float minFloatValue = getCurrentVarMin(varName);
+        float maxFloatValue = getCurrentVarMax(varName);
 
         SurfaceTextureDescription state = screenDescriptions[screenNumber];
         SurfaceTextureDescription result = new SurfaceTextureDescription(state.getFrameNumber(), state.getDepth(),
                 state.getVarName(), state.getColorMap(), state.isDynamicDimensions(), state.isDiff(),
-                state.isSecondSet(), minFloatValue, maxFloatValue);
+                state.isSecondSet(), minFloatValue, maxFloatValue, state.isLogScale());
         screenDescriptions[screenNumber] = result;
     }
 
@@ -827,5 +804,129 @@ public class ImauSettings {
 
     public int getInterfaceHeight() {
         return INTERFACE_HEIGHT;
+    }
+
+    public String getCurrentColormap(String key) {
+        String colormap = "";
+        if (currentColormap.containsKey(key)) {
+            colormap = currentColormap.get(key);
+        } else if (cacheFileManager != null) {
+            colormap = cacheFileManager.readColormap(key);
+        }
+
+        if (colormap.compareTo("") == 0) {
+            colormap = ColormapInterpreter.getColormapNames()[0];
+        }
+
+        return colormap;
+    }
+
+    public float getVarMin(String key) {
+        float value;
+        if (minValues.containsKey(key)) {
+            value = minValues.get(key);
+        } else {
+            value = Float.NaN;
+        }
+
+        return value;
+    }
+
+    public float getVarMax(String key) {
+        float value;
+        if (maxValues.containsKey(key)) {
+            value = maxValues.get(key);
+        } else {
+            value = Float.NaN;
+        }
+
+        return value;
+    }
+
+    public float getCurrentVarDiffMin(String key) {
+        float value;
+        if (currentDiffMinValues.containsKey(key)) {
+            value = currentDiffMinValues.get(key);
+        } else {
+            value = minValues.get(key);
+        }
+
+        return value;
+    }
+
+    public float getCurrentVarDiffMax(String key) {
+        float value;
+        if (currentDiffMaxValues.containsKey(key)) {
+            value = currentDiffMaxValues.get(key);
+        } else {
+            value = maxValues.get(key);
+        }
+
+        return value;
+    }
+
+    public float getCurrentVarMin(String key) {
+        float value;
+        if (currentMinValues.containsKey(key)) {
+            value = currentMinValues.get(key);
+        } else {
+            value = minValues.get(key);
+        }
+
+        return value;
+    }
+
+    public float getCurrentVarMax(String key) {
+        float value;
+        if (currentMaxValues.containsKey(key)) {
+            value = currentMaxValues.get(key);
+        } else {
+            value = maxValues.get(key);
+        }
+
+        return value;
+    }
+
+    public void setVarMin(String key, float currentMin) {
+        minValues.put(key, currentMin);
+        currentMinValues.put(key, currentMin);
+    }
+
+    public void setVarMax(String key, float currentMax) {
+        maxValues.put(key, currentMax);
+        currentMaxValues.put(key, currentMax);
+
+    }
+
+    public void initDefaultVariables(ArrayList<String> variables) {
+        screenDescriptions = new SurfaceTextureDescription[number_of_screens_col * number_of_screens_row];
+
+        if (variables.size() != 0) {
+            for (int j = 0; j < number_of_screens_col * number_of_screens_row; j++) {
+                String var;
+                if (j < variables.size()) {
+                    var = variables.get(j);
+                } else {
+                    var = variables.get(0);
+                }
+                screenDescriptions[j] = new SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, var,
+                        getCurrentColormap(var), false, false, false, getCurrentVarMin(var), getCurrentVarMax(var),
+                        false);
+
+                logger.debug(screenDescriptions[j].toString());
+            }
+        }
+    }
+
+    public void setLogScale(int screenNumber, boolean selected) {
+        SurfaceTextureDescription state = screenDescriptions[screenNumber];
+        SurfaceTextureDescription result = new SurfaceTextureDescription(state.getFrameNumber(), state.getDepth(),
+                state.getVarName(), state.getColorMap(), state.isDynamicDimensions(), state.isDiff(),
+                state.isSecondSet(), state.getLowerBound(), state.getUpperBound(), selected);
+        screenDescriptions[screenNumber] = result;
+    }
+
+    public void setCacheFileManager(CacheFileManager cacheFileManager) {
+        this.cacheFileManager = cacheFileManager;
     }
 }
