@@ -49,8 +49,6 @@ public class TimedPlayer implements Runnable {
     private final ArrayList<Float3Vector> bezierPoints, fixedPoints;
     private final ArrayList<Integer> bezierSteps;
 
-    private File fileDS1;
-
     public TimedPlayer(CustomJSlider timeBar2, JFormattedTextField frameCounter) {
         this.timeBar = timeBar2;
         this.frameCounter = frameCounter;
@@ -202,10 +200,6 @@ public class TimedPlayer implements Runnable {
         inputHandler.setRotation(new Float3Vector(settings.getInitialRotationX(), settings.getInitialRotationY(), 0f));
         inputHandler.setViewDist(settings.getInitialZoom());
 
-        // inputHandler.setRotation(new Float3Vector(bezierPoints.get(0).get(0),
-        // bezierPoints.get(0).get(1), 0f));
-        // inputHandler.setViewDist(bezierPoints.get(0).get(2));
-
         stop();
 
         while (running) {
@@ -218,12 +212,6 @@ public class TimedPlayer implements Runnable {
                         if (currentState == states.MOVIEMAKING) {
                             final Float3Vector rotation = inputHandler.getRotation();
                             if (settings.getMovieRotate()) {
-                                // rotation.set(
-                                // 1,
-                                // rotation.get(1)
-                                // + settings
-                                // .getMovieRotationSpeedDef());
-                                // inputHandler.setRotation(rotation);
                                 inputHandler.setRotation(new Float3Vector(bezierPoints.get(frameNumber).getX(),
                                         bezierPoints.get(frameNumber).getY(), 0f));
                                 inputHandler.setViewDist(bezierPoints.get(frameNumber).getZ());
@@ -238,9 +226,6 @@ public class TimedPlayer implements Runnable {
                             int newFrameNumber;
                             try {
                                 newFrameNumber = dsManager.getNextFrameNumber(frameNumber);
-                                // if (texStorage.doneWithLastRequest()) {
-                                // updateFrame(newFrameNumber, false);
-                                // }
                                 if (effTexStorage.doneWithLastRequest()) {
                                     updateFrame(newFrameNumber, false);
                                 }
@@ -270,14 +255,8 @@ public class TimedPlayer implements Runnable {
             } else if (currentState == states.REDRAWING) {
                 currentState = states.STOPPED;
             } else if (currentState == states.WAITINGONFRAME) {
-                // try {
-                // Thread.sleep(settings.getWaittimeBeforeRetry());
-
                 rewind();
                 start();
-                // } catch (final InterruptedException e) {
-                // System.err.println("Interrupted while waiting.");
-                // }
             }
         }
     }
@@ -308,10 +287,6 @@ public class TimedPlayer implements Runnable {
         }
     }
 
-    // public TextureStorage getTextureStorage() {
-    // return texStorage;
-    // }
-
     public EfficientTextureStorage getEfficientTextureStorage() {
         return effTexStorage;
     }
@@ -338,5 +313,9 @@ public class TimedPlayer implements Runnable {
 
     public int getImageHeight() {
         return dsManager.getImageHeight();
+    }
+
+    public int getInitialFrameNumber() {
+        return dsManager.getFrameNumberOfIndex(0);
     }
 }

@@ -623,7 +623,7 @@ public class ImauPanel extends NeonInterfacePanel {
             }
             cache = new CacheFileManager(files[0].getParent());
             settings.setCacheFileManager(cache);
-            settings.initDefaultVariables(variables);
+            settings.initDefaultVariables(variables, timer.getInitialFrameNumber());
 
             createDataTweakPanel();
 

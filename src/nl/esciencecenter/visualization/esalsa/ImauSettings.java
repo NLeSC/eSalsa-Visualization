@@ -151,11 +151,6 @@ public class ImauSettings {
             INTERFACE_WIDTH = props.getIntProperty("INTERFACE_WIDTH");
             INTERFACE_HEIGHT = props.getIntProperty("INTERFACE_HEIGHT");
 
-            // SCREENSHOT_SCREEN_WIDTH = props
-            // .getIntProperty("SCREENSHOT_SCREEN_WIDTH");
-            // SCREENSHOT_SCREEN_HEIGHT = props
-            // .getIntProperty("SCREENSHOT_SCREEN_HEIGHT");
-
             // Settings for the initial view
             INITIAL_SIMULATION_FRAME = props.getIntProperty("INITIAL_SIMULATION_FRAME");
             INITIAL_ROTATION_X = props.getFloatProperty("INITIAL_ROTATION_X");
@@ -174,9 +169,7 @@ public class ImauSettings {
             OCTREE_EDGES = props.getFloatProperty("OCTREE_EDGES");
 
             // Settings that should never change, but are listed here to make
-            // sure
-            // they
-            // can be found if necessary
+            // sure they can be found if necessary
             MAX_EXPECTED_MODELS = props.getIntProperty("MAX_EXPECTED_MODELS");
 
             SCREENSHOT_PATH = props.getProperty("SCREENSHOT_PATH");
@@ -324,11 +317,6 @@ public class ImauSettings {
             diffMaxValues.put("H2", props.getFloatProperty("DIFF_MAX_H2"));
             currentDiffMinValues.put("H2", props.getFloatProperty("SET_DIFF_MIN_H2"));
             currentDiffMaxValues.put("H2", props.getFloatProperty("SET_DIFF_MAX_H2"));
-
-            // grid_width_dimension_substring = props
-            // .getProperty("grid_width_dimension_substring");
-            // grid_height_dimension_substring = props
-            // .getProperty("grid_height_dimension_substring");
 
         } catch (NumberFormatException e) {
             logger.warn(e.getMessage());
@@ -898,7 +886,7 @@ public class ImauSettings {
 
     }
 
-    public void initDefaultVariables(ArrayList<String> variables) {
+    public void initDefaultVariables(ArrayList<String> variables, int initialFrameNumber) {
         screenDescriptions = new SurfaceTextureDescription[number_of_screens_col * number_of_screens_row];
 
         if (variables.size() != 0) {
@@ -909,7 +897,7 @@ public class ImauSettings {
                 } else {
                     var = variables.get(0);
                 }
-                screenDescriptions[j] = new SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, var,
+                screenDescriptions[j] = new SurfaceTextureDescription(initialFrameNumber, 0, var,
                         getCurrentColormap(var), false, false, false, getCurrentVarMin(var), getCurrentVarMax(var),
                         false);
 

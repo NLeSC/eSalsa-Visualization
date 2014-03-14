@@ -119,13 +119,6 @@ public class DatasetManager {
 
         int frameIndex = getIndexOfFrameNumber(frameNumber);
 
-        if (frameIndex == -1) {
-            frameIndex = 0;
-        }
-
-        // System.out.println("Requested frame number: " + frameNumber +
-        // " with index: " + frameIndex);
-
         NetCDFReader currentReader = readers.get(frameIndex);
 
         ByteBuffer surfaceBuffer = currentReader.getImage(desc.getColorMap(), varName, desc.getDepth(),
