@@ -632,6 +632,8 @@ public class ImauPanel extends NeonInterfacePanel {
             settings.setScreenshotPath(path);
 
             new Thread(timer).start();
+
+            setTweakState(TweakState.DATA);
         } else {
             final JOptionPane pane = new JOptionPane();
             pane.setMessage("Tried to open invalid file type.");
@@ -641,7 +643,7 @@ public class ImauPanel extends NeonInterfacePanel {
     }
 
     private File[] openFile() {
-        final JFileChooser fileChooser = new JFileChooser("/media/maarten/diskhdd1/");
+        final JFileChooser fileChooser = new JFileChooser("~");
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(true);

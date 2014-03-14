@@ -26,7 +26,7 @@ public class CacheFileManager {
             try {
                 in = new BufferedReader(new FileReader(cacheFile));
                 while ((str = in.readLine()) != null) {
-                    if (str.contains(variableName) && str.contains("min")) {
+                    if (str.contains(variableName) && str.contains(" min ")) {
                         String[] substrings = str.split(" ");
                         result = Float.parseFloat(substrings[2]);
                     }
