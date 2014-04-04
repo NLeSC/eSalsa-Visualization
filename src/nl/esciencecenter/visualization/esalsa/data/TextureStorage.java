@@ -14,18 +14,18 @@ import org.slf4j.LoggerFactory;
 
 import com.jogamp.common.nio.Buffers;
 
-public class EfficientTextureStorage {
+public class TextureStorage {
     private static final int LEGEND_TEXTURE_HEIGHT = 500;
     private static final int LEGEND_TEXTURE_WIDTH = 1;
 
-    private final static Logger logger = LoggerFactory.getLogger(EfficientTextureStorage.class);
+    private final static Logger logger = LoggerFactory.getLogger(TextureStorage.class);
 
     private final SurfaceTextureDescription[] oldScreenA;
     private final SurfaceTextureDescription[] newScreenA;
     private HashMap<SurfaceTextureDescription, Texture2D> surfaceStorage;
     private HashMap<SurfaceTextureDescription, Texture2D> legendStorage;
 
-    private final DatasetManager manager;
+    private final DatasetManager dsManager;
 
     private final ByteBufferTexture EMPTY_SURFACE_BUFFER;
     private final ByteBufferTexture EMPTY_LEGEND_BUFFER;
@@ -35,7 +35,7 @@ public class EfficientTextureStorage {
     private final int surfaceMultiTexUnit;
     private final int legendMultiTexUnit;
 
-    public EfficientTextureStorage(DatasetManager manager, int screens, int width, int height, int surfaceMultiTexUnit,
+    public TextureStorage(DatasetManager dsManager, int screens, int width, int height, int surfaceMultiTexUnit,
             int legendMultiTexUnit) {
         this.width = width;
         this.height = height;
@@ -48,7 +48,7 @@ public class EfficientTextureStorage {
         surfaceStorage = new HashMap<SurfaceTextureDescription, Texture2D>();
         legendStorage = new HashMap<SurfaceTextureDescription, Texture2D>();
 
-        this.manager = manager;
+        this.dsManager = dsManager;
 
         ByteBuffer surfaceBuffer = Buffers.newDirectByteBuffer(width * height * 4);
         ByteBuffer legendBuffer = Buffers.newDirectByteBuffer(LEGEND_TEXTURE_WIDTH * LEGEND_TEXTURE_HEIGHT * 4);
@@ -175,7 +175,8 @@ public class EfficientTextureStorage {
 
         if (!surfaceStorage.containsValue(newDesc) && !legendStorage.containsValue(newDesc)) {
             logger.debug("requesting: " + newDesc.getVarName());
-            manager.buildImages(newDesc);
+
+            dsManager.buildImages(newDesc);
         }
 
         return oldTextures;

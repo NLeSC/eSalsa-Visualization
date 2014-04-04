@@ -43,6 +43,24 @@ public class NetCDFReader {
 
     private final CacheFileManager cache;
 
+    private final class Bounds {
+        private final float max, min;
+
+        public Bounds(float min, float max) {
+            this.min = min;
+            this.max = max;
+        }
+
+        public float getMax() {
+            return max;
+        }
+
+        public float getMin() {
+            return min;
+        }
+
+    }
+
     public NetCDFReader(File file) {
         this.file = file;
         this.ncfile = open(file);
@@ -160,16 +178,23 @@ public class NetCDFReader {
         return units.get(varName);
     }
 
-    public ByteBuffer getImage(String colorMapname, String variableName, int depth, boolean logScale) {
+    public ByteBuffer getImage(String colorMapname, String variableName, int requestedDepth, boolean logScale) {
         Variable variable = variables.get(variableName);
-        int depths, lats, lons;
-        if (shapes.get(variableName).size() > 2) {
-            depths = shapes.get(variableName).get(0);
-            lats = shapes.get(variableName).get(1);
-            lons = shapes.get(variableName).get(2);
-        } else {
-            lats = shapes.get(variableName).get(0);
-            lons = shapes.get(variableName).get(1);
+
+        int times = 0, depths = 0, lats = 0, lons = 0;
+        for (int i = 0; i < shapes.get(variableName).size(); i++) {
+            if (dimensions.get(variableName).get(i).getFullName().contains("time")) {
+                times = shapes.get(variableName).get(i);
+            }
+            if (dimensions.get(variableName).get(i).getFullName().contains("depth")) {
+                depths = shapes.get(variableName).get(i);
+            }
+            if (dimensions.get(variableName).get(i).getFullName().contains("lat")) {
+                lats = shapes.get(variableName).get(i);
+            }
+            if (dimensions.get(variableName).get(i).getFullName().contains("lon")) {
+                lons = shapes.get(variableName).get(i);
+            }
         }
 
         ByteBuffer result = Buffers.newDirectByteBuffer(lats * lons * 4);
@@ -178,7 +203,7 @@ public class NetCDFReader {
         try {
             Array netCDFArray;
             if (shapes.get(variableName).size() > 2) {
-                netCDFArray = variable.slice(0, depth).read();
+                netCDFArray = variable.slice(0, requestedDepth).read();
             } else {
                 netCDFArray = variable.read();
             }
@@ -251,49 +276,63 @@ public class NetCDFReader {
 
         }
 
-        float currentMax = Float.MIN_VALUE;
-        float currentMin = Float.MAX_VALUE;
         float fillValue = fillValues.get(variableName);
 
         if (!(mins.containsKey(variableName) && maxes.containsKey(variableName))) {
             Variable variable = variables.get(variableName);
-            int times = shapes.get(variableName).get(0);
-            int lats = shapes.get(variableName).get(1);
-            int lons = shapes.get(variableName).get(2);
 
+            int times = 0, depths = 0, lats = 0, lons = 0;
+            for (int i = 0; i < shapes.get(variableName).size(); i++) {
+                if (dimensions.get(variableName).get(i).getFullName().contains("time")) {
+                    times = shapes.get(variableName).get(i);
+                }
+                if (dimensions.get(variableName).get(i).getFullName().contains("depth")) {
+                    depths = shapes.get(variableName).get(i);
+                }
+                if (dimensions.get(variableName).get(i).getFullName().contains("lat")) {
+                    lats = shapes.get(variableName).get(i);
+                }
+                if (dimensions.get(variableName).get(i).getFullName().contains("lon")) {
+                    lons = shapes.get(variableName).get(i);
+                }
+            }
             System.out.println("Determining minimum and maximum values for " + variableName + ", please wait");
 
             try {
-                for (int time = 0; time < times; time++) {
-                    Array netCDFArray = variable.slice(0, time).read();
-                    float[] data = (float[]) netCDFArray.get1DJavaArray(float.class);
+                if (lats == 0 || lons == 0) {
+                    System.err
+                            .println("ERROR: LATITUDES or LONGITUDES not found in the dimensions of this data file, exiting.");
+                    System.exit(1);
+                }
 
-                    for (int lat = 0; lat < lats; lat++) {
-                        for (int lon = lons - 1; lon >= 0; lon--) {
-                            float pieceOfData = data[lat * lons + lon];
-                            if (pieceOfData != fillValue) {
-                                if (pieceOfData < currentMin) {
-                                    currentMin = pieceOfData;
-                                }
-                                if (pieceOfData > currentMax) {
-                                    currentMax = pieceOfData;
-                                }
+                Variable resultingSlice;
+                Bounds bounds = new Bounds(Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY);
+                if (times > 0 && depths > 0) {
+                    if (dimensions.get(variableName).get(0).getFullName().contains("time")) {
+                        for (int time = 0; time < times; time++) {
+                            Variable singleTimeSlicedVariable = variable.slice(0, time + 1);
+                            for (int depth = 0; depth < depths; depth++) {
+                                resultingSlice = singleTimeSlicedVariable.slice(0, depth + 1);
+                                bounds = getBounds(resultingSlice, lats, lons, fillValue, bounds);
                             }
                         }
+                    } else if (dimensions.get(variableName).get(0).getFullName().contains("depth")) {
+                        for (int depth = 0; depth < depths; depth++) {
+                            resultingSlice = variable.slice(0, depth + 1);
+                            bounds = getBounds(resultingSlice, lats, lons, fillValue, bounds);
+                        }
+                    } else {
+                        bounds = getBounds(variable, lats, lons, fillValue, bounds);
                     }
-                    System.out.print(".");
                 }
-                System.out.println();
-                System.out.println(variableName + " minimum determined: " + currentMin);
-                System.out.println(variableName + " maximum determined: " + currentMax);
 
-                cache.writeMin(variableName, currentMin);
-                mins.put(variableName, currentMin);
-                settings.setVarMin(variableName, currentMin);
+                cache.writeMin(variableName, bounds.getMin());
+                mins.put(variableName, bounds.getMin());
+                settings.setVarMin(variableName, bounds.getMin());
 
-                cache.writeMax(variableName, currentMax);
-                maxes.put(variableName, currentMax);
-                settings.setVarMax(variableName, currentMax);
+                cache.writeMax(variableName, bounds.getMax());
+                maxes.put(variableName, bounds.getMax());
+                settings.setVarMax(variableName, bounds.getMax());
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -301,6 +340,31 @@ public class NetCDFReader {
                 e.printStackTrace();
             }
         }
+    }
+
+    private Bounds getBounds(Variable var, int lats, int lons, float fillValue, Bounds previousBounds)
+            throws IOException {
+        float currentMax = previousBounds.getMax();
+        float currentMin = previousBounds.getMin();
+
+        Array netCDFArray = var.read();
+        float[] data = (float[]) netCDFArray.get1DJavaArray(float.class);
+
+        for (int lat = 0; lat < lats; lat++) {
+            for (int lon = lons - 1; lon >= 0; lon--) {
+                float pieceOfData = data[lat * lons + lon];
+                if (pieceOfData != fillValue) {
+                    if (pieceOfData < currentMin) {
+                        currentMin = pieceOfData;
+                    }
+                    if (pieceOfData > currentMax) {
+                        currentMax = pieceOfData;
+                    }
+                }
+            }
+        }
+
+        return new Bounds(currentMin, currentMax);
     }
 
     public float getMinValue(String variableName) {

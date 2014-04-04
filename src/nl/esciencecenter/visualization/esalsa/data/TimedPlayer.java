@@ -39,7 +39,7 @@ public class TimedPlayer implements Runnable {
     private final InputHandler inputHandler;
 
     private DatasetManager dsManager;
-    private EfficientTextureStorage effTexStorage;
+    private TextureStorage effTexStorage;
 
     private boolean needsScreenshot = false;
     private String screenshotFilename = "";
@@ -287,7 +287,7 @@ public class TimedPlayer implements Runnable {
         }
     }
 
-    public EfficientTextureStorage getEfficientTextureStorage() {
+    public TextureStorage getTextureStorage() {
         return effTexStorage;
     }
 

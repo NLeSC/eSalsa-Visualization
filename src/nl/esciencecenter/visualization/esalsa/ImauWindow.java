@@ -197,7 +197,7 @@ public class ImauWindow implements GLEventListener {
             currentDesc = settings.getSurfaceDescription(i);
 
             if (currentDesc != null && !currentDesc.equals(cachedTextureDescriptions[i]) || reshaped) {
-                List<Texture2D> oldTextures = timer.getEfficientTextureStorage()
+                List<Texture2D> oldTextures = timer.getTextureStorage()
                         .requestNewConfiguration(i, currentDesc);
                 // Remove all of the (now unused) textures
                 for (Texture2D tex : oldTextures) {
@@ -225,8 +225,8 @@ public class ImauWindow implements GLEventListener {
 
                 cachedTextureDescriptions[i] = currentDesc;
 
-                cachedSurfaceTextures[i] = timer.getEfficientTextureStorage().getSurfaceImage(i);
-                cachedLegendTextures[i] = timer.getEfficientTextureStorage().getLegendImage(i);
+                cachedSurfaceTextures[i] = timer.getTextureStorage().getSurfaceImage(i);
+                cachedLegendTextures[i] = timer.getTextureStorage().getLegendImage(i);
 
                 cachedSurfaceTextures[i].init(gl);
                 cachedLegendTextures[i].init(gl);

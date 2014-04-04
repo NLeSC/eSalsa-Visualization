@@ -22,7 +22,7 @@ public class DatasetManager {
     private ArrayList<String> variables;
     private ArrayList<NetCDFReader> readers;
     private ArrayList<Integer> availableFrameSequenceNumbers;
-    private EfficientTextureStorage effTexStorage;
+    private TextureStorage texStorage;
 
     private int latArraySize;
     private int lonArraySize;
@@ -108,7 +108,7 @@ public class DatasetManager {
             }
         }
 
-        effTexStorage = new EfficientTextureStorage(this, settings.getNumScreensRows() * settings.getNumScreensCols(),
+        texStorage = new TextureStorage(this, settings.getNumScreensRows() * settings.getNumScreensCols(),
                 lonArraySize, latArraySize, GL3.GL_TEXTURE4, GL3.GL_TEXTURE5);
 
     }
@@ -123,7 +123,7 @@ public class DatasetManager {
 
         ByteBuffer surfaceBuffer = currentReader.getImage(desc.getColorMap(), varName, desc.getDepth(),
                 desc.isLogScale());
-        effTexStorage.setSurfaceImage(desc, surfaceBuffer);
+        texStorage.setSurfaceImage(desc, surfaceBuffer);
 
         Dimensions colormapDims = new Dimensions(settings.getCurrentVarMin(varName), settings.getCurrentVarMax(varName));
 
@@ -147,11 +147,11 @@ public class DatasetManager {
 
         outBuf.flip();
 
-        effTexStorage.setLegendImage(desc, outBuf);
+        texStorage.setLegendImage(desc, outBuf);
     }
 
-    public EfficientTextureStorage getEfficientTextureStorage() {
-        return effTexStorage;
+    public TextureStorage getEfficientTextureStorage() {
+        return texStorage;
     }
 
     public int getFrameNumberOfIndex(int index) {
