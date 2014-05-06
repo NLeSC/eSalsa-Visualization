@@ -4,34 +4,82 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.media.opengl.GL3;
 
-import nl.esciencecenter.neon.swing.ColormapInterpreter;
-import nl.esciencecenter.neon.swing.ColormapInterpreter.Color;
 import nl.esciencecenter.neon.swing.ColormapInterpreter.Dimensions;
 import nl.esciencecenter.visualization.esalsa.ImauSettings;
+import nl.esciencecenter.visualization.esalsa.JOCLColormapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DatasetManager {
-    private final static Logger logger = LoggerFactory.getLogger(DatasetManager.class);
-    private final ImauSettings settings = ImauSettings.getInstance();
+    private final static Logger     logger   = LoggerFactory.getLogger(DatasetManager.class);
+    private final ImauSettings      settings = ImauSettings.getInstance();
 
-    private ArrayList<String> variables;
+    private ArrayList<String>       variables;
     private ArrayList<NetCDFReader> readers;
-    private ArrayList<Integer> availableFrameSequenceNumbers;
-    private TextureStorage texStorage;
+    private ArrayList<Integer>      availableFrameSequenceNumbers;
+    private TextureStorage          texStorage;
 
-    private int latArraySize;
-    private int lonArraySize;
+    private int                     latArraySize;
+    private int                     lonArraySize;
 
-    public DatasetManager(File[] files) {
-        init(files);
+    private final ExecutorService   executor;
+    private final JOCLColormapper   mapper;
+
+    private class Worker implements Runnable {
+        private final SurfaceTextureDescription desc;
+
+        public Worker(SurfaceTextureDescription desc) {
+            this.desc = desc;
+        }
+
+        @Override
+        public void run() {
+            int frameNumber = desc.getFrameNumber();
+            String varName = desc.getVarName();
+
+            int frameIndex = getIndexOfFrameNumber(frameNumber);
+
+            NetCDFReader currentReader = readers.get(frameIndex);
+
+            Dimensions colormapDims = new Dimensions(settings.getCurrentVarMin(varName),
+                    settings.getCurrentVarMax(varName));
+            float[] surfaceArray = null;
+            while (surfaceArray == null) {
+                surfaceArray = currentReader.getData(varName, frameNumber);
+            }
+
+            int[] pixelArray = mapper.makeImage(desc.getColorMap(), colormapDims, surfaceArray,
+                    currentReader.getFillValue(varName));
+
+            ByteBuffer legendBuf = mapper.getColormapForLegendTexture(desc.getColorMap());
+
+            texStorage.setImageCombo(desc, pixelArray, legendBuf);
+        }
+
     }
 
-    private void init(File[] files) {
+    public DatasetManager(File[] files) {
+        executor = Executors.newFixedThreadPool(4);
+
+        init(files);
+
+        mapper = new JOCLColormapper(getImageWidth(), getImageHeight());
+    }
+
+    public synchronized void shutdown() {
+        executor.shutdown();
+
+        while (!executor.isTerminated()) {
+        }
+    }
+
+    private synchronized void init(File[] files) {
         variables = new ArrayList<String>();
         readers = new ArrayList<NetCDFReader>();
         availableFrameSequenceNumbers = new ArrayList<Integer>();
@@ -113,56 +161,24 @@ public class DatasetManager {
 
     }
 
-    public void buildImages(SurfaceTextureDescription desc) {
-        int frameNumber = desc.getFrameNumber();
-        String varName = desc.getVarName();
-
-        int frameIndex = getIndexOfFrameNumber(frameNumber);
-
-        NetCDFReader currentReader = readers.get(frameIndex);
-
-        ByteBuffer surfaceBuffer = currentReader.getImage(desc.getColorMap(), varName, desc.getDepth(),
-                desc.isLogScale());
-        texStorage.setSurfaceImage(desc, surfaceBuffer);
-
-        Dimensions colormapDims = new Dimensions(settings.getCurrentVarMin(varName), settings.getCurrentVarMax(varName));
-
-        int height = 500;
-        int width = 1;
-        ByteBuffer outBuf = ByteBuffer.allocate(height * width * 4);
-
-        for (int row = height - 1; row >= 0; row--) {
-            float index = row / (float) height;
-            float var = (index * colormapDims.getDiff()) + colormapDims.getMin();
-
-            Color c = ColormapInterpreter.getColor(desc.getColorMap(), colormapDims, var);
-
-            for (int col = 0; col < width; col++) {
-                outBuf.put((byte) (255 * c.getRed()));
-                outBuf.put((byte) (255 * c.getGreen()));
-                outBuf.put((byte) (255 * c.getBlue()));
-                outBuf.put((byte) 0);
-            }
-        }
-
-        outBuf.flip();
-
-        texStorage.setLegendImage(desc, outBuf);
+    public synchronized void buildImages(SurfaceTextureDescription desc) {
+        Runnable worker = new Worker(desc);
+        executor.execute(worker);
     }
 
-    public TextureStorage getEfficientTextureStorage() {
+    public synchronized TextureStorage getEfficientTextureStorage() {
         return texStorage;
     }
 
-    public int getFrameNumberOfIndex(int index) {
+    public synchronized int getFrameNumberOfIndex(int index) {
         return availableFrameSequenceNumbers.get(index);
     }
 
-    public int getIndexOfFrameNumber(int frameNumber) {
+    public synchronized int getIndexOfFrameNumber(int frameNumber) {
         return availableFrameSequenceNumbers.indexOf(frameNumber);
     }
 
-    public int getPreviousFrameNumber(int frameNumber) throws IOException {
+    public synchronized int getPreviousFrameNumber(int frameNumber) throws IOException {
         int nextNumber = getIndexOfFrameNumber(frameNumber) - 1;
 
         if (nextNumber >= 0 && nextNumber < availableFrameSequenceNumbers.size()) {
@@ -172,7 +188,7 @@ public class DatasetManager {
         }
     }
 
-    public int getNextFrameNumber(int frameNumber) throws IOException {
+    public synchronized int getNextFrameNumber(int frameNumber) throws IOException {
         int nextNumber = getIndexOfFrameNumber(frameNumber) + 1;
 
         if (nextNumber >= 0 && nextNumber < availableFrameSequenceNumbers.size()) {
@@ -182,27 +198,27 @@ public class DatasetManager {
         }
     }
 
-    public int getNumFrames() {
+    public synchronized int getNumFrames() {
         return availableFrameSequenceNumbers.size();
     }
 
-    public ArrayList<String> getVariables() {
+    public synchronized ArrayList<String> getVariables() {
         return variables;
     }
 
-    public String getVariableUnits(String varName) {
+    public synchronized String getVariableUnits(String varName) {
         return readers.get(0).getUnits(varName);
     }
 
-    public int getImageWidth() {
+    public synchronized int getImageWidth() {
         return lonArraySize;
     }
 
-    public int getImageHeight() {
+    public synchronized int getImageHeight() {
         return latArraySize;
     }
 
-    public float getMinValueContainedInDataset(String varName) {
+    public synchronized float getMinValueContainedInDataset(String varName) {
         float min = Float.MAX_VALUE;
         for (NetCDFReader reader : readers) {
             float readerMin = reader.getMinValue(varName);
@@ -213,7 +229,7 @@ public class DatasetManager {
         return min;
     }
 
-    public float getMaxValueContainedInDataset(String varName) {
+    public synchronized float getMaxValueContainedInDataset(String varName) {
         float max = Float.MIN_VALUE;
         for (NetCDFReader reader : readers) {
             float readerMax = reader.getMaxValue(varName);

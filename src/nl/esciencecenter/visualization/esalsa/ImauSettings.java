@@ -3,7 +3,6 @@ package nl.esciencecenter.visualization.esalsa;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import nl.esciencecenter.neon.swing.ColormapInterpreter;
 import nl.esciencecenter.neon.util.TypedProperties;
 import nl.esciencecenter.visualization.esalsa.data.SurfaceTextureDescription;
 
@@ -29,97 +28,99 @@ public class ImauSettings {
         Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec
     };
 
-    private boolean STEREO_RENDERING = true;
-    private boolean STEREO_SWITCHED = true;
+    private boolean                        STEREO_RENDERING                = true;
+    private boolean                        STEREO_SWITCHED                 = true;
 
-    private float STEREO_OCULAR_DISTANCE_MIN = 0f;
-    private float STEREO_OCULAR_DISTANCE_DEF = .2f;
-    private float STEREO_OCULAR_DISTANCE_MAX = 1f;
+    private float                          STEREO_OCULAR_DISTANCE_MIN      = 0f;
+    private float                          STEREO_OCULAR_DISTANCE_DEF      = .2f;
+    private float                          STEREO_OCULAR_DISTANCE_MAX      = 1f;
 
     // Size settings for default startup and screenshots
-    private int DEFAULT_SCREEN_WIDTH = 1024;
-    private int DEFAULT_SCREEN_HEIGHT = 768;
+    private int                            DEFAULT_SCREEN_WIDTH            = 1024;
+    private int                            DEFAULT_SCREEN_HEIGHT           = 768;
 
-    private int INTERFACE_HEIGHT = 88;
-    private int INTERFACE_WIDTH = 210;
+    private int                            INTERFACE_HEIGHT                = 88;
+    private int                            INTERFACE_WIDTH                 = 210;
 
-    private final int SCREENSHOT_SCREEN_WIDTH = 1280;
-    private final int SCREENSHOT_SCREEN_HEIGHT = 720;
+    private final int                      SCREENSHOT_SCREEN_WIDTH         = 1280;
+    private final int                      SCREENSHOT_SCREEN_HEIGHT        = 720;
 
     // Settings for the initial view
-    private int INITIAL_SIMULATION_FRAME = 0;
-    private float INITIAL_ROTATION_X = 17f;
-    private float INITIAL_ROTATION_Y = -25f;
-    private float INITIAL_ZOOM = -390.0f;
+    private int                            INITIAL_SIMULATION_FRAME        = 0;
+    private float                          INITIAL_ROTATION_X              = 17f;
+    private float                          INITIAL_ROTATION_Y              = -25f;
+    private float                          INITIAL_ZOOM                    = -390.0f;
 
     // Setting per movie frame
-    private boolean MOVIE_ROTATE = true;
-    private float MOVIE_ROTATION_SPEED_MIN = -1f;
-    private float MOVIE_ROTATION_SPEED_MAX = 1f;
-    private float MOVIE_ROTATION_SPEED_DEF = -0.25f;
+    private boolean                        MOVIE_ROTATE                    = true;
+    private float                          MOVIE_ROTATION_SPEED_MIN        = -1f;
+    private float                          MOVIE_ROTATION_SPEED_MAX        = 1f;
+    private float                          MOVIE_ROTATION_SPEED_DEF        = -0.25f;
 
     // Settings for the gas cloud octree
-    private int MAX_OCTREE_DEPTH = 25;
-    private float OCTREE_EDGES = 800f;
+    private int                            MAX_OCTREE_DEPTH                = 25;
+    private float                          OCTREE_EDGES                    = 800f;
 
     // Settings that should never change, but are listed here to make sure they
     // can be found if necessary
-    private int MAX_EXPECTED_MODELS = 1000;
+    private int                            MAX_EXPECTED_MODELS             = 1000;
 
-    protected String SCREENSHOT_PATH = System.getProperty("user.dir") + System.getProperty("path.separator");
+    protected String                       SCREENSHOT_PATH                 = System.getProperty("user.dir")
+                                                                                   + System.getProperty("path.separator");
 
-    private long WAITTIME_FOR_RETRY = 10000;
-    private long WAITTIME_FOR_MOVIE = 1000;
-    private int TIME_STEP_SIZE = 1;
-    private float EPSILON = 1.0E-7f;
+    private long                           WAITTIME_FOR_RETRY              = 10000;
+    private long                           WAITTIME_FOR_MOVIE              = 1000;
+    private int                            TIME_STEP_SIZE                  = 1;
+    private float                          EPSILON                         = 1.0E-7f;
 
-    private int FILE_EXTENSION_LENGTH = 2;
-    private int FILE_NUMBER_LENGTH = 4;
+    private int                            FILE_EXTENSION_LENGTH           = 2;
+    private int                            FILE_NUMBER_LENGTH              = 4;
 
-    private final String[] ACCEPTABLE_POSTFIXES = { ".nc" };
+    private final String[]                 ACCEPTABLE_POSTFIXES            = { ".nc" };
 
-    private String CURRENT_POSTFIX = "nc";
+    private String                         CURRENT_POSTFIX                 = "nc";
 
-    private int PREPROCESSING_AMOUNT = 2;
+    private int                            PREPROCESSING_AMOUNT            = 2;
 
-    private final HashMap<String, Float> minValues;
-    private final HashMap<String, Float> diffMinValues;
-    private final HashMap<String, Float> maxValues;
-    private final HashMap<String, Float> diffMaxValues;
-    private final HashMap<String, Float> currentMinValues;
-    private final HashMap<String, Float> currentDiffMinValues;
-    private final HashMap<String, Float> currentMaxValues;
-    private final HashMap<String, Float> currentDiffMaxValues;
-    private final HashMap<String, String> currentColormap;
+    private final HashMap<String, Float>   minValues;
+    private final HashMap<String, Float>   diffMinValues;
+    private final HashMap<String, Float>   maxValues;
+    private final HashMap<String, Float>   diffMaxValues;
+    private final HashMap<String, Float>   currentMinValues;
+    private final HashMap<String, Float>   currentDiffMinValues;
+    private final HashMap<String, Float>   currentMaxValues;
+    private final HashMap<String, Float>   currentDiffMaxValues;
+    private final HashMap<String, String>  currentColormap;
     private final HashMap<String, Boolean> logarithmicScale;
 
-    private int DEPTH_MIN = 0;
-    private int DEPTH_DEF = 0;
-    private int DEPTH_MAX = 41;
+    private int                            DEPTH_MIN                       = 0;
+    private int                            DEPTH_DEF                       = 0;
+    private int                            DEPTH_MAX                       = 41;
 
-    private int WINDOW_SELECTION = 0;
+    private int                            WINDOW_SELECTION                = 0;
 
-    private boolean IMAGE_STREAM_OUTPUT = false;
-    private final int SAGE_FRAMES_PER_SECOND = 10;
-    private boolean IMAGE_STREAM_GL_ONLY = true;
+    private boolean                        IMAGE_STREAM_OUTPUT             = false;
+    private final int                      SAGE_FRAMES_PER_SECOND          = 10;
+    private boolean                        IMAGE_STREAM_GL_ONLY            = true;
 
-    private float HEIGHT_DISTORION = 0f;
-    private final float HEIGHT_DISTORION_MIN = 0f;
-    private final float HEIGHT_DISTORION_MAX = .01f;
+    private float                          HEIGHT_DISTORION                = 0f;
+    private final float                    HEIGHT_DISTORION_MIN            = 0f;
+    private final float                    HEIGHT_DISTORION_MAX            = .01f;
 
-    private String SAGE_DIRECTORY = "/home/maarten/sage-code/sage";
+    private String                         SAGE_DIRECTORY                  = "/home/maarten/sage-code/sage";
 
-    private final boolean TOUCH_CONNECTED = false;
+    private final boolean                  TOUCH_CONNECTED                 = false;
 
-    private SurfaceTextureDescription[] screenDescriptions;
+    private SurfaceTextureDescription[]    screenDescriptions;
 
-    private final String grid_width_dimension_substring = "lon";
-    private final String grid_height_dimension_substring = "lat";
+    private final String                   grid_width_dimension_substring  = "lon";
+    private final String                   grid_height_dimension_substring = "lat";
 
-    private int number_of_screens_col = 2;
-    private int number_of_screens_row = 2;
+    private int                            number_of_screens_col           = 2;
+    private int                            number_of_screens_row           = 2;
 
-    private CacheFileManager cacheFileManager;
+    private CacheFileManager               cacheFileManager;
+    private boolean                        requestedNewConfiguration;
 
     private ImauSettings() {
         super();
@@ -325,91 +326,91 @@ public class ImauSettings {
         initializeScreenDescriptions();
     }
 
-    private void initializeScreenDescriptions() {
+    private synchronized void initializeScreenDescriptions() {
         screenDescriptions = new SurfaceTextureDescription[number_of_screens_col * number_of_screens_row];
     }
 
-    public void setWaittimeBeforeRetry(long value) {
+    public synchronized void setWaittimeBeforeRetry(long value) {
         WAITTIME_FOR_RETRY = value;
     }
 
-    public void setWaittimeMovie(long value) {
+    public synchronized void setWaittimeMovie(long value) {
         WAITTIME_FOR_MOVIE = value;
     }
 
-    public void setEpsilon(float value) {
+    public synchronized void setEpsilon(float value) {
         EPSILON = value;
     }
 
-    public void setFileExtensionLength(int value) {
+    public synchronized void setFileExtensionLength(int value) {
         FILE_EXTENSION_LENGTH = value;
     }
 
-    public void setFileNumberLength(int value) {
+    public synchronized void setFileNumberLength(int value) {
         FILE_NUMBER_LENGTH = value;
     }
 
-    public void setCurrentExtension(String value) {
+    public synchronized void setCurrentExtension(String value) {
         CURRENT_POSTFIX = value;
     }
 
-    public long getWaittimeBeforeRetry() {
+    public synchronized long getWaittimeBeforeRetry() {
         return WAITTIME_FOR_RETRY;
     }
 
-    public long getWaittimeMovie() {
+    public synchronized long getWaittimeMovie() {
         return WAITTIME_FOR_MOVIE;
     }
 
-    public float getEpsilon() {
+    public synchronized float getEpsilon() {
         return EPSILON;
     }
 
-    public int getFileExtensionLength() {
+    public synchronized int getFileExtensionLength() {
         return FILE_EXTENSION_LENGTH;
     }
 
-    public int getFileNumberLength() {
+    public synchronized int getFileNumberLength() {
         return FILE_NUMBER_LENGTH;
     }
 
-    public String[] getAcceptableExtensions() {
+    public synchronized String[] getAcceptableExtensions() {
         return ACCEPTABLE_POSTFIXES;
     }
 
-    public String getCurrentExtension() {
+    public synchronized String getCurrentExtension() {
         return CURRENT_POSTFIX;
     }
 
-    public int getPreprocessAmount() {
+    public synchronized int getPreprocessAmount() {
         return PREPROCESSING_AMOUNT;
     }
 
-    public void setPreprocessAmount(int value) {
+    public synchronized void setPreprocessAmount(int value) {
         PREPROCESSING_AMOUNT = value;
     }
 
-    public float getVarDiffMax(String var) {
+    public synchronized float getVarDiffMax(String var) {
         return diffMaxValues.get(var);
     }
 
-    public float getVarDiffMin(String var) {
+    public synchronized float getVarDiffMin(String var) {
         return diffMinValues.get(var);
     }
 
-    public int getDepthMin() {
+    public synchronized int getDepthMin() {
         return DEPTH_MIN;
     }
 
-    public void setDepthMin(int value) {
+    public synchronized void setDepthMin(int value) {
         DEPTH_MIN = value;
     }
 
-    public int getDepthDef() {
+    public synchronized int getDepthDef() {
         return DEPTH_DEF;
     }
 
-    public void setFrameNumber(int value) {
+    public synchronized void setFrameNumber(int value) {
         for (int i = 0; i < number_of_screens_col * number_of_screens_row; i++) {
             SurfaceTextureDescription currentState = screenDescriptions[i];
             screenDescriptions[i] = new SurfaceTextureDescription(value, currentState.getDepth(),
@@ -417,9 +418,10 @@ public class ImauSettings {
                     currentState.isDiff(), currentState.isSecondSet(), currentState.getLowerBound(),
                     currentState.getUpperBound(), currentState.isLogScale());
         }
+        setRequestedNewConfiguration(true);
     }
 
-    public void setDepth(int value) {
+    public synchronized void setDepth(int value) {
         for (int i = 0; i < number_of_screens_col * number_of_screens_row; i++) {
             SurfaceTextureDescription currentState = screenDescriptions[i];
             screenDescriptions[i] = new SurfaceTextureDescription(currentState.getFrameNumber(), value,
@@ -429,25 +431,26 @@ public class ImauSettings {
         }
 
         DEPTH_DEF = value;
+        setRequestedNewConfiguration(true);
     }
 
-    public int getDepthMax() {
+    public synchronized int getDepthMax() {
         return DEPTH_MAX;
     }
 
-    public void setDepthMax(int value) {
+    public synchronized void setDepthMax(int value) {
         DEPTH_MAX = value;
     }
 
-    public void setWindowSelection(int i) {
+    public synchronized void setWindowSelection(int i) {
         WINDOW_SELECTION = i;
     }
 
-    public int getWindowSelection() {
+    public synchronized int getWindowSelection() {
         return WINDOW_SELECTION;
     }
 
-    public String selectionToString(int windowSelection) {
+    public synchronized String selectionToString(int windowSelection) {
         if (windowSelection == 1) {
             return "Left Top";
         } else if (windowSelection == 2) {
@@ -469,6 +472,7 @@ public class ImauSettings {
                 state.getColorMap(), dynamic, diff, secondSet, state.getLowerBound(), state.getUpperBound(),
                 state.isLogScale());
         screenDescriptions[screenNumber] = result;
+        setRequestedNewConfiguration(true);
     }
 
     public synchronized void setVariable(int screenNumber, String variable) {
@@ -477,6 +481,7 @@ public class ImauSettings {
                 variable, getCurrentColormap(variable), state.isDynamicDimensions(), state.isDiff(),
                 state.isSecondSet(), state.getLowerBound(), state.getUpperBound(), state.isLogScale());
         screenDescriptions[screenNumber] = result;
+        setRequestedNewConfiguration(true);
     }
 
     public synchronized SurfaceTextureDescription getSurfaceDescription(int screenNumber) {
@@ -494,53 +499,54 @@ public class ImauSettings {
         if (cacheFileManager != null) {
             cacheFileManager.writeColormap(state.getVarName(), selectedColorMap);
         }
+        setRequestedNewConfiguration(true);
     }
 
-    public boolean isIMAGE_STREAM_OUTPUT() {
+    public synchronized boolean isIMAGE_STREAM_OUTPUT() {
         return IMAGE_STREAM_OUTPUT;
     }
 
-    public void setIMAGE_STREAM_OUTPUT(boolean value) {
+    public synchronized void setIMAGE_STREAM_OUTPUT(boolean value) {
         IMAGE_STREAM_OUTPUT = value;
     }
 
-    public String getSAGE_DIRECTORY() {
+    public synchronized String getSAGE_DIRECTORY() {
         return SAGE_DIRECTORY;
     }
 
-    public void setSAGE_DIRECTORY(String sAGE_DIRECTORY) {
+    public synchronized void setSAGE_DIRECTORY(String sAGE_DIRECTORY) {
         SAGE_DIRECTORY = sAGE_DIRECTORY;
     }
 
-    public boolean isIMAGE_STREAM_GL_ONLY() {
+    public synchronized boolean isIMAGE_STREAM_GL_ONLY() {
         return IMAGE_STREAM_GL_ONLY;
     }
 
-    public void setIMAGE_STREAM_GL_ONLY(boolean iMAGE_STREAM_GL_ONLY) {
+    public synchronized void setIMAGE_STREAM_GL_ONLY(boolean iMAGE_STREAM_GL_ONLY) {
         IMAGE_STREAM_GL_ONLY = iMAGE_STREAM_GL_ONLY;
     }
 
-    public float getHeightDistortion() {
+    public synchronized float getHeightDistortion() {
         return HEIGHT_DISTORION;
     }
 
-    public float getHeightDistortionMin() {
+    public synchronized float getHeightDistortionMin() {
         return HEIGHT_DISTORION_MIN;
     }
 
-    public float getHeightDistortionMax() {
+    public synchronized float getHeightDistortionMax() {
         return HEIGHT_DISTORION_MAX;
     }
 
-    public void setHeightDistortion(float value) {
+    public synchronized void setHeightDistortion(float value) {
         HEIGHT_DISTORION = value;
     }
 
-    public boolean isTouchConnected() {
+    public synchronized boolean isTouchConnected() {
         return TOUCH_CONNECTED;
     }
 
-    public String getFancyDate(int frameNumber) {
+    public synchronized String getFancyDate(int frameNumber) {
         String result = "";
 
         int year = (int) Math.floor(frameNumber / 100);
@@ -580,149 +586,150 @@ public class ImauSettings {
         return result;
     }
 
-    public int getSageFramesPerSecond() {
+    public synchronized int getSageFramesPerSecond() {
         return SAGE_FRAMES_PER_SECOND;
     }
 
-    public int getTimestep() {
+    public synchronized int getTimestep() {
         return TIME_STEP_SIZE;
     }
 
-    public void setTimestep(int value) {
+    public synchronized void setTimestep(int value) {
         System.out.println("Timestep set to: " + value);
         TIME_STEP_SIZE = value;
     }
 
-    public boolean getStereo() {
+    public synchronized boolean getStereo() {
         return STEREO_RENDERING;
     }
 
-    public void setStereo(int stateChange) {
+    public synchronized void setStereo(int stateChange) {
         if (stateChange == 1)
             STEREO_RENDERING = true;
         if (stateChange == 2)
             STEREO_RENDERING = false;
     }
 
-    public boolean getStereoSwitched() {
+    public synchronized boolean getStereoSwitched() {
         return STEREO_SWITCHED;
     }
 
-    public void setStereoSwitched(int stateChange) {
+    public synchronized void setStereoSwitched(int stateChange) {
         if (stateChange == 1)
             STEREO_SWITCHED = true;
         if (stateChange == 2)
             STEREO_SWITCHED = false;
     }
 
-    public float getStereoOcularDistanceMin() {
+    public synchronized float getStereoOcularDistanceMin() {
         return STEREO_OCULAR_DISTANCE_MIN;
     }
 
-    public float getStereoOcularDistanceMax() {
+    public synchronized float getStereoOcularDistanceMax() {
         return STEREO_OCULAR_DISTANCE_MAX;
     }
 
-    public float getStereoOcularDistance() {
+    public synchronized float getStereoOcularDistance() {
         return STEREO_OCULAR_DISTANCE_DEF;
     }
 
-    public void setStereoOcularDistance(float value) {
+    public synchronized void setStereoOcularDistance(float value) {
         STEREO_OCULAR_DISTANCE_DEF = value;
     }
 
-    public int getDefaultScreenWidth() {
+    public synchronized int getDefaultScreenWidth() {
         return DEFAULT_SCREEN_WIDTH;
     }
 
-    public int getDefaultScreenHeight() {
+    public synchronized int getDefaultScreenHeight() {
         return DEFAULT_SCREEN_HEIGHT;
     }
 
-    public int getScreenshotScreenWidth() {
+    public synchronized int getScreenshotScreenWidth() {
         return SCREENSHOT_SCREEN_WIDTH;
     }
 
-    public int getScreenshotScreenHeight() {
+    public synchronized int getScreenshotScreenHeight() {
         return SCREENSHOT_SCREEN_HEIGHT;
     }
 
-    public int getMaxOctreeDepth() {
+    public synchronized int getMaxOctreeDepth() {
         return MAX_OCTREE_DEPTH;
     }
 
-    public float getOctreeEdges() {
+    public synchronized float getOctreeEdges() {
         return OCTREE_EDGES;
     }
 
-    public int getMaxExpectedModels() {
+    public synchronized int getMaxExpectedModels() {
         return MAX_EXPECTED_MODELS;
     }
 
-    public float getInitialRotationX() {
+    public synchronized float getInitialRotationX() {
         return INITIAL_ROTATION_X;
     }
 
-    public float getInitialRotationY() {
+    public synchronized float getInitialRotationY() {
         return INITIAL_ROTATION_Y;
     }
 
-    public float getInitialZoom() {
+    public synchronized float getInitialZoom() {
         return INITIAL_ZOOM;
     }
 
-    public void setMovieRotate(int stateChange) {
+    public synchronized void setMovieRotate(int stateChange) {
         if (stateChange == 1)
             MOVIE_ROTATE = true;
         if (stateChange == 2)
             MOVIE_ROTATE = false;
     }
 
-    public boolean getMovieRotate() {
+    public synchronized boolean getMovieRotate() {
         return MOVIE_ROTATE;
     }
 
-    public void setMovieRotationSpeed(float value) {
+    public synchronized void setMovieRotationSpeed(float value) {
         MOVIE_ROTATION_SPEED_DEF = value;
     }
 
-    public float getMovieRotationSpeedMin() {
+    public synchronized float getMovieRotationSpeedMin() {
         return MOVIE_ROTATION_SPEED_MIN;
     }
 
-    public float getMovieRotationSpeedMax() {
+    public synchronized float getMovieRotationSpeedMax() {
         return MOVIE_ROTATION_SPEED_MAX;
     }
 
-    public float getMovieRotationSpeedDef() {
+    public synchronized float getMovieRotationSpeedDef() {
         return MOVIE_ROTATION_SPEED_DEF;
     }
 
-    public int getInitialSimulationFrame() {
+    public synchronized int getInitialSimulationFrame() {
         return INITIAL_SIMULATION_FRAME;
     }
 
-    public void setInitial_simulation_frame(int initialSimulationFrame) {
+    public synchronized void setInitial_simulation_frame(int initialSimulationFrame) {
         INITIAL_SIMULATION_FRAME = initialSimulationFrame;
     }
 
-    public void setInitial_rotation_x(float initialRotationX) {
+    public synchronized void setInitial_rotation_x(float initialRotationX) {
         INITIAL_ROTATION_X = initialRotationX;
     }
 
-    public void setInitial_rotation_y(float initialRotationY) {
+    public synchronized void setInitial_rotation_y(float initialRotationY) {
         INITIAL_ROTATION_Y = initialRotationY;
     }
 
-    public String getScreenshotPath() {
+    public synchronized String getScreenshotPath() {
         return SCREENSHOT_PATH;
     }
 
-    public void setScreenshotPath(String newPath) {
+    public synchronized void setScreenshotPath(String newPath) {
         SCREENSHOT_PATH = newPath;
     }
 
-    public void setVariableRange(int screenNumber, String varName, int sliderLowerValue, int sliderUpperValue) {
+    public synchronized void setVariableRange(int screenNumber, String varName, int sliderLowerValue,
+            int sliderUpperValue) {
         float diff = getVarMax(varName) - getVarMin(varName);
 
         currentMinValues.put(varName, (sliderLowerValue / 100f) * diff + getVarMin(varName));
@@ -735,9 +742,10 @@ public class ImauSettings {
                 state.getVarName(), state.getColorMap(), state.isDynamicDimensions(), state.isDiff(),
                 state.isSecondSet(), minFloatValue, maxFloatValue, state.isLogScale());
         screenDescriptions[screenNumber] = result;
+        setRequestedNewConfiguration(true);
     }
 
-    public int getRangeSliderLowerValue(int screenNumber) {
+    public synchronized int getRangeSliderLowerValue(int screenNumber) {
         SurfaceTextureDescription state = screenDescriptions[screenNumber];
 
         float min = getVarMin(state.getVarName());
@@ -750,7 +758,7 @@ public class ImauSettings {
         return (int) (result * 100) - 1;
     }
 
-    public int getRangeSliderUpperValue(int screenNumber) {
+    public synchronized int getRangeSliderUpperValue(int screenNumber) {
         SurfaceTextureDescription state = screenDescriptions[screenNumber];
 
         float min = getVarMin(state.getVarName());
@@ -763,38 +771,38 @@ public class ImauSettings {
         return (int) (result * 100) - 1;
     }
 
-    public String getWidthSubstring() {
+    public synchronized String getWidthSubstring() {
         return grid_width_dimension_substring;
     }
 
-    public String getHeightSubstring() {
+    public synchronized String getHeightSubstring() {
         return grid_height_dimension_substring;
     }
 
-    public int getNumScreensRows() {
+    public synchronized int getNumScreensRows() {
         return number_of_screens_row;
     }
 
-    public int getNumScreensCols() {
+    public synchronized int getNumScreensCols() {
         return number_of_screens_col;
     }
 
-    public void setNumberOfScreens(int rows, int columns) {
+    public synchronized void setNumberOfScreens(int rows, int columns) {
         number_of_screens_row = rows;
         number_of_screens_col = columns;
 
         initializeScreenDescriptions();
     }
 
-    public int getInterfaceWidth() {
+    public synchronized int getInterfaceWidth() {
         return INTERFACE_WIDTH;
     }
 
-    public int getInterfaceHeight() {
+    public synchronized int getInterfaceHeight() {
         return INTERFACE_HEIGHT;
     }
 
-    public String getCurrentColormap(String key) {
+    public synchronized String getCurrentColormap(String key) {
         String colormap = "";
         if (currentColormap.containsKey(key)) {
             colormap = currentColormap.get(key);
@@ -803,13 +811,13 @@ public class ImauSettings {
         }
 
         if (colormap.compareTo("") == 0) {
-            colormap = ColormapInterpreter.getColormapNames()[0];
+            colormap = JOCLColormapper.getColormapNames()[0];
         }
 
         return colormap;
     }
 
-    public float getVarMin(String key) {
+    public synchronized float getVarMin(String key) {
         float value;
         if (minValues.containsKey(key)) {
             value = minValues.get(key);
@@ -820,7 +828,7 @@ public class ImauSettings {
         return value;
     }
 
-    public float getVarMax(String key) {
+    public synchronized float getVarMax(String key) {
         float value;
         if (maxValues.containsKey(key)) {
             value = maxValues.get(key);
@@ -831,7 +839,7 @@ public class ImauSettings {
         return value;
     }
 
-    public float getCurrentVarDiffMin(String key) {
+    public synchronized float getCurrentVarDiffMin(String key) {
         float value;
         if (currentDiffMinValues.containsKey(key)) {
             value = currentDiffMinValues.get(key);
@@ -842,7 +850,7 @@ public class ImauSettings {
         return value;
     }
 
-    public float getCurrentVarDiffMax(String key) {
+    public synchronized float getCurrentVarDiffMax(String key) {
         float value;
         if (currentDiffMaxValues.containsKey(key)) {
             value = currentDiffMaxValues.get(key);
@@ -853,7 +861,7 @@ public class ImauSettings {
         return value;
     }
 
-    public float getCurrentVarMin(String key) {
+    public synchronized float getCurrentVarMin(String key) {
         float value;
         if (currentMinValues.containsKey(key)) {
             value = currentMinValues.get(key);
@@ -864,7 +872,7 @@ public class ImauSettings {
         return value;
     }
 
-    public float getCurrentVarMax(String key) {
+    public synchronized float getCurrentVarMax(String key) {
         float value;
         if (currentMaxValues.containsKey(key)) {
             value = currentMaxValues.get(key);
@@ -875,18 +883,20 @@ public class ImauSettings {
         return value;
     }
 
-    public void setVarMin(String key, float currentMin) {
+    public synchronized void setVarMin(String key, float currentMin) {
         minValues.put(key, currentMin);
         currentMinValues.put(key, currentMin);
+        setRequestedNewConfiguration(true);
     }
 
-    public void setVarMax(String key, float currentMax) {
+    public synchronized void setVarMax(String key, float currentMax) {
         maxValues.put(key, currentMax);
         currentMaxValues.put(key, currentMax);
+        setRequestedNewConfiguration(true);
 
     }
 
-    public void initDefaultVariables(ArrayList<String> variables, int initialFrameNumber) {
+    public synchronized void initDefaultVariables(ArrayList<String> variables, int initialFrameNumber) {
         screenDescriptions = new SurfaceTextureDescription[number_of_screens_col * number_of_screens_row];
 
         if (variables.size() != 0) {
@@ -906,15 +916,24 @@ public class ImauSettings {
         }
     }
 
-    public void setLogScale(int screenNumber, boolean selected) {
+    public synchronized void setLogScale(int screenNumber, boolean selected) {
         SurfaceTextureDescription state = screenDescriptions[screenNumber];
         SurfaceTextureDescription result = new SurfaceTextureDescription(state.getFrameNumber(), state.getDepth(),
                 state.getVarName(), state.getColorMap(), state.isDynamicDimensions(), state.isDiff(),
                 state.isSecondSet(), state.getLowerBound(), state.getUpperBound(), selected);
         screenDescriptions[screenNumber] = result;
+        setRequestedNewConfiguration(true);
     }
 
-    public void setCacheFileManager(CacheFileManager cacheFileManager) {
+    public synchronized void setCacheFileManager(CacheFileManager cacheFileManager) {
         this.cacheFileManager = cacheFileManager;
+    }
+
+    public synchronized boolean isRequestedNewConfiguration() {
+        return requestedNewConfiguration;
+    }
+
+    public synchronized void setRequestedNewConfiguration(boolean requestedNewConfiguration) {
+        this.requestedNewConfiguration = requestedNewConfiguration;
     }
 }

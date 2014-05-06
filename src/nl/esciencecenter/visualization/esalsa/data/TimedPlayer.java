@@ -23,31 +23,31 @@ public class TimedPlayer implements Runnable {
         UNOPENED, UNINITIALIZED, INITIALIZED, STOPPED, REDRAWING, SNAPSHOTTING, MOVIEMAKING, CLEANUP, WAITINGONFRAME, PLAYING
     }
 
-    private final ImauSettings settings = ImauSettings.getInstance();
+    private final ImauSettings        settings           = ImauSettings.getInstance();
 
-    private states currentState = states.UNOPENED;
-    private int frameNumber;
+    private states                    currentState       = states.UNOPENED;
+    private int                       frameNumber;
 
-    private final boolean running = true;
-    private boolean initialized = false;
+    private final boolean             running            = true;
+    private boolean                   initialized        = false;
 
-    private long startTime, stopTime;
+    private long                      startTime, stopTime;
 
-    private final JSlider timeBar;
+    private final JSlider             timeBar;
     private final JFormattedTextField frameCounter;
 
-    private final InputHandler inputHandler;
+    private final InputHandler        inputHandler;
 
-    private DatasetManager dsManager;
-    private TextureStorage effTexStorage;
+    private DatasetManager            dsManager;
+    private TextureStorage            effTexStorage;
 
-    private boolean needsScreenshot = false;
-    private String screenshotFilename = "";
+    private boolean                   needsScreenshot    = false;
+    private String                    screenshotFilename = "";
 
-    private final long waittime = settings.getWaittimeMovie();
+    private final long                waittime           = settings.getWaittimeMovie();
 
     private final ArrayList<Float3Vector> bezierPoints, fixedPoints;
-    private final ArrayList<Integer> bezierSteps;
+    private final ArrayList<Integer>      bezierSteps;
 
     public TimedPlayer(CustomJSlider timeBar2, JFormattedTextField frameCounter) {
         this.timeBar = timeBar2;
@@ -95,7 +95,7 @@ public class TimedPlayer implements Runnable {
         }
     }
 
-    public void close() {
+    public synchronized void close() {
         initialized = false;
         frameNumber = 0;
         timeBar.setValue(0);
@@ -103,7 +103,7 @@ public class TimedPlayer implements Runnable {
         timeBar.setMaximum(0);
     }
 
-    public void init(File[] files) {
+    public synchronized void init(File[] files) {
         this.dsManager = new DatasetManager(files);
         this.effTexStorage = dsManager.getEfficientTextureStorage();
 
@@ -116,7 +116,7 @@ public class TimedPlayer implements Runnable {
         initialized = true;
     }
 
-    public boolean isInitialized() {
+    public synchronized boolean isInitialized() {
         return initialized;
     }
 
@@ -278,44 +278,47 @@ public class TimedPlayer implements Runnable {
     private synchronized void updateFrame(int newFrameNumber, boolean overrideUpdate) {
         if (dsManager != null) {
             if (newFrameNumber != frameNumber || overrideUpdate) {
+                if (!settings.isRequestedNewConfiguration()) {
+                    frameNumber = newFrameNumber;
+                    settings.setFrameNumber(newFrameNumber);
+                    this.timeBar.setValue(dsManager.getIndexOfFrameNumber(newFrameNumber));
+                    this.frameCounter.setValue(dsManager.getIndexOfFrameNumber(newFrameNumber));
 
-                frameNumber = newFrameNumber;
-                settings.setFrameNumber(newFrameNumber);
-                this.timeBar.setValue(dsManager.getIndexOfFrameNumber(newFrameNumber));
-                this.frameCounter.setValue(dsManager.getIndexOfFrameNumber(newFrameNumber));
+                    settings.setRequestedNewConfiguration(true);
+                }
             }
         }
     }
 
-    public TextureStorage getTextureStorage() {
+    public synchronized TextureStorage getTextureStorage() {
         return effTexStorage;
     }
 
-    public ArrayList<String> getVariables() {
+    public synchronized ArrayList<String> getVariables() {
         return dsManager.getVariables();
     }
 
-    public String getVariableUnits(String varName) {
+    public synchronized String getVariableUnits(String varName) {
         return dsManager.getVariableUnits(varName);
     }
 
-    public float getMinValueContainedInDataset(String varName) {
+    public synchronized float getMinValueContainedInDataset(String varName) {
         return dsManager.getMinValueContainedInDataset(varName);
     }
 
-    public float getMaxValueContainedInDataset(String varName) {
+    public synchronized float getMaxValueContainedInDataset(String varName) {
         return dsManager.getMaxValueContainedInDataset(varName);
     }
 
-    public int getImageWidth() {
+    public synchronized int getImageWidth() {
         return dsManager.getImageWidth();
     }
 
-    public int getImageHeight() {
+    public synchronized int getImageHeight() {
         return dsManager.getImageHeight();
     }
 
-    public int getInitialFrameNumber() {
+    public synchronized int getInitialFrameNumber() {
         return dsManager.getFrameNumberOfIndex(0);
     }
 }

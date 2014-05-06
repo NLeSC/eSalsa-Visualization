@@ -33,64 +33,64 @@ import nl.esciencecenter.neon.shaders.ShaderProgramLoader;
 import nl.esciencecenter.neon.text.MultiColorText;
 import nl.esciencecenter.neon.text.jogampexperimental.Font;
 import nl.esciencecenter.neon.text.jogampexperimental.FontFactory;
-import nl.esciencecenter.neon.textures.Texture2D;
 import nl.esciencecenter.visualization.esalsa.data.SurfaceTextureDescription;
+import nl.esciencecenter.visualization.esalsa.data.TextureStorage.TextureCombo;
 import nl.esciencecenter.visualization.esalsa.data.TimedPlayer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ImauWindow implements GLEventListener {
-    private final static Logger logger = LoggerFactory.getLogger(ImauWindow.class);
-    private final ImauSettings settings = ImauSettings.getInstance();
+    private final static Logger         logger        = LoggerFactory.getLogger(ImauWindow.class);
+    private final ImauSettings          settings      = ImauSettings.getInstance();
 
-    private Quad fsq;
+    private Quad                        fsq;
 
     protected final ShaderProgramLoader loader;
-    protected final InputHandler inputHandler;
+    protected final InputHandler        inputHandler;
 
-    private ShaderProgram shaderProgram_Sphere, shaderProgram_Legend, shaderProgram_Atmosphere,
+    private ShaderProgram               shaderProgram_Sphere, shaderProgram_Legend, shaderProgram_Atmosphere,
             shaderProgram_FlattenLayers, shaderProgram_PostProcess, shaderProgram_Text;
 
-    private Model sphereModel, legendModel, atmModel;
+    private Model                       sphereModel, legendModel, atmModel;
 
-    private FrameBufferObject atmosphereFBO, hudTextFBO, legendTextureFBO, sphereTextureFBO;
+    private FrameBufferObject           atmosphereFBO, hudTextFBO, legendTextureFBO, sphereTextureFBO;
 
-    private IntPixelBufferObject finalPBO;
+    private IntPixelBufferObject        finalPBO;
 
-    private final BufferedImage currentImage = null;
+    private final BufferedImage         currentImage  = null;
 
-    private final int fontSize = 42;
+    private final int                   fontSize      = 42;
 
-    private boolean reshaped = false;
+    private boolean                     reshaped      = false;
 
     private SurfaceTextureDescription[] cachedTextureDescriptions;
-    private FrameBufferObject[] cachedFBOs;
-    private MultiColorText[] varNames;
-    private MultiColorText[] legendTextsMin;
-    private MultiColorText[] legendTextsMax;
-    private MultiColorText[] dates;
-    private MultiColorText[] dataSets;
+    private FrameBufferObject[]         cachedFBOs;
+    private MultiColorText[]            varNames;
+    private MultiColorText[]            legendTextsMin;
+    private MultiColorText[]            legendTextsMax;
+    private MultiColorText[]            dates;
+    private MultiColorText[]            dataSets;
 
-    private int cachedScreens = 1;
+    private int                         cachedScreens = 1;
 
-    private TimedPlayer timer;
-    private float aspect;
+    private TimedPlayer                 timer;
+    private float                       aspect;
 
-    protected int fontSet = FontFactory.UBUNTU;
-    protected Font font;
-    protected int canvasWidth, canvasHeight;
+    protected int                       fontSet       = FontFactory.UBUNTU;
+    protected Font                      font;
+    protected int                       canvasWidth, canvasHeight;
 
-    protected final float radius = 1.0f;
-    protected final float ftheta = 0.0f;
-    protected final float phi = 0.0f;
+    protected final float               radius        = 1.0f;
+    protected final float               ftheta        = 0.0f;
+    protected final float               phi           = 0.0f;
 
-    protected final float fovy = 45.0f;
-    protected final float zNear = 0.1f;
-    protected final float zFar = 3000.0f;
+    protected final float               fovy          = 45.0f;
+    protected final float               zNear         = 0.1f;
+    protected final float               zFar          = 3000.0f;
 
-    private final Texture2D[] cachedSurfaceTextures;
-    private final Texture2D[] cachedLegendTextures;
+    private final Texture2D[]           cachedSurfaceTextures;
+    private final Texture2D[]           cachedLegendTextures;
 
     public ImauWindow(InputHandler inputHandler) {
         this.loader = new ShaderProgramLoader();
@@ -191,53 +191,85 @@ public class ImauWindow implements GLEventListener {
 
         drawAtmosphere(gl, mv, atmosphereFBO);
 
-        SurfaceTextureDescription currentDesc;
+        if (settings.isRequestedNewConfiguration()) {
+            SurfaceTextureDescription currentDesc;
 
-        for (int i = 0; i < cachedScreens; i++) {
-            currentDesc = settings.getSurfaceDescription(i);
+            boolean allRequestsFullfilled = true;
+            for (int i = 0; i < cachedScreens; i++) {
+                // Get the currently needed description from the settings
+                // manager
+                currentDesc = settings.getSurfaceDescription(i);
 
-            if (currentDesc != null && !currentDesc.equals(cachedTextureDescriptions[i]) || reshaped) {
-                List<Texture2D> oldTextures = timer.getTextureStorage()
-                        .requestNewConfiguration(i, currentDesc);
-                // Remove all of the (now unused) textures
-                for (Texture2D tex : oldTextures) {
-                    tex.delete(gl);
+                if (currentDesc != null) {
+                    // Ask the TextureStorage for the currently displayed/ready
+                    // image
+                    TextureCombo result = timer.getTextureStorage().getImages(i);
+
+                    if (result.getDescription() != currentDesc) {
+                        // Check if we need to request new images, or if we are
+                        // waiting for new images
+                        if (!timer.getTextureStorage().isRequested(currentDesc)) {
+                            // We need to request new ones
+                            logger.debug(currentDesc.toString());
+
+                            List<Texture2D> oldTextures = timer.getTextureStorage().requestNewConfiguration(i,
+                                    currentDesc);
+                            // Remove all of the (now unused) textures
+                            for (Texture2D tex : oldTextures) {
+                                tex.delete(gl);
+                            }
+                        }
+                        // We are waiting for images to be generated
+                        allRequestsFullfilled = false;
+                    } else {
+                        // We might have received a new request here
+                        if (cachedSurfaceTextures[i] != result.getSurfaceTexture()
+                                || cachedLegendTextures[i] != result.getLegendTexture()) {
+                            logger.debug("adding new texture for screen " + i + " to opengl: " + currentDesc);
+
+                            // Apparently a new image was just created for us,
+                            // so
+                            // lets store it
+                            cachedSurfaceTextures[i] = result.getSurfaceTexture();
+                            cachedLegendTextures[i] = result.getLegendTexture();
+
+                            cachedSurfaceTextures[i].init(gl);
+                            cachedLegendTextures[i].init(gl);
+
+                            // And set the appropriate text to accompany it.
+                            String variableName = currentDesc.getVarName();
+                            String fancyName = variableName;
+                            varNames[i].setString(gl, fancyName, Color4.WHITE, fontSize);
+
+                            String min, max;
+                            if (currentDesc.isDiff()) {
+                                min = Float.toString(settings.getCurrentVarDiffMin(currentDesc.getVarName()));
+                                max = Float.toString(settings.getCurrentVarDiffMax(currentDesc.getVarName()));
+                            } else {
+                                min = Float.toString(settings.getCurrentVarMin(currentDesc.getVarName()));
+                                max = Float.toString(settings.getCurrentVarMax(currentDesc.getVarName()));
+                            }
+                            dates[i].setString(gl, settings.getFancyDate(currentDesc.getFrameNumber()), Color4.WHITE,
+                                    fontSize);
+                            dataSets[i].setString(gl, currentDesc.verbalizeDataMode(), Color4.WHITE, fontSize);
+                            legendTextsMin[i].setString(gl, min, Color4.WHITE, fontSize);
+                            legendTextsMax[i].setString(gl, max, Color4.WHITE, fontSize);
+                        }
+                    }
                 }
-
-                String variableName = currentDesc.getVarName();
-                String fancyName = variableName;
-                String units = timer.getVariableUnits(variableName);
-                fancyName += " in " + units;
-                varNames[i].setString(gl, fancyName, Color4.WHITE, fontSize);
-
-                String min, max;
-                if (currentDesc.isDiff()) {
-                    min = Float.toString(settings.getCurrentVarDiffMin(currentDesc.getVarName()));
-                    max = Float.toString(settings.getCurrentVarDiffMax(currentDesc.getVarName()));
-                } else {
-                    min = Float.toString(settings.getCurrentVarMin(currentDesc.getVarName()));
-                    max = Float.toString(settings.getCurrentVarMax(currentDesc.getVarName()));
-                }
-                dates[i].setString(gl, settings.getFancyDate(currentDesc.getFrameNumber()), Color4.WHITE, fontSize);
-                dataSets[i].setString(gl, currentDesc.verbalizeDataMode(), Color4.WHITE, fontSize);
-                legendTextsMin[i].setString(gl, min, Color4.WHITE, fontSize);
-                legendTextsMax[i].setString(gl, max, Color4.WHITE, fontSize);
-
-                cachedTextureDescriptions[i] = currentDesc;
-
-                cachedSurfaceTextures[i] = timer.getTextureStorage().getSurfaceImage(i);
-                cachedLegendTextures[i] = timer.getTextureStorage().getLegendImage(i);
-
-                cachedSurfaceTextures[i].init(gl);
-                cachedLegendTextures[i].init(gl);
             }
 
+            if (allRequestsFullfilled) {
+                settings.setRequestedNewConfiguration(false);
+            }
+        }
+
+        for (int i = 0; i < cachedScreens; i++) {
             if (cachedLegendTextures[i] != null && cachedSurfaceTextures[i] != null) {
                 drawSingleWindow(width, height, gl, mv, cachedLegendTextures[i], cachedSurfaceTextures[i], varNames[i],
                         dates[i], dataSets[i], legendTextsMin[i], legendTextsMax[i], cachedFBOs[i], clickCoords);
             }
         }
-
         logger.debug("Tiling windows");
         renderTexturesToScreen(gl, width, height);
     }

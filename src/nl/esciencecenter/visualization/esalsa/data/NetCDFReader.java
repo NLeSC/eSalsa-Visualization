@@ -27,21 +27,21 @@ import ucar.nc2.Variable;
 import com.jogamp.common.nio.Buffers;
 
 public class NetCDFReader {
-    private final static Logger logger = LoggerFactory.getLogger(NetCDFReader.class);
-    private final ImauSettings settings = ImauSettings.getInstance();
+    private final static Logger                    logger   = LoggerFactory.getLogger(NetCDFReader.class);
+    private final ImauSettings                     settings = ImauSettings.getInstance();
 
-    private final File file;
-    private final NetcdfFile ncfile;
-    private final HashMap<String, Variable> variables;
-    private final HashMap<String, String> units;
+    private final File                             file;
+    private final NetcdfFile                       ncfile;
+    private final HashMap<String, Variable>        variables;
+    private final HashMap<String, String>          units;
     private final HashMap<String, List<Dimension>> dimensions;
-    private final HashMap<String, List<Integer>> shapes;
-    private final HashMap<String, Float> fillValues;
+    private final HashMap<String, List<Integer>>   shapes;
+    private final HashMap<String, Float>           fillValues;
 
-    private final HashMap<String, Float> mins;
-    private final HashMap<String, Float> maxes;
+    private final HashMap<String, Float>           mins;
+    private final HashMap<String, Float>           maxes;
 
-    private final CacheFileManager cache;
+    private final CacheFileManager                 cache;
 
     private final class Bounds {
         private final float max, min;
@@ -113,7 +113,7 @@ public class NetCDFReader {
         }
     }
 
-    public int getAvailableFrames() {
+    public synchronized int getAvailableFrames() {
         int value = -1;
         for (Entry<String, List<Integer>> shapeEntry : shapes.entrySet()) {
             String name = shapeEntry.getKey();
@@ -128,14 +128,14 @@ public class NetCDFReader {
         return value;
     }
 
-    public int getThisParticularFrameNumber() {
+    public synchronized int getThisParticularFrameNumber() {
         // Assume we've given the correct file but it has no time variable,
         // therefore it 'must be' a single frame.
         return Integer.parseInt(getSequenceNumber(file));
 
     }
 
-    public int getLatSize() {
+    public synchronized int getLatSize() {
         int value = -1;
         for (Entry<String, List<Integer>> shapeEntry : shapes.entrySet()) {
             String name = shapeEntry.getKey();
@@ -150,7 +150,7 @@ public class NetCDFReader {
         return value;
     }
 
-    public int getLonSize() {
+    public synchronized int getLonSize() {
         int value = -1;
         for (Entry<String, List<Integer>> shapeEntry : shapes.entrySet()) {
             String name = shapeEntry.getKey();
@@ -165,7 +165,7 @@ public class NetCDFReader {
         return value;
     }
 
-    public ArrayList<String> getVariableNames() {
+    public synchronized ArrayList<String> getVariableNames() {
         ArrayList<String> result = new ArrayList<String>();
         for (String s : variables.keySet()) {
             result.add(s);
@@ -174,11 +174,12 @@ public class NetCDFReader {
         return result;
     }
 
-    public String getUnits(String varName) {
+    public synchronized String getUnits(String varName) {
         return units.get(varName);
     }
 
-    public ByteBuffer getImage(String colorMapname, String variableName, int requestedDepth, boolean logScale) {
+    public synchronized ByteBuffer getImage(String colorMapname, String variableName, int requestedDepth,
+            boolean logScale) {
         Variable variable = variables.get(variableName);
 
         int times = 0, depths = 0, lats = 0, lons = 0;
@@ -251,7 +252,23 @@ public class NetCDFReader {
         return result;
     }
 
-    public void determineMinMax(String variableName) {
+    public synchronized float[] getData(String variableName, int time) {
+        Variable variable = variables.get(variableName);
+
+        float[] data = null;
+
+        Array netCDFArray;
+        try {
+            netCDFArray = variable.slice(0, time).read();
+            data = (float[]) netCDFArray.get1DJavaArray(float.class);
+        } catch (IOException | InvalidRangeException e) {
+            e.printStackTrace();
+        }
+
+        return data;
+    }
+
+    public synchronized void determineMinMax(String variableName) {
         // Check the settings first to see if this value was predefined.
         float settingsMin = settings.getVarMin(variableName);
         float settingsMax = settings.getVarMax(variableName);
@@ -342,7 +359,7 @@ public class NetCDFReader {
         }
     }
 
-    private Bounds getBounds(Variable var, int lats, int lons, float fillValue, Bounds previousBounds)
+    private synchronized Bounds getBounds(Variable var, int lats, int lons, float fillValue, Bounds previousBounds)
             throws IOException {
         float currentMax = previousBounds.getMax();
         float currentMin = previousBounds.getMin();
@@ -367,7 +384,7 @@ public class NetCDFReader {
         return new Bounds(currentMin, currentMax);
     }
 
-    public float getMinValue(String variableName) {
+    public synchronized float getMinValue(String variableName) {
         if (mins.containsKey(variableName)) {
             return mins.get(variableName);
         } else {
@@ -376,7 +393,7 @@ public class NetCDFReader {
         }
     }
 
-    public float getMaxValue(String variableName) {
+    public synchronized float getMaxValue(String variableName) {
         if (mins.containsKey(variableName)) {
             return mins.get(variableName);
         } else {
@@ -386,7 +403,7 @@ public class NetCDFReader {
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
         String result = "";
         for (String name : variables.keySet()) {
             result += "Variable: " + name + "\n";
@@ -401,7 +418,7 @@ public class NetCDFReader {
         return result;
     }
 
-    private NetcdfFile open(File file) {
+    private synchronized NetcdfFile open(File file) {
         NetcdfFile ncfile = null;
         try {
             ncfile = NetcdfFile.open(file.getAbsolutePath());
@@ -411,7 +428,7 @@ public class NetCDFReader {
         return ncfile;
     }
 
-    public void close() {
+    public synchronized void close() {
         try {
             this.ncfile.close();
         } catch (IOException ioe) {
@@ -432,7 +449,7 @@ public class NetCDFReader {
      *            requested.
      * @return The sequence number of the file.
      */
-    private static String getSequenceNumber(File file) {
+    private synchronized static String getSequenceNumber(File file) {
         final String path = file.getParent();
         final String name = file.getName();
         final String fullPath = path + name;
@@ -459,5 +476,9 @@ public class NetCDFReader {
         }
 
         return sequenceNumberString;
+    }
+
+    public synchronized float getFillValue(String variableName) {
+        return fillValues.get(variableName);
     }
 }
