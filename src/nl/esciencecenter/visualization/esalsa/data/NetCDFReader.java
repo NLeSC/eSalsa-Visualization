@@ -2,15 +2,10 @@ package nl.esciencecenter.visualization.esalsa.data;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map.Entry;
 
-import nl.esciencecenter.neon.swing.ColormapInterpreter;
-import nl.esciencecenter.neon.swing.ColormapInterpreter.Color;
-import nl.esciencecenter.neon.swing.ColormapInterpreter.Dimensions;
 import nl.esciencecenter.visualization.esalsa.CacheFileManager;
 import nl.esciencecenter.visualization.esalsa.ImauSettings;
 
@@ -24,24 +19,18 @@ import ucar.nc2.Dimension;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.Variable;
 
-import com.jogamp.common.nio.Buffers;
-
 public class NetCDFReader {
-    private final static Logger                    logger   = LoggerFactory.getLogger(NetCDFReader.class);
-    private final ImauSettings                     settings = ImauSettings.getInstance();
+    private final static Logger logger = LoggerFactory.getLogger(NetCDFReader.class);
+    private final ImauSettings settings = ImauSettings.getInstance();
 
-    private final File                             file;
-    private final NetcdfFile                       ncfile;
-    private final HashMap<String, Variable>        variables;
-    private final HashMap<String, String>          units;
-    private final HashMap<String, List<Dimension>> dimensions;
-    private final HashMap<String, List<Integer>>   shapes;
-    private final HashMap<String, Float>           fillValues;
+    private final File file;
+    private final NetcdfFile ncfile;
+    private final HashMap<String, Variable> variables;
 
-    private final HashMap<String, Float>           mins;
-    private final HashMap<String, Float>           maxes;
+    private final HashMap<String, Float> mins;
+    private final HashMap<String, Float> maxes;
 
-    private final CacheFileManager                 cache;
+    private final CacheFileManager cache;
 
     private final class Bounds {
         private final float max, min;
@@ -67,65 +56,32 @@ public class NetCDFReader {
         cache = new CacheFileManager(file.getParent());
 
         variables = new HashMap<String, Variable>();
-        units = new HashMap<String, String>();
-        dimensions = new HashMap<String, List<Dimension>>();
-        shapes = new HashMap<String, List<Integer>>();
-        fillValues = new HashMap<String, Float>();
 
         mins = new HashMap<String, Float>();
         maxes = new HashMap<String, Float>();
 
         List<Variable> vars = ncfile.getVariables();
-        List<Dimension> dims = ncfile.getDimensions();
 
         for (Variable v : vars) {
             String name = v.getFullName();
 
-            boolean variableIsActuallyADimension = false;
-            for (Dimension d : dims) {
-                if (d.getFullName().compareTo(name) == 0) {
-                    variableIsActuallyADimension = true;
+            boolean latDimensionFound = false;
+            boolean lonDimensionFound = false;
+
+            for (Dimension d : v.getDimensions()) {
+                if (d.getFullName().contains("lat")) {
+                    latDimensionFound = true;
+                }
+                if (d.getFullName().contains("lon")) {
+                    lonDimensionFound = true;
                 }
             }
 
-            ArrayList<Integer> shape = new ArrayList<Integer>();
-            for (int i : v.getShape()) {
-                shape.add(i);
-            }
-            shapes.put(name, shape);
-
-            if (!variableIsActuallyADimension) {
+            if (latDimensionFound && lonDimensionFound) {
                 variables.put(name, v);
-                units.put(name, v.getUnitsString());
-
-                for (Attribute a : v.getAttributes()) {
-                    if (a.getFullName().compareTo("_FillValue") == 0) {
-                        float fillValue = a.getNumericValue().floatValue();
-                        fillValues.put(name, fillValue);
-                    }
-                }
-                if (!fillValues.containsKey(name)) {
-                    fillValues.put(name, Float.NaN);
-                }
-            } else {
-                dimensions.put(name, v.getDimensions());
+                System.out.println("Variable: " + name + " found and available for use.");
             }
         }
-    }
-
-    public synchronized int getAvailableFrames() {
-        int value = -1;
-        for (Entry<String, List<Integer>> shapeEntry : shapes.entrySet()) {
-            String name = shapeEntry.getKey();
-            if (name.compareTo("time") == 0) {
-                List<Integer> shape = shapeEntry.getValue();
-                for (int i : shape) {
-                    value = i;
-                }
-            }
-        }
-
-        return value;
     }
 
     public synchronized int getThisParticularFrameNumber() {
@@ -137,13 +93,9 @@ public class NetCDFReader {
 
     public synchronized int getLatSize() {
         int value = -1;
-        for (Entry<String, List<Integer>> shapeEntry : shapes.entrySet()) {
-            String name = shapeEntry.getKey();
-            if (name.contains("lat")) {
-                List<Integer> shape = shapeEntry.getValue();
-                for (int i : shape) {
-                    value = i;
-                }
+        for (Dimension d : ncfile.getDimensions()) {
+            if (d.getFullName().contains("lat")) {
+                value = d.getLength();
             }
         }
 
@@ -152,13 +104,9 @@ public class NetCDFReader {
 
     public synchronized int getLonSize() {
         int value = -1;
-        for (Entry<String, List<Integer>> shapeEntry : shapes.entrySet()) {
-            String name = shapeEntry.getKey();
-            if (name.contains("lon")) {
-                List<Integer> shape = shapeEntry.getValue();
-                for (int i : shape) {
-                    value = i;
-                }
+        for (Dimension d : ncfile.getDimensions()) {
+            if (d.getFullName().contains("lon")) {
+                value = d.getLength();
             }
         }
 
@@ -169,97 +117,120 @@ public class NetCDFReader {
         ArrayList<String> result = new ArrayList<String>();
         for (String s : variables.keySet()) {
             result.add(s);
-            System.out.println(s);
+            // System.out.println(s);
         }
         return result;
     }
 
     public synchronized String getUnits(String varName) {
-        return units.get(varName);
+        return variables.get(varName).getUnitsString();
     }
 
-    public synchronized ByteBuffer getImage(String colorMapname, String variableName, int requestedDepth,
-            boolean logScale) {
-        Variable variable = variables.get(variableName);
+    // public synchronized ByteBuffer getImage(String colorMapname, String
+    // variableName, int requestedDepth,
+    // boolean logScale) {
+    // Variable variable = variables.get(variableName);
+    //
+    // int times = 0, depths = 0, lats = 0, lons = 0;
+    // for (int i = 0; i < shapes.get(variableName).size(); i++) {
+    // if (dimensions.get(variableName).get(i).getFullName().contains("time")) {
+    // times = shapes.get(variableName).get(i);
+    // }
+    // if (dimensions.get(variableName).get(i).getFullName().contains("depth")
+    // || dimensions.get(variableName).get(i).getFullName().contains("z_t")) {
+    // depths = shapes.get(variableName).get(i);
+    // }
+    // if (dimensions.get(variableName).get(i).getFullName().contains("lat")) {
+    // lats = shapes.get(variableName).get(i);
+    // }
+    // if (dimensions.get(variableName).get(i).getFullName().contains("lon")) {
+    // lons = shapes.get(variableName).get(i);
+    // }
+    // }
+    //
+    // ByteBuffer result = Buffers.newDirectByteBuffer(lats * lons * 4);
+    // result.rewind();
+    //
+    // try {
+    // Array netCDFArray;
+    // if (shapes.get(variableName).size() > 2) {
+    // netCDFArray = variable.slice(0, requestedDepth).read();
+    // } else {
+    // netCDFArray = variable.read();
+    // }
+    //
+    // float[] data = (float[]) netCDFArray.get1DJavaArray(float.class);
+    //
+    // Dimensions colormapDims;
+    // if (logScale) {
+    // colormapDims = new Dimensions((float)
+    // Math.log(settings.getCurrentVarMin(variableName) + 1f),
+    // (float) Math.log(settings.getCurrentVarMax(variableName) + 1f));
+    // for (int lat = lats - 1; lat > 0; lat--) {
+    // for (int lon = lons - 1; lon >= 0; lon--) {
+    // Color color = ColormapInterpreter.getColor(colorMapname, colormapDims,
+    // (float) Math.log(data[lat * lons + lon] + 1f),
+    // (float) Math.log(fillValues.get(variableName)));
+    // result.put((byte) (color.getRed() * 255));
+    // result.put((byte) (color.getGreen() * 255));
+    // result.put((byte) (color.getBlue() * 255));
+    // result.put((byte) 0);
+    // }
+    // }
+    // } else {
+    // colormapDims = new Dimensions(settings.getCurrentVarMin(variableName),
+    // settings.getCurrentVarMax(variableName));
+    // for (int lat = lats - 1; lat > 0; lat--) {
+    // for (int lon = lons - 1; lon >= 0; lon--) {
+    // Color color = ColormapInterpreter.getColor(colorMapname, colormapDims,
+    // data[lat * lons + lon],
+    // fillValues.get(variableName));
+    // result.put((byte) (color.getRed() * 255));
+    // result.put((byte) (color.getGreen() * 255));
+    // result.put((byte) (color.getBlue() * 255));
+    // result.put((byte) 0);
+    // }
+    // }
+    // }
+    //
+    // } catch (IOException e) {
+    // e.printStackTrace();
+    // } catch (InvalidRangeException e) {
+    // e.printStackTrace();
+    // }
+    //
+    // result.rewind();
+    //
+    // return result;
+    // }
 
-        int times = 0, depths = 0, lats = 0, lons = 0;
-        for (int i = 0; i < shapes.get(variableName).size(); i++) {
-            if (dimensions.get(variableName).get(i).getFullName().contains("time")) {
-                times = shapes.get(variableName).get(i);
-            }
-            if (dimensions.get(variableName).get(i).getFullName().contains("depth")) {
-                depths = shapes.get(variableName).get(i);
-            }
-            if (dimensions.get(variableName).get(i).getFullName().contains("lat")) {
-                lats = shapes.get(variableName).get(i);
-            }
-            if (dimensions.get(variableName).get(i).getFullName().contains("lon")) {
-                lons = shapes.get(variableName).get(i);
-            }
-        }
-
-        ByteBuffer result = Buffers.newDirectByteBuffer(lats * lons * 4);
-        result.rewind();
-
-        try {
-            Array netCDFArray;
-            if (shapes.get(variableName).size() > 2) {
-                netCDFArray = variable.slice(0, requestedDepth).read();
-            } else {
-                netCDFArray = variable.read();
-            }
-
-            float[] data = (float[]) netCDFArray.get1DJavaArray(float.class);
-
-            Dimensions colormapDims;
-            if (logScale) {
-                colormapDims = new Dimensions((float) Math.log(settings.getCurrentVarMin(variableName) + 1f),
-                        (float) Math.log(settings.getCurrentVarMax(variableName) + 1f));
-                for (int lat = lats - 1; lat > 0; lat--) {
-                    for (int lon = lons - 1; lon >= 0; lon--) {
-                        Color color = ColormapInterpreter.getColor(colorMapname, colormapDims,
-                                (float) Math.log(data[lat * lons + lon] + 1f),
-                                (float) Math.log(fillValues.get(variableName)));
-                        result.put((byte) (color.getRed() * 255));
-                        result.put((byte) (color.getGreen() * 255));
-                        result.put((byte) (color.getBlue() * 255));
-                        result.put((byte) 0);
-                    }
-                }
-            } else {
-                colormapDims = new Dimensions(settings.getCurrentVarMin(variableName),
-                        settings.getCurrentVarMax(variableName));
-                for (int lat = lats - 1; lat > 0; lat--) {
-                    for (int lon = lons - 1; lon >= 0; lon--) {
-                        Color color = ColormapInterpreter.getColor(colorMapname, colormapDims, data[lat * lons + lon],
-                                fillValues.get(variableName));
-                        result.put((byte) (color.getRed() * 255));
-                        result.put((byte) (color.getGreen() * 255));
-                        result.put((byte) (color.getBlue() * 255));
-                        result.put((byte) 0);
-                    }
-                }
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InvalidRangeException e) {
-            e.printStackTrace();
-        }
-
-        result.rewind();
-
-        return result;
-    }
-
-    public synchronized float[] getData(String variableName, int time) {
+    public synchronized float[] getData(String variableName, int requestedDepth) {
         Variable variable = variables.get(variableName);
 
         float[] data = null;
 
-        Array netCDFArray;
+        Array netCDFArray = null;
         try {
-            netCDFArray = variable.slice(0, time).read();
+            Variable v = variables.get(variableName);
+            if (v.getDimension(0).getFullName().contains("depth") || v.getDimension(0).getFullName().contains("z_t")) {
+                netCDFArray = variable.slice(0, requestedDepth).read();
+            } else if (v.getDimension(0).getFullName().contains("time") && v.getDimension(0).getLength() == 1) {
+                if (v.getDimension(1).getFullName().contains("depth")
+                        || v.getDimension(1).getFullName().contains("z_t")) {
+                    netCDFArray = variable.slice(0, 0).slice(1, requestedDepth).read();
+                } else {
+                    netCDFArray = variable.slice(0, 0).read();
+                    // logger.error(v.getFullName() +
+                    // "-> v.getDimension(1).getFullName() : "
+                    // + v.getDimension(0).getFullName() +
+                    // " did not contain either 'time' or 'z_t'");
+                }
+            } else {
+                netCDFArray = variable.read();
+                // logger.error(v.getFullName()+"-> v.getDimension(0).getFullName() : "+v.getDimension(0).getFullName()
+                // + " did not contain either 'time' or 'z_t'");
+            }
+
             data = (float[]) netCDFArray.get1DJavaArray(float.class);
         } catch (IOException | InvalidRangeException e) {
             e.printStackTrace();
@@ -293,24 +264,34 @@ public class NetCDFReader {
 
         }
 
-        float fillValue = fillValues.get(variableName);
+        Variable variable = variables.get(variableName);
+
+        float fillValue = Float.NEGATIVE_INFINITY;
+        for (Attribute a : variable.getAttributes()) {
+            if (a.getFullName().compareTo("_FillValue") == 0) {
+                fillValue = a.getNumericValue().floatValue();
+            }
+        }
 
         if (!(mins.containsKey(variableName) && maxes.containsKey(variableName))) {
-            Variable variable = variables.get(variableName);
-
+            Variable v = variables.get(variableName);
             int times = 0, depths = 0, lats = 0, lons = 0;
-            for (int i = 0; i < shapes.get(variableName).size(); i++) {
-                if (dimensions.get(variableName).get(i).getFullName().contains("time")) {
-                    times = shapes.get(variableName).get(i);
+
+            List<Dimension> dimensions = v.getDimensions();
+            int[] shapes = v.getShape();
+            for (int i = 0; i < dimensions.size(); i++) {
+                if (dimensions.get(i).getFullName().contains("time")) {
+                    times = shapes[i];
                 }
-                if (dimensions.get(variableName).get(i).getFullName().contains("depth")) {
-                    depths = shapes.get(variableName).get(i);
+                if (dimensions.get(i).getFullName().contains("depth")
+                        || dimensions.get(i).getFullName().contains("z_t")) {
+                    depths = shapes[i];
                 }
-                if (dimensions.get(variableName).get(i).getFullName().contains("lat")) {
-                    lats = shapes.get(variableName).get(i);
+                if (dimensions.get(i).getFullName().contains("lat")) {
+                    lats = shapes[i];
                 }
-                if (dimensions.get(variableName).get(i).getFullName().contains("lon")) {
-                    lons = shapes.get(variableName).get(i);
+                if (dimensions.get(i).getFullName().contains("lon")) {
+                    lons = shapes[i];
                 }
             }
             System.out.println("Determining minimum and maximum values for " + variableName + ", please wait");
@@ -325,17 +306,18 @@ public class NetCDFReader {
                 Variable resultingSlice;
                 Bounds bounds = new Bounds(Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY);
                 if (times > 0 && depths > 0) {
-                    if (dimensions.get(variableName).get(0).getFullName().contains("time")) {
+                    if (dimensions.get(0).getFullName().contains("time")) {
                         for (int time = 0; time < times; time++) {
-                            Variable singleTimeSlicedVariable = variable.slice(0, time + 1);
+                            Variable singleTimeSlicedVariable = variable.slice(0, time);
                             for (int depth = 0; depth < depths; depth++) {
-                                resultingSlice = singleTimeSlicedVariable.slice(0, depth + 1);
+                                resultingSlice = singleTimeSlicedVariable.slice(0, depth);
                                 bounds = getBounds(resultingSlice, lats, lons, fillValue, bounds);
                             }
                         }
-                    } else if (dimensions.get(variableName).get(0).getFullName().contains("depth")) {
+                    } else if (dimensions.get(0).getFullName().contains("depth")
+                            || dimensions.get(0).getFullName().contains("z_t")) {
                         for (int depth = 0; depth < depths; depth++) {
-                            resultingSlice = variable.slice(0, depth + 1);
+                            resultingSlice = variable.slice(0, depth);
                             bounds = getBounds(resultingSlice, lats, lons, fillValue, bounds);
                         }
                     } else {
@@ -408,12 +390,13 @@ public class NetCDFReader {
         for (String name : variables.keySet()) {
             result += "Variable: " + name + "\n";
 
-            String dimensionNames = "";
-            for (Dimension d : dimensions.get(name)) {
-                dimensionNames += d.getFullName() + " ";
+            Variable v = variables.get(name);
+
+            int i = 0;
+            for (Dimension d : v.getDimensions()) {
+                result += "Dims: " + d.getFullName() + "[" + v.getShape()[i] + "]\n";
+                i++;
             }
-            result += "Dims: " + dimensionNames + "\n";
-            result += "Shape: " + shapes.get(name) + "\n";
         }
         return result;
     }
@@ -479,6 +462,12 @@ public class NetCDFReader {
     }
 
     public synchronized float getFillValue(String variableName) {
-        return fillValues.get(variableName);
+        float fillValue = Float.NEGATIVE_INFINITY;
+        for (Attribute a : variables.get(variableName).getAttributes()) {
+            if (a.getFullName().compareTo("_FillValue") == 0) {
+                fillValue = a.getNumericValue().floatValue();
+            }
+        }
+        return fillValue;
     }
 }

@@ -17,19 +17,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DatasetManager {
-    private final static Logger     logger   = LoggerFactory.getLogger(DatasetManager.class);
-    private final ImauSettings      settings = ImauSettings.getInstance();
+    private final static Logger logger = LoggerFactory.getLogger(DatasetManager.class);
+    private final ImauSettings settings = ImauSettings.getInstance();
 
-    private ArrayList<String>       variables;
+    private ArrayList<String> variables;
     private ArrayList<NetCDFReader> readers;
-    private ArrayList<Integer>      availableFrameSequenceNumbers;
-    private TextureStorage          texStorage;
+    private ArrayList<Integer> availableFrameSequenceNumbers;
+    private TextureStorage texStorage;
 
-    private int                     latArraySize;
-    private int                     lonArraySize;
+    private int latArraySize;
+    private int lonArraySize;
 
-    private final ExecutorService   executor;
-    private final JOCLColormapper   mapper;
+    private final ExecutorService executor;
+    private final JOCLColormapper mapper;
 
     private class Worker implements Runnable {
         private final SurfaceTextureDescription desc;
@@ -42,20 +42,20 @@ public class DatasetManager {
         public void run() {
             int frameNumber = desc.getFrameNumber();
             String varName = desc.getVarName();
+            int requestedDepth = desc.getDepth();
 
             int frameIndex = getIndexOfFrameNumber(frameNumber);
-
             NetCDFReader currentReader = readers.get(frameIndex);
 
             Dimensions colormapDims = new Dimensions(settings.getCurrentVarMin(varName),
                     settings.getCurrentVarMax(varName));
             float[] surfaceArray = null;
             while (surfaceArray == null) {
-                surfaceArray = currentReader.getData(varName, frameNumber);
+                surfaceArray = currentReader.getData(varName, requestedDepth);
             }
 
             int[] pixelArray = mapper.makeImage(desc.getColorMap(), colormapDims, surfaceArray,
-                    currentReader.getFillValue(varName));
+                    currentReader.getFillValue(varName), desc.isLogScale());
 
             ByteBuffer legendBuf = mapper.getColormapForLegendTexture(desc.getColorMap());
 
@@ -101,9 +101,9 @@ public class DatasetManager {
                 lonArraySize = ncr.getLonSize();
             }
 
-            if (frames == 0) {
-                frames = ncr.getAvailableFrames();
-            }
+            // if (frames == 0) {
+            // frames = ncr.getAvailableFrames();
+            // }
 
             if (variables.size() == 0) {
                 variables = ncr.getVariableNames();
@@ -138,10 +138,10 @@ public class DatasetManager {
                 accept = false;
             }
 
-            if (frames != ncr.getAvailableFrames()) {
-                logger.debug("NUMBER OF FRAMES NOT EQUAL");
-                accept = false;
-            }
+            // if (frames != ncr.getAvailableFrames()) {
+            // logger.debug("NUMBER OF FRAMES NOT EQUAL");
+            // accept = false;
+            // }
 
             // If it does adhere to the standard, add the variables to the
             // datastore and associate them with the netcdf readers they came

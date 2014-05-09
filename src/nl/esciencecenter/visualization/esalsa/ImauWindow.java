@@ -41,56 +41,56 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ImauWindow implements GLEventListener {
-    private final static Logger         logger        = LoggerFactory.getLogger(ImauWindow.class);
-    private final ImauSettings          settings      = ImauSettings.getInstance();
+    private final static Logger logger = LoggerFactory.getLogger(ImauWindow.class);
+    private final ImauSettings settings = ImauSettings.getInstance();
 
-    private Quad                        fsq;
+    private Quad fsq;
 
     protected final ShaderProgramLoader loader;
-    protected final InputHandler        inputHandler;
+    protected final InputHandler inputHandler;
 
-    private ShaderProgram               shaderProgram_Sphere, shaderProgram_Legend, shaderProgram_Atmosphere,
+    private ShaderProgram shaderProgram_Sphere, shaderProgram_Legend, shaderProgram_Atmosphere,
             shaderProgram_FlattenLayers, shaderProgram_PostProcess, shaderProgram_Text;
 
-    private Model                       sphereModel, legendModel, atmModel;
+    private Model sphereModel, legendModel, atmModel;
 
-    private FrameBufferObject           atmosphereFBO, hudTextFBO, legendTextureFBO, sphereTextureFBO;
+    private FrameBufferObject atmosphereFBO, hudTextFBO, legendTextureFBO, sphereTextureFBO;
 
-    private IntPixelBufferObject        finalPBO;
+    private IntPixelBufferObject finalPBO;
 
-    private final BufferedImage         currentImage  = null;
+    private final BufferedImage currentImage = null;
 
-    private final int                   fontSize      = 42;
+    private final int fontSize = 42;
 
-    private boolean                     reshaped      = false;
+    private boolean reshaped = false;
 
     private SurfaceTextureDescription[] cachedTextureDescriptions;
-    private FrameBufferObject[]         cachedFBOs;
-    private MultiColorText[]            varNames;
-    private MultiColorText[]            legendTextsMin;
-    private MultiColorText[]            legendTextsMax;
-    private MultiColorText[]            dates;
-    private MultiColorText[]            dataSets;
+    private FrameBufferObject[] cachedFBOs;
+    private MultiColorText[] varNames;
+    private MultiColorText[] legendTextsMin;
+    private MultiColorText[] legendTextsMax;
+    private MultiColorText[] dates;
+    private MultiColorText[] dataSets;
 
-    private int                         cachedScreens = 1;
+    private int cachedScreens = 1;
 
-    private TimedPlayer                 timer;
-    private float                       aspect;
+    private TimedPlayer timer;
+    private float aspect;
 
-    protected int                       fontSet       = FontFactory.UBUNTU;
-    protected Font                      font;
-    protected int                       canvasWidth, canvasHeight;
+    protected int fontSet = FontFactory.UBUNTU;
+    protected Font font;
+    protected int canvasWidth, canvasHeight;
 
-    protected final float               radius        = 1.0f;
-    protected final float               ftheta        = 0.0f;
-    protected final float               phi           = 0.0f;
+    protected final float radius = 1.0f;
+    protected final float ftheta = 0.0f;
+    protected final float phi = 0.0f;
 
-    protected final float               fovy          = 45.0f;
-    protected final float               zNear         = 0.1f;
-    protected final float               zFar          = 3000.0f;
+    protected final float fovy = 45.0f;
+    protected final float zNear = 0.1f;
+    protected final float zFar = 3000.0f;
 
-    private final Texture2D[]           cachedSurfaceTextures;
-    private final Texture2D[]           cachedLegendTextures;
+    private final Texture2D[] cachedSurfaceTextures;
+    private final Texture2D[] cachedLegendTextures;
 
     public ImauWindow(InputHandler inputHandler) {
         this.loader = new ShaderProgramLoader();
@@ -210,13 +210,18 @@ public class ImauWindow implements GLEventListener {
                         // waiting for new images
                         if (!timer.getTextureStorage().isRequested(currentDesc)) {
                             // We need to request new ones
-                            logger.debug(currentDesc.toString());
+                            logger.debug("requesting: " + currentDesc.toString());
 
                             List<Texture2D> oldTextures = timer.getTextureStorage().requestNewConfiguration(i,
                                     currentDesc);
                             // Remove all of the (now unused) textures
                             for (Texture2D tex : oldTextures) {
-                                tex.delete(gl);
+                                try {
+                                    tex.delete(gl);
+                                } catch (UninitializedException e) {
+                                    // TODO Auto-generated catch block
+                                    e.printStackTrace();
+                                }
                             }
                         }
                         // We are waiting for images to be generated
@@ -228,8 +233,7 @@ public class ImauWindow implements GLEventListener {
                             logger.debug("adding new texture for screen " + i + " to opengl: " + currentDesc);
 
                             // Apparently a new image was just created for us,
-                            // so
-                            // lets store it
+                            // so lets store it
                             cachedSurfaceTextures[i] = result.getSurfaceTexture();
                             cachedLegendTextures[i] = result.getLegendTexture();
 
@@ -270,7 +274,7 @@ public class ImauWindow implements GLEventListener {
                         dates[i], dataSets[i], legendTextsMin[i], legendTextsMax[i], cachedFBOs[i], clickCoords);
             }
         }
-        logger.debug("Tiling windows");
+        // logger.debug("Tiling windows");
         renderTexturesToScreen(gl, width, height);
     }
 
@@ -278,16 +282,16 @@ public class ImauWindow implements GLEventListener {
             Texture2D globe, MultiColorText varNameText, MultiColorText dateText, MultiColorText datasetText,
             MultiColorText legendTextMin, MultiColorText legendTextMax, FrameBufferObject target,
             Float2Vector clickCoords) {
-        logger.debug("Drawing Text");
+        // logger.debug("Drawing Text");
         drawHUDText(gl, width, height, varNameText, dateText, datasetText, legendTextMin, legendTextMax, hudTextFBO);
 
-        logger.debug("Drawing HUD");
+        // logger.debug("Drawing HUD");
         drawHUDLegend(gl, width, height, legend, legendTextureFBO);
 
-        logger.debug("Drawing Sphere");
+        // logger.debug("Drawing Sphere");
         drawSphere(gl, mv, globe, sphereTextureFBO, clickCoords);
 
-        logger.debug("Flattening Layers");
+        // logger.debug("Flattening Layers");
         flattenLayers(gl, hudTextFBO, legendTextureFBO, sphereTextureFBO, atmosphereFBO, target);
     }
 

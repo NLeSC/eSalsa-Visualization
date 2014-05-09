@@ -117,6 +117,7 @@ public class JOCLColormapper {
      * pixel data in a CL memory object
      */
     private cl_kernel kernel;
+    private cl_kernel logKernel;
 
     /**
      * The OpenCL memory object which stores the pixel data
@@ -210,6 +211,12 @@ public class JOCLColormapper {
 
         // Create the kernel
         kernel = clCreateKernel(cpProgram, "mapColors", null);
+
+        // Same Program Setup for Logarithmic scale colormapper
+        source = readFile("kernels/LogColormapper.cl");
+        cpProgram = clCreateProgramWithSource(context, 1, new String[] { source }, null, null);
+        clBuildProgram(cpProgram, 0, null, "-cl-mad-enable", null, null);
+        logKernel = clCreateKernel(cpProgram, "mapColors", null);
     }
 
     /**
@@ -430,7 +437,7 @@ public class JOCLColormapper {
         ByteBuffer colorMap = Buffers.newDirectByteBuffer(finalSize * 4);
         int cmEntries = colors.size();
 
-        for (int i = 0; i < finalSize; i++) {
+        for (int i = finalSize - 1; i >= 0; i--) {
             float rawIndex = cmEntries * (i / (float) finalSize);
 
             int iLow = (int) Math.floor(rawIndex);
@@ -472,9 +479,9 @@ public class JOCLColormapper {
             int g = (int) (g0 + percentage * dg);
             int b = (int) (b0 + percentage * db);
 
-            colorMap.put((byte) (r));
-            colorMap.put((byte) (g));
-            colorMap.put((byte) (b));
+            colorMap.put((byte) (r & 0xFF));
+            colorMap.put((byte) (g & 0xFF));
+            colorMap.put((byte) (b & 0xFF));
             colorMap.put((byte) (255));
         }
 
@@ -509,7 +516,8 @@ public class JOCLColormapper {
      * Execute the kernel function and return the resulting pixel data in an
      * array
      */
-    public synchronized int[] makeImage(String colormapName, Dimensions dim, float[] data, float fillValue) {
+    public synchronized int[] makeImage(String colormapName, Dimensions dim, float[] data, float fillValue,
+            boolean logScale) {
         // select colormap and write to GPU
         int[] colorMap = colorMaps.get(colormapName);
         if (colorMap == null) {
@@ -538,20 +546,25 @@ public class JOCLColormapper {
         globalWorkSize[0] = width;
         globalWorkSize[1] = height;
 
-        // load uniforms
-        clSetKernelArg(kernel, 0, Sizeof.cl_mem, Pointer.to(dataMem));
-        clSetKernelArg(kernel, 1, Sizeof.cl_mem, Pointer.to(outputMem));
-        clSetKernelArg(kernel, 2, Sizeof.cl_mem, Pointer.to(colorMapMem));
-        clSetKernelArg(kernel, 3, Sizeof.cl_uint, Pointer.to(new int[] { width }));
-        clSetKernelArg(kernel, 4, Sizeof.cl_uint, Pointer.to(new int[] { height }));
-        clSetKernelArg(kernel, 5, Sizeof.cl_float, Pointer.to(new float[] { fillValue }));
-        clSetKernelArg(kernel, 6, Sizeof.cl_float, Pointer.to(new float[] { dim.getMin() }));
-        clSetKernelArg(kernel, 7, Sizeof.cl_float, Pointer.to(new float[] { dim.getMax() }));
-        clSetKernelArg(kernel, 8, Sizeof.cl_uint, Pointer.to(new int[] { 0 << 24 | 0 << 16 | 0 << 8 | 0 << 0 }));
-        clSetKernelArg(kernel, 9, Sizeof.cl_uint, Pointer.to(new int[] { colorMap.length }));
+        cl_kernel currentKernel = kernel;
+        if (logScale) {
+            currentKernel = logKernel;
+        }
 
-        // and execute the kernel
-        clEnqueueNDRangeKernel(commandQueue, kernel, 2, null, globalWorkSize, null, 0, null, null);
+        // load uniforms
+        clSetKernelArg(currentKernel, 0, Sizeof.cl_mem, Pointer.to(dataMem));
+        clSetKernelArg(currentKernel, 1, Sizeof.cl_mem, Pointer.to(outputMem));
+        clSetKernelArg(currentKernel, 2, Sizeof.cl_mem, Pointer.to(colorMapMem));
+        clSetKernelArg(currentKernel, 3, Sizeof.cl_uint, Pointer.to(new int[] { width }));
+        clSetKernelArg(currentKernel, 4, Sizeof.cl_uint, Pointer.to(new int[] { height }));
+        clSetKernelArg(currentKernel, 5, Sizeof.cl_float, Pointer.to(new float[] { fillValue }));
+        clSetKernelArg(currentKernel, 6, Sizeof.cl_float, Pointer.to(new float[] { dim.getMin() }));
+        clSetKernelArg(currentKernel, 7, Sizeof.cl_float, Pointer.to(new float[] { dim.getMax() }));
+        clSetKernelArg(currentKernel, 8, Sizeof.cl_uint, Pointer.to(new int[] { 0 << 24 | 0 << 16 | 0 << 8 | 0 << 0 }));
+        clSetKernelArg(currentKernel, 9, Sizeof.cl_uint, Pointer.to(new int[] { colorMap.length }));
+
+        // and execute the currentKernel
+        clEnqueueNDRangeKernel(commandQueue, currentKernel, 2, null, globalWorkSize, null, 0, null, null);
 
         // Read the output pixel data into the array
         int pixels[] = new int[width * height];
@@ -589,9 +602,9 @@ public class JOCLColormapper {
 
             for (int col = 0; col < width; col++) {
                 for (int row = 0; row < height; row++) {
-                    raster.setSample(col, row, 0, legendImageBuffer[col][row].getBlue() * 255);
-                    raster.setSample(col, row, 1, legendImageBuffer[col][row].getGreen() * 255);
-                    raster.setSample(col, row, 2, legendImageBuffer[col][row].getRed() * 255);
+                    raster.setSample(col, row, 0, legendImageBuffer[col][row].getBlue());
+                    raster.setSample(col, row, 1, legendImageBuffer[col][row].getGreen());
+                    raster.setSample(col, row, 2, legendImageBuffer[col][row].getRed());
                 }
             }
 
@@ -636,11 +649,11 @@ public class JOCLColormapper {
 
             Color color;
             if (cmIndex == cmEntries) {
-                color = new Color(colorMap[cmEntries - 1]);
+                color = new Color(colorMap[cmEntries - 1], true);
             } else if (cmIndex < 0) {
-                color = new Color(colorMap[0]);
+                color = new Color(colorMap[0], true);
             } else {
-                color = new Color(colorMap[cmIndex]);
+                color = new Color(colorMap[cmIndex], true);
             }
 
             for (int row = 0; row < height; row++) {

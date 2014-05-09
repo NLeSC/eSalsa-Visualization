@@ -23,31 +23,31 @@ public class TimedPlayer implements Runnable {
         UNOPENED, UNINITIALIZED, INITIALIZED, STOPPED, REDRAWING, SNAPSHOTTING, MOVIEMAKING, CLEANUP, WAITINGONFRAME, PLAYING
     }
 
-    private final ImauSettings        settings           = ImauSettings.getInstance();
+    private final ImauSettings settings = ImauSettings.getInstance();
 
-    private states                    currentState       = states.UNOPENED;
-    private int                       frameNumber;
+    private states currentState = states.UNOPENED;
+    private int frameNumber;
 
-    private final boolean             running            = true;
-    private boolean                   initialized        = false;
+    private final boolean running = true;
+    private boolean initialized = false;
 
-    private long                      startTime, stopTime;
+    private long startTime, stopTime;
 
-    private final JSlider             timeBar;
+    private final JSlider timeBar;
     private final JFormattedTextField frameCounter;
 
-    private final InputHandler        inputHandler;
+    private final InputHandler inputHandler;
 
-    private DatasetManager            dsManager;
-    private TextureStorage            effTexStorage;
+    private DatasetManager dsManager;
+    private TextureStorage effTexStorage;
 
-    private boolean                   needsScreenshot    = false;
-    private String                    screenshotFilename = "";
+    private boolean needsScreenshot = false;
+    private String screenshotFilename = "";
 
-    private final long                waittime           = settings.getWaittimeMovie();
+    private final long waittime = settings.getWaittimeMovie();
 
     private final ArrayList<Float3Vector> bezierPoints, fixedPoints;
-    private final ArrayList<Integer>      bezierSteps;
+    private final ArrayList<Integer> bezierSteps;
 
     public TimedPlayer(CustomJSlider timeBar2, JFormattedTextField frameCounter) {
         this.timeBar = timeBar2;
@@ -228,6 +228,8 @@ public class TimedPlayer implements Runnable {
                                 newFrameNumber = dsManager.getNextFrameNumber(frameNumber);
                                 if (effTexStorage.doneWithLastRequest()) {
                                     updateFrame(newFrameNumber, false);
+                                } else {
+                                    Thread.sleep(100);
                                 }
                             } catch (IOException e) {
                                 logger.debug("Waiting on frame after " + frameNumber);

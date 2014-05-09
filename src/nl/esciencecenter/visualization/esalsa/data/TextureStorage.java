@@ -14,29 +14,29 @@ import org.slf4j.LoggerFactory;
 import com.jogamp.common.nio.Buffers;
 
 public class TextureStorage {
-    private static final int                  LEGEND_TEXTURE_HEIGHT = 500;
-    private static final int                  LEGEND_TEXTURE_WIDTH  = 1;
+    private static final int LEGEND_TEXTURE_HEIGHT = 500;
+    private static final int LEGEND_TEXTURE_WIDTH = 1;
 
-    private final static Logger               logger                = LoggerFactory.getLogger(TextureStorage.class);
+    private final static Logger logger = LoggerFactory.getLogger(TextureStorage.class);
 
     private final SurfaceTextureDescription[] oldScreenA;
     private final SurfaceTextureDescription[] newScreenA;
-    private List<TextureCombo>                storage;
+    private List<TextureCombo> storage;
 
-    private final DatasetManager              manager;
+    private final DatasetManager manager;
 
-    private final ByteBufferTexture           EMPTY_SURFACE_BUFFER;
-    private final ByteBufferTexture           EMPTY_LEGEND_BUFFER;
+    private final ByteBufferTexture EMPTY_SURFACE_BUFFER;
+    private final ByteBufferTexture EMPTY_LEGEND_BUFFER;
 
-    private final int                         width;
-    private final int                         height;
-    private final int                         surfaceMultiTexUnit;
-    private final int                         legendMultiTexUnit;
+    private final int width;
+    private final int height;
+    private final int surfaceMultiTexUnit;
+    private final int legendMultiTexUnit;
 
     public class TextureCombo {
         private final SurfaceTextureDescription description;
-        private final Texture2D                 surfaceTexture;
-        private final Texture2D                 legendTexture;
+        private final Texture2D surfaceTexture;
+        private final Texture2D legendTexture;
 
         public TextureCombo(SurfaceTextureDescription description, Texture2D surfaceTexture, Texture2D legendTexture) {
             this.description = description;
@@ -76,6 +76,8 @@ public class TextureStorage {
 
         EMPTY_LEGEND_BUFFER = new ByteBufferTexture(legendMultiTexUnit, legendBuffer, LEGEND_TEXTURE_WIDTH,
                 LEGEND_TEXTURE_HEIGHT);
+
+        storage = new ArrayList<TextureCombo>();
 
         logger.debug("Texture storage initialization, size: " + width + "x" + height);
     }
@@ -143,11 +145,11 @@ public class TextureStorage {
             } else {
                 // Add all of the unused ones to the to-be-removed list UNLESS
                 // it's the empty buffers
-                if (combo.getSurfaceTexture() != EMPTY_SURFACE_BUFFER) {
+                if (combo.getSurfaceTexture() != EMPTY_SURFACE_BUFFER && combo.getSurfaceTexture().isInitialized()) {
                     oldTextures.add(combo.getSurfaceTexture());
                 }
 
-                if (combo.getLegendTexture() != EMPTY_LEGEND_BUFFER) {
+                if (combo.getLegendTexture() != EMPTY_LEGEND_BUFFER && combo.getSurfaceTexture().isInitialized()) {
                     oldTextures.add(combo.getLegendTexture());
                 }
             }

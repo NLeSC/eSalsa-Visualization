@@ -53,29 +53,29 @@ public class ImauPanel extends NeonInterfacePanel {
         NONE, DATA, VISUAL, MOVIE
     }
 
-    private final ImauSettings    settings           = ImauSettings.getInstance();
-    private final static Logger   logger             = LoggerFactory.getLogger(ImauPanel.class);
+    private final ImauSettings settings = ImauSettings.getInstance();
+    private final static Logger logger = LoggerFactory.getLogger(ImauPanel.class);
 
-    private static final long     serialVersionUID   = 1L;
+    private static final long serialVersionUID = 1L;
 
-    protected CustomJSlider       timeBar;
+    protected CustomJSlider timeBar;
 
     protected JFormattedTextField frameCounter, stepSizeField;
-    private TweakState            currentConfigState = TweakState.DATA;
+    private TweakState currentConfigState = TweakState.DATA;
 
-    private final JPanel          configPanel;
+    private final JPanel configPanel;
 
-    private final JPanel          dataConfig, visualConfig, movieConfig;
+    private final JPanel dataConfig, visualConfig, movieConfig;
 
-    private static TimedPlayer    timer;
+    private static TimedPlayer timer;
 
-    private ArrayList<String>     variables;
+    private ArrayList<String> variables;
 
-    protected GLCanvas            glCanvas;
+    protected GLCanvas glCanvas;
 
-    private CacheFileManager      cache;
+    private CacheFileManager cache;
 
-    private final boolean         demomode           = false;
+    private final boolean demomode = false;
 
     public ImauPanel() {
         setLayout(new BorderLayout(0, 0));
@@ -642,7 +642,7 @@ public class ImauPanel extends NeonInterfacePanel {
     }
 
     private File[] openFile() {
-        final JFileChooser fileChooser = new JFileChooser("~");
+        final JFileChooser fileChooser = new JFileChooser("/media/maarten/diskhdd1/eSalsaDATA/01deg_prod_run3/");
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(true);
