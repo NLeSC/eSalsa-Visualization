@@ -212,11 +212,13 @@ public class NetCDFReader {
         Array netCDFArray = null;
         try {
             Variable v = variables.get(variableName);
-            if (v.getDimension(0).getFullName().contains("depth") || v.getDimension(0).getFullName().contains("z_t")) {
+            if (v.getDimension(0).getFullName().contains("depth") || v.getDimension(0).getFullName().contains("z_t")
+                    || v.getDimension(0).getFullName().contains("lev")) {
                 netCDFArray = variable.slice(0, requestedDepth).read();
             } else if (v.getDimension(0).getFullName().contains("time") && v.getDimension(0).getLength() == 1) {
                 if (v.getDimension(1).getFullName().contains("depth")
-                        || v.getDimension(1).getFullName().contains("z_t")) {
+                        || v.getDimension(1).getFullName().contains("z_t")
+                        || v.getDimension(1).getFullName().contains("lev")) {
                     netCDFArray = variable.slice(0, 0).slice(1, requestedDepth).read();
                 } else {
                     netCDFArray = variable.slice(0, 0).read();
@@ -284,7 +286,8 @@ public class NetCDFReader {
                     times = shapes[i];
                 }
                 if (dimensions.get(i).getFullName().contains("depth")
-                        || dimensions.get(i).getFullName().contains("z_t")) {
+                        || dimensions.get(i).getFullName().contains("z_t")
+                        || dimensions.get(i).getFullName().contains("lev")) {
                     depths = shapes[i];
                 }
                 if (dimensions.get(i).getFullName().contains("lat")) {
@@ -309,13 +312,20 @@ public class NetCDFReader {
                     if (dimensions.get(0).getFullName().contains("time")) {
                         for (int time = 0; time < times; time++) {
                             Variable singleTimeSlicedVariable = variable.slice(0, time);
-                            for (int depth = 0; depth < depths; depth++) {
-                                resultingSlice = singleTimeSlicedVariable.slice(0, depth);
-                                bounds = getBounds(resultingSlice, lats, lons, fillValue, bounds);
+                            if (dimensions.get(1).getFullName().contains("depth")
+                                    || dimensions.get(1).getFullName().contains("z_t")
+                                    || dimensions.get(1).getFullName().contains("lev")) {
+                                for (int depth = 0; depth < depths; depth++) {
+                                    resultingSlice = singleTimeSlicedVariable.slice(0, depth);
+                                    bounds = getBounds(resultingSlice, lats, lons, fillValue, bounds);
+                                }
+                            } else {
+                                bounds = getBounds(singleTimeSlicedVariable, lats, lons, fillValue, bounds);
                             }
                         }
                     } else if (dimensions.get(0).getFullName().contains("depth")
-                            || dimensions.get(0).getFullName().contains("z_t")) {
+                            || dimensions.get(0).getFullName().contains("z_t")
+                            || dimensions.get(0).getFullName().contains("lev")) {
                         for (int depth = 0; depth < depths; depth++) {
                             resultingSlice = variable.slice(0, depth);
                             bounds = getBounds(resultingSlice, lats, lons, fillValue, bounds);
@@ -443,6 +453,25 @@ public class NetCDFReader {
         String sequenceNumberString = "";
         for (int i = 0; i < split.length; i++) {
             String s = split[i];
+            String s2 = "";
+            if (i < split.length - 1) {
+                try {
+                    Integer.parseInt(split[i + 1]);
+                } catch (NumberFormatException e) {
+                    // IGNORE
+                }
+                s2 = split[i + 1];
+            }
+            String s3 = "";
+            if (i < split.length - 2) {
+                try {
+                    Integer.parseInt(split[i + 2]);
+                } catch (NumberFormatException e) {
+                    // IGNORE
+                }
+                s3 = split[i + 2];
+            }
+            s = s + s2 + s3;
             try {
                 Integer.parseInt(s);
                 if (s.length() >= 5) {

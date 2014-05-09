@@ -734,8 +734,8 @@ public class ImauSettings {
         float calcMin = (sliderLowerValue / 100f) * diff + getVarMin(varName);
         float calcMax = (sliderUpperValue / 100f) * diff + getVarMin(varName);
 
-        calcMin = Math.round(calcMin * 10f) / 10f;
-        calcMax = Math.round(calcMax * 10f) / 10f;
+        // calcMin = Math.round(calcMin * 10f) / 10f;
+        // calcMax = Math.round(calcMax * 10f) / 10f;
 
         currentMinValues.put(varName, calcMin);
         currentMaxValues.put(varName, calcMax);
