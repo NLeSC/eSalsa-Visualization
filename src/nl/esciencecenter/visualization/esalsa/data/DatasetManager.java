@@ -17,19 +17,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DatasetManager {
-    private final static Logger logger = LoggerFactory.getLogger(DatasetManager.class);
-    private final ImauSettings settings = ImauSettings.getInstance();
+    private final static Logger     logger   = LoggerFactory.getLogger(DatasetManager.class);
+    private final ImauSettings      settings = ImauSettings.getInstance();
 
-    private ArrayList<String> variables;
+    private ArrayList<String>       variables;
     private ArrayList<NetCDFReader> readers;
-    private ArrayList<Integer> availableFrameSequenceNumbers;
-    private TextureStorage texStorage;
+    private ArrayList<Integer>      availableFrameSequenceNumbers;
+    private TextureStorage          texStorage;
 
-    private int latArraySize;
-    private int lonArraySize;
+    private int                     latArraySize;
+    private int                     lonArraySize;
 
-    private final ExecutorService executor;
-    private final JOCLColormapper mapper;
+    private final ExecutorService   executor;
+    private final JOCLColormapper   mapper;
 
     private class Worker implements Runnable {
         private final SurfaceTextureDescription desc;
@@ -55,7 +55,7 @@ public class DatasetManager {
             }
 
             int[] pixelArray = mapper.makeImage(desc.getColorMap(), colormapDims, surfaceArray,
-                    currentReader.getFillValue(varName), desc.isLogScale());
+                    currentReader.getFillValue(varName), desc.isLogScale(), desc.getLongitudes(), desc.getLatitudes());
 
             ByteBuffer legendBuf = mapper.getColormapForLegendTexture(desc.getColorMap());
 
@@ -69,7 +69,7 @@ public class DatasetManager {
 
         init(files);
 
-        mapper = new JOCLColormapper(getImageWidth(), getImageHeight());
+        mapper = new JOCLColormapper();
     }
 
     public synchronized void shutdown() {

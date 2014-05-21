@@ -32,6 +32,7 @@ import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -93,47 +94,66 @@ public class JOCLColormapper {
     private static Map<String, int[]> colorMaps;
 
     /**
-     * The width of the image
-     */
-    private int width = 0;
-
-    /**
-     * The height of the image
-     */
-    private int height = 0;
-
-    /**
      * The OpenCL context
      */
-    private cl_context context;
+    private cl_context                context;
 
     /**
      * The OpenCL command queue
      */
-    private cl_command_queue commandQueue;
+    private cl_command_queue          commandQueue;
 
     /**
      * The OpenCL kernel which will actually compute the Colormap and store the
      * pixel data in a CL memory object
      */
-    private cl_kernel kernel;
-    private cl_kernel logKernel;
-
-    /**
-     * The OpenCL memory object which stores the pixel data
-     */
-    private cl_mem outputMem;
-
-    /**
-     * The OpenCL memory object which stores the raw data
-     */
-    private cl_mem dataMem;
+    private cl_kernel                 kernel;
+    private cl_kernel                 logKernel;
 
     /**
      * An OpenCL memory object which stores a nifty color map, encoded as
      * integers combining the RGB components of the colors.
      */
-    private cl_mem colorMapMem;
+    private cl_mem                    colorMapMem;
+
+    private class ReservedMemoryConstruct {
+        int                  width, height;
+
+        /**
+         * The OpenCL memory object which stores the pixel data
+         */
+        private final cl_mem outputMem;
+
+        /**
+         * The OpenCL memory object which stores the raw data
+         */
+        private final cl_mem dataMem;
+
+        public ReservedMemoryConstruct(int width, int height, cl_mem output, cl_mem data) {
+            this.width = width;
+            this.height = height;
+            this.dataMem = data;
+            this.outputMem = output;
+        }
+
+        public int getWidth() {
+            return width;
+        }
+
+        public int getHeight() {
+            return height;
+        }
+
+        public cl_mem getOutputMem() {
+            return outputMem;
+        }
+
+        public cl_mem getDataMem() {
+            return dataMem;
+        }
+    }
+
+    private final List<ReservedMemoryConstruct> reservedMemory;
 
     static {
         // Create and fill the memory object containing the color maps
@@ -143,26 +163,25 @@ public class JOCLColormapper {
     /**
      * Creates the JOCLColormapper with the given width and height
      */
-    public JOCLColormapper(int width, int height) {
-        this.width = width;
-        this.height = height;
+    public JOCLColormapper() {
+        reservedMemory = new ArrayList<ReservedMemoryConstruct>();
 
         // Initialize OpenCL
-        initCL(width, height);
+        initCL();
     }
 
     /** Storage for the statically built legend images. */
-    private static Map<String, Color[][]> legends;
+    private static Map<String, Color[][]>  legends;
     private static Map<String, ByteBuffer> legendByteBuffers;
 
-    private final static int LEGEND_WIDTH = 150;
-    private final static int LEGEND_HEIGHT = 150;
-    private final static int COLORMAP_FINAL_ENTRIES = 500;
+    private final static int               LEGEND_WIDTH           = 150;
+    private final static int               LEGEND_HEIGHT          = 150;
+    private final static int               COLORMAP_FINAL_ENTRIES = 500;
 
     /**
      * Initialize OpenCL: Create the context, the command queue and the kernel.
      */
-    private void initCL(int width, int height) {
+    private void initCL() {
         final int platformIndex = 0;
         final long deviceType = CL_DEVICE_TYPE_ALL;
         final int deviceIndex = 0;
@@ -517,7 +536,7 @@ public class JOCLColormapper {
      * array
      */
     public synchronized int[] makeImage(String colormapName, Dimensions dim, float[] data, float fillValue,
-            boolean logScale) {
+            boolean logScale, int width, int height) {
         // select colormap and write to GPU
         int[] colorMap = colorMaps.get(colormapName);
         if (colorMap == null) {
@@ -529,17 +548,26 @@ public class JOCLColormapper {
         clEnqueueWriteBuffer(commandQueue, colorMapMem, CL_TRUE, 0, colorMap.length * Sizeof.cl_uint,
                 Pointer.to(colorMap), 0, null, null);
 
-        // write data to GPU
-        if (dataMem == null) {
-            dataMem = clCreateBuffer(context, CL_MEM_READ_WRITE, width * height * Sizeof.cl_float, null, null);
+        // Check if an ooutput and databuffer for this size were previously
+        // allocated, if not create them.
+        ReservedMemoryConstruct predefinedConstruct = null;
+        for (ReservedMemoryConstruct memoryConstruct : reservedMemory) {
+            if (memoryConstruct.width == width && memoryConstruct.height == height) {
+                predefinedConstruct = memoryConstruct;
+            }
         }
+        if (predefinedConstruct == null) {
+            cl_mem outputMem = clCreateBuffer(context, CL_MEM_WRITE_ONLY, width * height * Sizeof.cl_uint, null, null);
+            cl_mem dataMem = clCreateBuffer(context, CL_MEM_READ_WRITE, width * height * Sizeof.cl_float, null, null);
+            predefinedConstruct = new ReservedMemoryConstruct(width, height, outputMem, dataMem);
+        }
+
+        cl_mem dataMem = predefinedConstruct.getDataMem();
+        cl_mem outputMem = predefinedConstruct.getOutputMem();
+
+        // write data to GPU
         clEnqueueWriteBuffer(commandQueue, dataMem, CL_TRUE, 0, width * height * Sizeof.cl_float, Pointer.to(data), 0,
                 null, null);
-
-        // Define the output buffer
-        if (outputMem == null) {
-            outputMem = clCreateBuffer(context, CL_MEM_WRITE_ONLY, width * height * Sizeof.cl_uint, null, null);
-        }
 
         // Set work size
         long globalWorkSize[] = new long[2];

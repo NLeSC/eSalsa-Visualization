@@ -1,15 +1,15 @@
 package nl.esciencecenter.visualization.esalsa.data;
 
 public class SurfaceTextureDescription {
-    protected final int frameNumber;
-    protected final int depth;
-    protected final String varName;
-    protected final String colorMap;
+    protected final int     frameNumber;
+    protected final int     depth;
+    protected final String  varName;
+    protected final String  colorMap;
     protected final boolean dynamicDimensions;
     protected final boolean diff;
     protected final boolean secondSet;
-    protected final float lowerBound;
-    protected final float upperBound;
+    protected final float   lowerBound;
+    protected final float   upperBound;
     protected final boolean logScale;
 
     public SurfaceTextureDescription(int frameNumber, int depth, String varName, String colorMap,
