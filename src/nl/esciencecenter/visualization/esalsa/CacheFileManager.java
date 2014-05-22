@@ -26,8 +26,8 @@ public class CacheFileManager {
             try {
                 in = new BufferedReader(new FileReader(cacheFile));
                 while ((str = in.readLine()) != null) {
-                    if (str.contains(variableName) && str.contains(" min ")) {
-                        String[] substrings = str.split(" ");
+                    String[] substrings = str.split(" ");
+                    if (substrings[0].compareTo(variableName) == 0 && substrings[1].compareTo("min") == 0) {
                         result = Float.parseFloat(substrings[2]);
                     }
                 }
@@ -71,8 +71,8 @@ public class CacheFileManager {
             try {
                 in = new BufferedReader(new FileReader(cacheFile));
                 while ((str = in.readLine()) != null) {
-                    if (str.contains(variableName) && str.contains("max")) {
-                        String[] substrings = str.split(" ");
+                    String[] substrings = str.split(" ");
+                    if (substrings[0].compareTo(variableName) == 0 && substrings[1].compareTo("max") == 0) {
                         result = Float.parseFloat(substrings[2]);
                     }
                 }
@@ -115,8 +115,8 @@ public class CacheFileManager {
             try {
                 in = new BufferedReader(new FileReader(cacheFile));
                 while ((str = in.readLine()) != null) {
-                    if (str.contains(variableName) && str.contains("colormap")) {
-                        String[] substrings = str.split(" ");
+                    String[] substrings = str.split(" ");
+                    if (substrings[0].compareTo(variableName) == 0 && substrings[1].compareTo("colormap") == 0) {
                         result = substrings[2];
                     }
                 }

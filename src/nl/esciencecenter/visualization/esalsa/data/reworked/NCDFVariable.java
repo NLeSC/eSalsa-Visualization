@@ -224,33 +224,8 @@ public class NCDFVariable {
             // determine the bounds by hand.
             float tempMin = Float.POSITIVE_INFINITY, tempMax = Float.NEGATIVE_INFINITY;
             for (long t : getSequenceNumbers()) {
-                // if (heightDimensionSize == 0 || heightDimensionSize == 1) {
-                // float[] dataSlice = getData(t, 0);
-                // for (int i = 0; i < dataSlice.length; i++) {
-                // float value = dataSlice[i];
-                // if (value != fillValue && value < tempMin) {
-                // tempMin = value;
-                // }
-                // if (value != fillValue && value > tempMax) {
-                // tempMax = value;
-                // }
-                // }
-                // if (tempMin == Float.POSITIVE_INFINITY && tempMax ==
-                // Float.NEGATIVE_INFINITY) {
-                // dataSlice = getData(t, 1);
-                // for (int i = 0; i < dataSlice.length; i++) {
-                // float value = dataSlice[i];
-                // if (value != fillValue && value < tempMin) {
-                // tempMin = value;
-                // }
-                // if (value != fillValue && value > tempMax) {
-                // tempMax = value;
-                // }
-                // }
-                // }
-                // } else {
-                for (int d = 0; d < heightDimensionSize; d++) {
-                    float[] dataSlice = getData(t, d);
+                if (heightDimensionSize == 0) {
+                    float[] dataSlice = getData(t, 0);
                     for (int i = 0; i < dataSlice.length; i++) {
                         float value = dataSlice[i];
                         if (value != fillValue && value < tempMin) {
@@ -260,8 +235,43 @@ public class NCDFVariable {
                             tempMax = value;
                         }
                     }
+                } else if (heightDimensionSize == 1) {
+                    float[] dataSlice = getData(t, 0);
+                    for (int i = 0; i < dataSlice.length; i++) {
+                        float value = dataSlice[i];
+                        if (value != fillValue && value < tempMin) {
+                            tempMin = value;
+                        }
+                        if (value != fillValue && value > tempMax) {
+                            tempMax = value;
+                        }
+                    }
+                    if (tempMin == Float.POSITIVE_INFINITY && tempMax == Float.NEGATIVE_INFINITY) {
+                        dataSlice = getData(t, 1);
+                        for (int i = 0; i < dataSlice.length; i++) {
+                            float value = dataSlice[i];
+                            if (value != fillValue && value < tempMin) {
+                                tempMin = value;
+                            }
+                            if (value != fillValue && value > tempMax) {
+                                tempMax = value;
+                            }
+                        }
+                    }
+                } else {
+                    for (int d = 0; d < heightDimensionSize; d++) {
+                        float[] dataSlice = getData(t, d);
+                        for (int i = 0; i < dataSlice.length; i++) {
+                            float value = dataSlice[i];
+                            if (value != fillValue && value < tempMin) {
+                                tempMin = value;
+                            }
+                            if (value != fillValue && value > tempMax) {
+                                tempMax = value;
+                            }
+                        }
+                    }
                 }
-                // }
             }
             if (!Float.isNaN(resultMin)) {
                 minimumValue = resultMin;
