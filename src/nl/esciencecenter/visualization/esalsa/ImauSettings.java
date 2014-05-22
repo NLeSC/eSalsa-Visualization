@@ -118,7 +118,9 @@ public class ImauSettings {
     private int number_of_screens_col = 2;
     private int number_of_screens_row = 2;
 
-    private CacheFileManager cacheFileManager;
+    private CacheFileManager cacheFileManagerAtDataLocation;
+    private CacheFileManager cacheFileManagerAtProgramLocation;
+
     private boolean requestedNewConfiguration;
 
     private ImauSettings() {
@@ -570,8 +572,11 @@ public class ImauSettings {
         screenDescriptions[screenNumber] = result;
         currentColormap.put(state.getVarName(), selectedColorMap);
 
-        if (cacheFileManager != null) {
-            cacheFileManager.writeColormap(state.getVarName(), selectedColorMap);
+        if (cacheFileManagerAtDataLocation != null) {
+            cacheFileManagerAtDataLocation.writeColormap(state.getVarName(), selectedColorMap);
+        }
+        if (cacheFileManagerAtProgramLocation != null) {
+            cacheFileManagerAtProgramLocation.writeColormap(state.getVarName(), selectedColorMap);
         }
         setRequestedNewConfiguration(true);
     }
@@ -886,8 +891,10 @@ public class ImauSettings {
         String colormap = "";
         if (currentColormap.containsKey(key)) {
             colormap = currentColormap.get(key);
-        } else if (cacheFileManager != null) {
-            colormap = cacheFileManager.readColormap(key);
+        } else if (cacheFileManagerAtDataLocation != null) {
+            colormap = cacheFileManagerAtDataLocation.readColormap(key);
+        } else if (cacheFileManagerAtProgramLocation != null) {
+            colormap = cacheFileManagerAtProgramLocation.readColormap(key);
         }
 
         if (colormap.compareTo("") == 0) {
@@ -1004,15 +1011,27 @@ public class ImauSettings {
         setRequestedNewConfiguration(true);
     }
 
-    public synchronized void setCacheFileManager(CacheFileManager cacheFileManager) {
-        this.cacheFileManager = cacheFileManager;
-    }
-
     public synchronized boolean isRequestedNewConfiguration() {
         return requestedNewConfiguration;
     }
 
     public synchronized void setRequestedNewConfiguration(boolean requestedNewConfiguration) {
         this.requestedNewConfiguration = requestedNewConfiguration;
+    }
+
+    public synchronized void setCacheFileManagerAtDataLocation(CacheFileManager cacheAtDataLocation) {
+        this.cacheFileManagerAtDataLocation = cacheAtDataLocation;
+    }
+
+    public synchronized void setCacheFileManagerAtProgramLocation(CacheFileManager cacheAtProgramLocation) {
+        this.cacheFileManagerAtProgramLocation = cacheAtProgramLocation;
+    }
+
+    public synchronized CacheFileManager getCacheFileManagerAtDataLocation() {
+        return cacheFileManagerAtDataLocation;
+    }
+
+    public synchronized CacheFileManager getCacheFileManagerAtProgramLocation() {
+        return cacheFileManagerAtProgramLocation;
     }
 }

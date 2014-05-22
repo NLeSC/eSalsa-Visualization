@@ -6,8 +6,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import nl.esciencecenter.visualization.esalsa.CacheFileManager;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,11 +15,9 @@ import ucar.nc2.Variable;
 
 public class NCDFDataSet {
     private final static Logger logger = LoggerFactory.getLogger(NCDFDataSet.class);
-    private final CacheFileManager cache;
     private final List<NCDFVariable> variables;
 
     public NCDFDataSet(List<File> files) throws IOException, VariableNotCompatibleException {
-        cache = new CacheFileManager(files.get(0).getParent());
         variables = new ArrayList<NCDFVariable>();
         Collections.sort(files);
 
@@ -54,7 +50,7 @@ public class NCDFDataSet {
                             }
                         }
                         if (!alreadyAnalysed) {
-                            NCDFVariable newVariable = new NCDFVariable(cache, v, files);
+                            NCDFVariable newVariable = new NCDFVariable(v, files);
                             variables.add(newVariable);
                         }
                     }

@@ -71,8 +71,6 @@ public class NCDFVariable {
         }
     }
 
-    private final CacheFileManager cache;
-
     private final Variable variable;
     private final List<TimeStep> timeSteps;
 
@@ -82,9 +80,14 @@ public class NCDFVariable {
 
     private float minimumValue, maximumValue, fillValue;
 
-    public NCDFVariable(CacheFileManager cache, Variable variable, List<File> filesToBeAnalysed)
-            throws VariableNotCompatibleException, IOException {
-        this.cache = cache;
+    private final CacheFileManager cacheAtDataLocation;
+    private final CacheFileManager cacheAtProgramLocation;
+
+    public NCDFVariable(Variable variable, List<File> filesToBeAnalysed) throws VariableNotCompatibleException,
+            IOException {
+        cacheAtDataLocation = settings.getCacheFileManagerAtDataLocation();
+        cacheAtProgramLocation = settings.getCacheFileManagerAtProgramLocation();
+
         timeSteps = new ArrayList<TimeStep>();
         this.variable = variable;
 
@@ -199,7 +202,7 @@ public class NCDFVariable {
         // Then Check if we have made a cacheFileManager file earlier and the
         // value is in there
         if (Float.isNaN(resultMin)) {
-            float cacheMin = cache.readMin(variable.getFullName());
+            float cacheMin = cacheAtDataLocation.readMin(variable.getFullName());
             if (!Float.isNaN(cacheMin)) {
                 resultMin = cacheMin;
                 logger.debug("Cache hit for min " + variable.getFullName() + " : " + resultMin);
@@ -207,7 +210,23 @@ public class NCDFVariable {
         }
 
         if (Float.isNaN(resultMax)) {
-            float cacheMax = cache.readMax(variable.getFullName());
+            float cacheMax = cacheAtDataLocation.readMax(variable.getFullName());
+            if (!Float.isNaN(cacheMax)) {
+                resultMax = cacheMax;
+                logger.debug("Cache hit for max " + variable.getFullName() + " : " + resultMax);
+            }
+        }
+
+        if (Float.isNaN(resultMin)) {
+            float cacheMin = cacheAtProgramLocation.readMin(variable.getFullName());
+            if (!Float.isNaN(cacheMin)) {
+                resultMin = cacheMin;
+                logger.debug("Cache hit for min " + variable.getFullName() + " : " + resultMin);
+            }
+        }
+
+        if (Float.isNaN(resultMax)) {
+            float cacheMax = cacheAtProgramLocation.readMax(variable.getFullName());
             if (!Float.isNaN(cacheMax)) {
                 resultMax = cacheMax;
                 logger.debug("Cache hit for max " + variable.getFullName() + " : " + resultMax);
@@ -294,8 +313,10 @@ public class NCDFVariable {
             }
         }
 
-        cache.writeMin(variable.getFullName(), minimumValue);
-        cache.writeMax(variable.getFullName(), maximumValue);
+        cacheAtDataLocation.writeMin(variable.getFullName(), minimumValue);
+        cacheAtDataLocation.writeMax(variable.getFullName(), maximumValue);
+        cacheAtProgramLocation.writeMin(variable.getFullName(), minimumValue);
+        cacheAtProgramLocation.writeMax(variable.getFullName(), maximumValue);
 
         settings.setVarMin(variable.getFullName(), minimumValue);
         settings.setVarMax(variable.getFullName(), maximumValue);

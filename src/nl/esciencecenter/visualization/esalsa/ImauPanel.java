@@ -73,8 +73,6 @@ public class ImauPanel extends NeonInterfacePanel {
 
     protected GLCanvas glCanvas;
 
-    private CacheFileManager cache;
-
     private final boolean demomode = false;
 
     public ImauPanel() {
@@ -621,8 +619,12 @@ public class ImauPanel extends NeonInterfacePanel {
             for (String v : timer.getVariables()) {
                 variables.add(v);
             }
-            cache = new CacheFileManager(files[0].getParent());
-            settings.setCacheFileManager(cache);
+
+            CacheFileManager cacheAtDataLocation = new CacheFileManager(files[0].getParent());
+            settings.setCacheFileManagerAtDataLocation(cacheAtDataLocation);
+            CacheFileManager cacheAtProgramLocation = new CacheFileManager(System.getProperty("user.dir"));
+            settings.setCacheFileManagerAtProgramLocation(cacheAtProgramLocation);
+
             settings.initDefaultVariables(variables, timer.getInitialFrameNumber());
 
             createDataTweakPanel();
@@ -643,7 +645,7 @@ public class ImauPanel extends NeonInterfacePanel {
     }
 
     private File[] openFile() {
-        final JFileChooser fileChooser = new JFileChooser("/media/maarten/diskhdd1/eSalsaDATA/01deg_prod_run3/");
+        final JFileChooser fileChooser = new JFileChooser();// "/media/maarten/diskhdd1/eSalsaDATA/01deg_prod_run3/");
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(true);
