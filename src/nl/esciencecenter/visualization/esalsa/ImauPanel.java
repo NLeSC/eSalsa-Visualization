@@ -608,6 +608,12 @@ public class ImauPanel extends NeonInterfacePanel {
         }
 
         if (accept) {
+            CacheFileManager cacheAtDataLocation = new CacheFileManager(files[0].getParent());
+            logger.debug("settings cacheAtDataLocation " + files[0].getParent());
+            settings.setCacheFileManagerAtDataLocation(cacheAtDataLocation);
+            CacheFileManager cacheAtProgramLocation = new CacheFileManager(System.getProperty("user.dir"));
+            settings.setCacheFileManagerAtProgramLocation(cacheAtProgramLocation);
+
             if (timer.isInitialized()) {
                 timer.close();
             }
@@ -619,11 +625,6 @@ public class ImauPanel extends NeonInterfacePanel {
             for (String v : timer.getVariables()) {
                 variables.add(v);
             }
-
-            CacheFileManager cacheAtDataLocation = new CacheFileManager(files[0].getParent());
-            settings.setCacheFileManagerAtDataLocation(cacheAtDataLocation);
-            CacheFileManager cacheAtProgramLocation = new CacheFileManager(System.getProperty("user.dir"));
-            settings.setCacheFileManagerAtProgramLocation(cacheAtProgramLocation);
 
             settings.initDefaultVariables(variables, timer.getInitialFrameNumber());
 
