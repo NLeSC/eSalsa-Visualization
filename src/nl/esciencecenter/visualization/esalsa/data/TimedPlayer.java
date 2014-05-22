@@ -3,6 +3,7 @@ package nl.esciencecenter.visualization.esalsa.data;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFormattedTextField;
 import javax.swing.JSlider;
@@ -16,8 +17,8 @@ import nl.esciencecenter.visualization.esalsa.ImauSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ImauTimedPlayer implements Runnable {
-    private final static Logger logger = LoggerFactory.getLogger(ImauTimedPlayer.class);
+public class TimedPlayer implements Runnable {
+    private final static Logger logger = LoggerFactory.getLogger(TimedPlayer.class);
 
     public static enum states {
         UNOPENED, UNINITIALIZED, INITIALIZED, STOPPED, REDRAWING, SNAPSHOTTING, MOVIEMAKING, CLEANUP, WAITINGONFRAME, PLAYING
@@ -26,7 +27,7 @@ public class ImauTimedPlayer implements Runnable {
     private final ImauSettings settings = ImauSettings.getInstance();
 
     private states currentState = states.UNOPENED;
-    private int frameNumber;
+    private long frameNumber;
 
     private final boolean running = true;
     private boolean initialized = false;
@@ -38,21 +39,17 @@ public class ImauTimedPlayer implements Runnable {
 
     private final InputHandler inputHandler;
 
-    private ImauDatasetManager dsManager;
-    private TextureStorage texStorage;
+    private DatasetManager dsManager;
 
     private boolean needsScreenshot = false;
     private String screenshotFilename = "";
 
-    private long waittime = settings.getWaittimeMovie();
+    private final long waittime = settings.getWaittimeMovie();
 
     private final ArrayList<Float3Vector> bezierPoints, fixedPoints;
     private final ArrayList<Integer> bezierSteps;
 
-    private File fileDS1;
-    private File fileDS2;
-
-    public ImauTimedPlayer(CustomJSlider timeBar2, JFormattedTextField frameCounter) {
+    public TimedPlayer(CustomJSlider timeBar2, JFormattedTextField frameCounter) {
         this.timeBar = timeBar2;
         this.frameCounter = frameCounter;
         this.inputHandler = InputHandler.getInstance();
@@ -98,7 +95,7 @@ public class ImauTimedPlayer implements Runnable {
         }
     }
 
-    public void close() {
+    public synchronized void close() {
         initialized = false;
         frameNumber = 0;
         timeBar.setValue(0);
@@ -106,50 +103,19 @@ public class ImauTimedPlayer implements Runnable {
         timeBar.setMaximum(0);
     }
 
-    public void init(File fileDS1) {
-        this.fileDS1 = fileDS1;
-        this.fileDS2 = null;
-        this.dsManager = new ImauDatasetManager(fileDS1, null, 1, 4);
-        this.texStorage = dsManager.getTextureStorage();
+    public synchronized void init(File[] files) {
+        this.dsManager = new DatasetManager(files);
 
-        frameNumber = dsManager.getFrameNumberOfIndex(0);
-        final int initialMaxBar = dsManager.getNumFiles() - 1;
+        frameNumber = dsManager.getFirstFrameNumber();
+        final int initialMaxBar = dsManager.getNumFrames() - 1;
 
         timeBar.setMaximum(initialMaxBar);
         timeBar.setMinimum(0);
 
-        updateFrame(frameNumber, true);
-
         initialized = true;
     }
 
-    public void init(File fileDS1, File fileDS2) {
-        this.fileDS1 = fileDS1;
-        this.fileDS2 = fileDS2;
-        this.dsManager = new ImauDatasetManager(fileDS1, fileDS2, 1, 4);
-        this.texStorage = dsManager.getTextureStorage();
-
-        frameNumber = dsManager.getFrameNumberOfIndex(0);
-        final int initialMaxBar = dsManager.getNumFiles() - 1;
-
-        timeBar.setMaximum(initialMaxBar);
-        timeBar.setMinimum(0);
-
-        this.waittime = waittime * 2;
-
-        updateFrame(frameNumber, true);
-
-        initialized = true;
-    }
-
-    public void reinitializeDatastores() {
-        this.dsManager = new ImauDatasetManager(fileDS1, fileDS2, 1, 4);
-        this.texStorage = dsManager.getTextureStorage();
-
-        updateFrame(frameNumber, true);
-    }
-
-    public boolean isInitialized() {
+    public synchronized boolean isInitialized() {
         return initialized;
     }
 
@@ -169,7 +135,7 @@ public class ImauTimedPlayer implements Runnable {
         stop();
 
         try {
-            int newFrameNumber = dsManager.getPreviousFrameNumber(frameNumber);
+            long newFrameNumber = dsManager.getPreviousFrameNumber(frameNumber);
             updateFrame(newFrameNumber, false);
         } catch (IOException e) {
             logger.debug("One back failed.");
@@ -180,7 +146,7 @@ public class ImauTimedPlayer implements Runnable {
         stop();
 
         try {
-            int newFrameNumber = dsManager.getNextFrameNumber(frameNumber);
+            long newFrameNumber = dsManager.getNextFrameNumber(frameNumber);
             updateFrame(newFrameNumber, false);
         } catch (IOException e) {
             logger.debug("One forward failed.");
@@ -196,7 +162,7 @@ public class ImauTimedPlayer implements Runnable {
 
     public synchronized void rewind() {
         stop();
-        int newFrameNumber = dsManager.getFrameNumberOfIndex(0);
+        long newFrameNumber = dsManager.getFirstFrameNumber();
         updateFrame(newFrameNumber, false);
     }
 
@@ -209,6 +175,8 @@ public class ImauTimedPlayer implements Runnable {
                     + rotation.getY() + " , viewDist: " + viewDist);
 
             screenshotFilename = settings.getScreenshotPath() + String.format("%05d", (frameNumber)) + ".png";
+
+            System.out.println("Screenshot filename: " + screenshotFilename);
         }
         needsScreenshot = value;
     }
@@ -231,10 +199,6 @@ public class ImauTimedPlayer implements Runnable {
         inputHandler.setRotation(new Float3Vector(settings.getInitialRotationX(), settings.getInitialRotationY(), 0f));
         inputHandler.setViewDist(settings.getInitialZoom());
 
-        // inputHandler.setRotation(new Float3Vector(bezierPoints.get(0).get(0),
-        // bezierPoints.get(0).get(1), 0f));
-        // inputHandler.setViewDist(bezierPoints.get(0).get(2));
-
         stop();
 
         while (running) {
@@ -247,15 +211,11 @@ public class ImauTimedPlayer implements Runnable {
                         if (currentState == states.MOVIEMAKING) {
                             final Float3Vector rotation = inputHandler.getRotation();
                             if (settings.getMovieRotate()) {
-                                // rotation.set(
-                                // 1,
-                                // rotation.get(1)
-                                // + settings
-                                // .getMovieRotationSpeedDef());
-                                // inputHandler.setRotation(rotation);
-                                inputHandler.setRotation(new Float3Vector(bezierPoints.get(frameNumber).getX(),
-                                        bezierPoints.get(frameNumber).getY(), 0f));
-                                inputHandler.setViewDist(bezierPoints.get(frameNumber).getZ());
+                                inputHandler.setRotation(new Float3Vector(bezierPoints.get(
+                                        dsManager.getIndexOfFrameNumber(frameNumber)).getX(), bezierPoints.get(
+                                        dsManager.getIndexOfFrameNumber(frameNumber)).getY(), 0f));
+                                inputHandler.setViewDist(bezierPoints.get(dsManager.getIndexOfFrameNumber(frameNumber))
+                                        .getZ());
                                 setScreenshotNeeded(true);
                             } else {
                                 setScreenshotNeeded(true);
@@ -264,12 +224,11 @@ public class ImauTimedPlayer implements Runnable {
 
                         // Forward frame
                         if (currentState != states.REDRAWING) {
-                            int newFrameNumber;
+                            long newFrameNumber;
                             try {
                                 newFrameNumber = dsManager.getNextFrameNumber(frameNumber);
-                                if (texStorage.doneWithLastRequest()) {
-                                    updateFrame(newFrameNumber, false);
-                                }
+                                updateFrame(newFrameNumber, false);
+
                             } catch (IOException e) {
                                 logger.debug("Waiting on frame after " + frameNumber);
                                 currentState = states.WAITINGONFRAME;
@@ -296,22 +255,27 @@ public class ImauTimedPlayer implements Runnable {
             } else if (currentState == states.REDRAWING) {
                 currentState = states.STOPPED;
             } else if (currentState == states.WAITINGONFRAME) {
-                // try {
-                // Thread.sleep(settings.getWaittimeBeforeRetry());
-
                 rewind();
                 start();
-                // } catch (final InterruptedException e) {
-                // System.err.println("Interrupted while waiting.");
-                // }
             }
         }
     }
 
-    public synchronized void setFrame(int value, boolean overrideUpdate) {
+    public synchronized void setFrameByIndex(int value, boolean overrideUpdate) {
         stop();
 
-        updateFrame(dsManager.getFrameNumberOfIndex(value), overrideUpdate);
+        long frameNumberIndex;
+        try {
+            frameNumberIndex = dsManager.getFirstFrameNumber();
+            for (int i = 0; i < value; i++) {
+                frameNumberIndex = dsManager.getNextFrameNumber(frameNumberIndex);
+            }
+        } catch (IOException e) {
+            logger.error("Frame index of " + value + " not found.");
+            frameNumberIndex = dsManager.getFirstFrameNumber();
+        }
+
+        updateFrame(frameNumberIndex, overrideUpdate);
     }
 
     public synchronized void start() {
@@ -322,39 +286,42 @@ public class ImauTimedPlayer implements Runnable {
         currentState = states.STOPPED;
     }
 
-    private synchronized void updateFrame(int newFrameNumber, boolean overrideUpdate) {
+    private synchronized void updateFrame(long newFrameNumber, boolean overrideUpdate) {
         if (dsManager != null) {
             if (newFrameNumber != frameNumber || overrideUpdate) {
+                if (!settings.isRequestedNewConfiguration()) {
+                    frameNumber = newFrameNumber;
+                    settings.setFrameNumber(newFrameNumber);
+                    this.timeBar.setValue(dsManager.getIndexOfFrameNumber(newFrameNumber));
+                    this.frameCounter.setValue(dsManager.getIndexOfFrameNumber(newFrameNumber));
 
-                frameNumber = newFrameNumber;
-                settings.setFrameNumber(newFrameNumber);
-                this.timeBar.setValue(dsManager.getIndexOfFrameNumber(newFrameNumber));
-                this.frameCounter.setValue(dsManager.getIndexOfFrameNumber(newFrameNumber));
+                    settings.setRequestedNewConfiguration(true);
+                }
             }
         }
     }
 
-    public TextureStorage getTextureStorage() {
-        return texStorage;
+    public synchronized TextureStorage getTextureStorage(String varName) {
+        return dsManager.getTextureStorage(varName);
     }
 
-    public ArrayList<String> getVariables() {
+    public synchronized List<String> getVariables() {
         return dsManager.getVariables();
     }
 
-    public String getVariableFancyName(String varName) {
-        return dsManager.getVariableFancyName(varName);
-    }
-
-    public String getVariableUnits(String varName) {
+    public synchronized String getVariableUnits(String varName) {
         return dsManager.getVariableUnits(varName);
     }
 
-    public int getImageWidth() {
-        return dsManager.getImageWidth();
+    public synchronized float getMinValueContainedInDataset(String varName) {
+        return dsManager.getMinValueContainedInDataset(varName);
     }
 
-    public int getImageHeight() {
-        return dsManager.getImageHeight();
+    public synchronized float getMaxValueContainedInDataset(String varName) {
+        return dsManager.getMaxValueContainedInDataset(varName);
+    }
+
+    public long getInitialFrameNumber() {
+        return dsManager.getFirstFrameNumber();
     }
 }

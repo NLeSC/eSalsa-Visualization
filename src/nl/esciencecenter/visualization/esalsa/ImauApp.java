@@ -6,7 +6,6 @@ import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.io.File;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -26,33 +25,8 @@ public class ImauApp {
     private static ImauWindow imauWindow;
 
     public static void main(String[] arguments) {
-        String cmdlnfileName = null;
-        String cmdlnfileName2 = null;
-        String path = "";
-
-        for (int i = 0; i < arguments.length; i++) {
-            if (arguments[i].equals("-o")) {
-                i++;
-                cmdlnfileName = arguments[i];
-                final File cmdlnfile = new File(cmdlnfileName);
-                path = cmdlnfile.getPath().substring(0, cmdlnfile.getPath().length() - cmdlnfile.getName().length());
-            } else if (arguments[i].equals("-o2")) {
-                i++;
-                cmdlnfileName2 = arguments[i];
-            } else if (arguments[i].equals("-resume")) {
-                i++;
-                ImauApp.settings.setInitial_simulation_frame(Integer.parseInt(arguments[i]));
-                i++;
-                ImauApp.settings.setInitial_rotation_x(Float.parseFloat(arguments[i]));
-                i++;
-                ImauApp.settings.setInitial_rotation_y(Float.parseFloat(arguments[i]));
-            } else {
-                cmdlnfileName = null;
-                path = System.getProperty("user.dir");
-            }
-        }
         // Create the Swing interface elements
-        imauPanel = new ImauPanel(path, cmdlnfileName, cmdlnfileName2);
+        imauPanel = new ImauPanel();
 
         // Create the GLEventListener
         imauWindow = new ImauWindow(InputHandler.getInstance());

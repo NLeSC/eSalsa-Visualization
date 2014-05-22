@@ -20,6 +20,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -36,15 +37,13 @@ import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicSliderUI;
 
 import nl.esciencecenter.neon.NeonInterfacePanel;
-import nl.esciencecenter.neon.swing.ColormapInterpreter;
 import nl.esciencecenter.neon.swing.CustomJSlider;
 import nl.esciencecenter.neon.swing.GoggleSwing;
 import nl.esciencecenter.neon.swing.RangeSlider;
 import nl.esciencecenter.neon.swing.RangeSliderUI;
 import nl.esciencecenter.neon.swing.SimpleImageIcon;
-import nl.esciencecenter.visualization.esalsa.data.ImauTimedPlayer;
-import nl.esciencecenter.visualization.esalsa.data.NetCDFUtil;
 import nl.esciencecenter.visualization.esalsa.data.SurfaceTextureDescription;
+import nl.esciencecenter.visualization.esalsa.data.TimedPlayer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,25 +61,22 @@ public class ImauPanel extends NeonInterfacePanel {
     protected CustomJSlider timeBar;
 
     protected JFormattedTextField frameCounter, stepSizeField;
-    private TweakState currentConfigState = TweakState.NONE;
+    private TweakState currentConfigState = TweakState.DATA;
 
     private final JPanel configPanel;
 
     private final JPanel dataConfig, visualConfig, movieConfig;
 
-    private static ImauTimedPlayer timer;
+    private static TimedPlayer timer;
 
-    private File file1;
     private ArrayList<String> variables;
 
     protected GLCanvas glCanvas;
 
     private final boolean demomode = false;
 
-    public ImauPanel(String path, String cmdlnfileName, String cmdlnfileName2) {
+    public ImauPanel() {
         setLayout(new BorderLayout(0, 0));
-
-        // this.imauWindow = imauWindow;
 
         variables = new ArrayList<String>();
 
@@ -93,7 +89,7 @@ public class ImauPanel extends NeonInterfacePanel {
         timeBar.setPaintTicks(true);
         timeBar.setSnapToTicks(true);
 
-        timer = new ImauTimedPlayer(timeBar, frameCounter);
+        timer = new TimedPlayer(timeBar, frameCounter);
 
         // Make the menu bar
         final JMenuBar menuBar = new JMenuBar();
@@ -104,35 +100,15 @@ public class ImauPanel extends NeonInterfacePanel {
         open.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
-                final File file = openFile();
-                file1 = file;
-                handleFile(file);
+                final File[] files = openFile();
+                handleFiles(files);
             }
         });
         file.add(open);
         menuBar.add(file);
-
-        // final JMenuItem open2 = new JMenuItem("Open Second");
-        // open2.addActionListener(new ActionListener() {
-        // @Override
-        // public void actionPerformed(ActionEvent arg0) {
-        // final File file = openFile();
-        // handleFile(file1, file);
-        // }
-        // });
-        // file.add(open2);
-
-        // final JMenuItem makeMovie = new JMenuItem("Make movie.");
-        // makeMovie.addActionListener(new ActionListener() {
-        // @Override
-        // public void actionPerformed(ActionEvent arg0) {
-        // setTweakState(TweakState.MOVIE);
-        // }
-        // });
-        // options.add(makeMovie);
+        menuBar.add(Box.createHorizontalGlue());
 
         if (!demomode) {
-
             final JMenu options = new JMenu("Options");
             final JMenuItem showDataTweakPanel = new JMenuItem("Show data configuration panel.");
             showDataTweakPanel.addActionListener(new ActionListener() {
@@ -142,56 +118,6 @@ public class ImauPanel extends NeonInterfacePanel {
                 }
             });
             options.add(showDataTweakPanel);
-            // final JMenuItem showVisualTweakPanel = new JMenuItem(
-            // "Show visual configuration panel.");
-            // showVisualTweakPanel.addActionListener(new ActionListener() {
-            // @Override
-            // public void actionPerformed(ActionEvent arg0) {
-            // setTweakState(TweakState.VISUAL);
-            // }
-            // });
-            // options.add(showVisualTweakPanel);
-            //
-            // // a group of radio button menu items, to control output options
-            // options.addSeparator();
-            //
-            // JRadioButtonMenuItem rbMenuItem;
-            // ButtonGroup screenCountGroup = new ButtonGroup();
-            //
-            // rbMenuItem = new JRadioButtonMenuItem("2x2");
-            // rbMenuItem.setSelected(true);
-            // screenCountGroup.add(rbMenuItem);
-            // rbMenuItem.addActionListener(new ActionListener() {
-            // @Override
-            // public void actionPerformed(ActionEvent e) {
-            // JRadioButtonMenuItem item = (JRadioButtonMenuItem) e
-            // .getSource();
-            // item.setSelected(true);
-            //
-            // settings.setNumberOfScreens(2, 2);
-            // dataConfig.setVisible(false);
-            // createDataTweakPanel();
-            // dataConfig.setVisible(true);
-            // }
-            // });
-            // options.add(rbMenuItem);
-            //
-            // rbMenuItem = new JRadioButtonMenuItem("3x3");
-            // screenCountGroup.add(rbMenuItem);
-            // rbMenuItem.addActionListener(new ActionListener() {
-            // @Override
-            // public void actionPerformed(ActionEvent e) {
-            // JRadioButtonMenuItem item = (JRadioButtonMenuItem) e
-            // .getSource();
-            // item.setSelected(true);
-            //
-            // settings.setNumberOfScreens(3, 3);
-            // dataConfig.setVisible(false);
-            // createDataTweakPanel();
-            // dataConfig.setVisible(true);
-            // }
-            // });
-            // options.add(rbMenuItem);
 
             menuBar.add(options);
 
@@ -216,12 +142,6 @@ public class ImauPanel extends NeonInterfacePanel {
         JLabel imaulogo = new JLabel(imauIcon);
         imaulogo.setMinimumSize(new Dimension(50, 20));
         imaulogo.setMaximumSize(new Dimension(52, 28));
-
-        // ImageIcon qrIcon = GoggleSwing.createResizedImageIcon(
-        // "images/qrcode_nlesc.png", "QR", 28, 28);
-        // JLabel qr = new JLabel(qrIcon);
-        // qr.setMinimumSize(new Dimension(20, 20));
-        // qr.setMaximumSize(new Dimension(28, 28));
 
         menuBar2.add(Box.createHorizontalGlue());
         menuBar2.add(imaulogo);
@@ -257,29 +177,10 @@ public class ImauPanel extends NeonInterfacePanel {
         createDataTweakPanel();
 
         visualConfig = new JPanel();
-        // visualConfig.setLayout(new BoxLayout(visualConfig,
-        // BoxLayout.Y_AXIS));
-        // visualConfig.setMinimumSize(visualConfig.getPreferredSize());
-        // createVisualTweakPanel();
 
         movieConfig = new JPanel();
-        // movieConfig.setLayout(new BoxLayout(movieConfig, BoxLayout.Y_AXIS));
-        // movieConfig.setMinimumSize(configPanel.getPreferredSize());
-        // createMovieTweakPanel();
 
         add(bottomPanel, BorderLayout.SOUTH);
-
-        // Read command line file information
-        if (cmdlnfileName != null) {
-            if (cmdlnfileName2 != null) {
-                final File cmdlnfile1 = new File(cmdlnfileName);
-                final File cmdlnfile2 = new File(cmdlnfileName2);
-                handleFile(cmdlnfile1, cmdlnfile2);
-            } else {
-                final File cmdlnfile = new File(cmdlnfileName);
-                handleFile(cmdlnfile);
-            }
-        }
 
         setTweakState(TweakState.DATA);
 
@@ -363,13 +264,6 @@ public class ImauPanel extends NeonInterfacePanel {
         screenshotButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // timer.stop();
-                // final ImauInputHandler inputHandler = ImauInputHandler
-                // .getInstance();
-                // final String fileName = "screenshot: " + "{"
-                // + inputHandler.getRotation().get(0) + ","
-                // + inputHandler.getRotation().get(1) + " - "
-                // + Float.toString(inputHandler.getViewDist()) + "} ";
                 timer.setScreenshotNeeded(true);
             }
         });
@@ -433,7 +327,8 @@ public class ImauPanel extends NeonInterfacePanel {
                 if (source.hasFocus()) {
                     if (source == frameCounter) {
                         if (timer.isInitialized()) {
-                            timer.setFrame(((Number) frameCounter.getValue()).intValue() - timeBar.getMinimum(), false);
+                            timer.setFrameByIndex(((Number) frameCounter.getValue()).intValue() - timeBar.getMinimum(),
+                                    false);
                         }
                         playButton.setIcon(playIcon);
                         playButton.invalidate();
@@ -449,7 +344,7 @@ public class ImauPanel extends NeonInterfacePanel {
             public void stateChanged(ChangeEvent e) {
                 final JSlider source = (JSlider) e.getSource();
                 if (source.hasFocus()) {
-                    timer.setFrame(timeBar.getValue() - timeBar.getMinimum(), false);
+                    timer.setFrameByIndex(timeBar.getValue() - timeBar.getMinimum(), false);
                     playButton.setIcon(playIcon);
                     playButton.invalidate();
                 }
@@ -511,161 +406,176 @@ public class ImauPanel extends NeonInterfacePanel {
     private void createDataTweakPanel() {
         dataConfig.removeAll();
 
-        final ItemListener listener = new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent arg0) {
-                setTweakState(TweakState.NONE);
-            }
-        };
-        dataConfig.add(GoggleSwing.titleBox("Configuration", listener));
+        if (timer.isInitialized()) {
 
-        if (!demomode) {
-            final JLabel depthSetting = new JLabel("" + settings.getDepthDef());
-            final ChangeListener depthListener = new ChangeListener() {
+            final ItemListener listener = new ItemListener() {
                 @Override
-                public void stateChanged(ChangeEvent e) {
-                    final JSlider source = (JSlider) e.getSource();
-                    if (source.hasFocus()) {
-                        settings.setDepth(source.getValue());
-                        depthSetting.setText("" + settings.getDepthDef());
-                    }
+                public void itemStateChanged(ItemEvent arg0) {
+                    setTweakState(TweakState.NONE);
                 }
             };
-            dataConfig.add(GoggleSwing.sliderBox("Depth setting", depthListener, settings.getDepthMin(),
-                    settings.getDepthMax(), 1, settings.getDepthDef(), depthSetting));
-        }
+            dataConfig.add(GoggleSwing.titleBox("Configuration", listener));
 
-        final ArrayList<Component> vcomponents = new ArrayList<Component>();
-        JLabel windowlabel = new JLabel("Window Selection");
-        windowlabel.setMaximumSize(new Dimension(200, 25));
-        windowlabel.setAlignmentX(CENTER_ALIGNMENT);
-
-        vcomponents.add(windowlabel);
-        vcomponents.add(Box.createHorizontalGlue());
-
-        String[] screenSelection = new String[1 + settings.getNumScreensRows() * settings.getNumScreensCols()];
-        screenSelection[0] = "All Screens";
-        for (int i = 0; i < settings.getNumScreensRows() * settings.getNumScreensCols(); i++) {
-            screenSelection[i + 1] = "Screen Number " + i;
-        }
-
-        final JComboBox<String> comboBox = new JComboBox<String>(screenSelection);
-        comboBox.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                int selection = comboBox.getSelectedIndex();
-                settings.setWindowSelection(selection);
-            }
-        });
-        comboBox.setMaximumSize(new Dimension(200, 25));
-        vcomponents.add(comboBox);
-        vcomponents.add(GoggleSwing.verticalStrut(5));
-
-        dataConfig.add(GoggleSwing.vBoxedComponents(vcomponents, true));
-
-        String[] dataModes = SurfaceTextureDescription.getDataModes();
-
-        final String[] colorMaps = ColormapInterpreter.getColormapNames();
-
-        for (int i = 0; i < settings.getNumScreensRows() * settings.getNumScreensCols(); i++) {
-            final int currentScreen = i;
-
-            final ArrayList<Component> screenVcomponents = new ArrayList<Component>();
-
-            JLabel screenLabel = new JLabel("Screen " + currentScreen);
-            screenVcomponents.add(screenLabel);
-
-            SurfaceTextureDescription selectionDescription = settings.getSurfaceDescription(currentScreen);
-
-            final ArrayList<Component> screenHcomponents = new ArrayList<Component>();
-
-            JComboBox<String> dataModeComboBox = new JComboBox<String>(dataModes);
-            ActionListener al = new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (e != null && e.getSource() instanceof JComboBox
-                            && e.getSource().getClass().getComponentType() == String.class) {
-                        @SuppressWarnings("unchecked")
-                        JComboBox<String> cb = (JComboBox<String>) e.getSource();
-                        int selection = cb.getSelectedIndex();
-
-                        if (selection == 1) {
-                            settings.setDataMode(currentScreen, false, false, true);
-                        } else if (selection == 2) {
-                            settings.setDataMode(currentScreen, false, true, false);
-                        } else {
-                            settings.setDataMode(currentScreen, false, false, false);
+            if (!demomode) {
+                final JLabel depthSetting = new JLabel("" + settings.getDepthDef());
+                final ChangeListener depthListener = new ChangeListener() {
+                    @Override
+                    public void stateChanged(ChangeEvent e) {
+                        final JSlider source = (JSlider) e.getSource();
+                        if (source.hasFocus()) {
+                            settings.setDepth(source.getValue());
+                            depthSetting.setText("" + settings.getDepthDef());
                         }
                     }
-                }
-            };
-            dataModeComboBox.addActionListener(al);
-            dataModeComboBox.setSelectedIndex(selectionDescription.getDataModeIndex());
-            dataModeComboBox.setMinimumSize(new Dimension(50, 25));
-            dataModeComboBox.setMaximumSize(new Dimension(100, 25));
-            screenHcomponents.add(dataModeComboBox);
+                };
+                dataConfig.add(GoggleSwing.sliderBox("Depth setting", depthListener, settings.getDepthMin(),
+                        settings.getDepthMax(), 1, settings.getDepthDef(), depthSetting));
+            }
 
-            final JComboBox<String> variablesComboBox = new JComboBox<String>(variables.toArray(new String[0]));
-            variablesComboBox.setSelectedItem(selectionDescription.getVarName());
-            variablesComboBox.setMinimumSize(new Dimension(50, 25));
-            variablesComboBox.setMaximumSize(new Dimension(100, 25));
-            screenHcomponents.add(variablesComboBox);
+            final ArrayList<Component> vcomponents = new ArrayList<Component>();
+            JLabel windowlabel = new JLabel("Window Selection");
+            windowlabel.setMaximumSize(new Dimension(200, 25));
+            windowlabel.setAlignmentX(CENTER_ALIGNMENT);
 
-            screenVcomponents.add(GoggleSwing.hBoxedComponents(screenHcomponents, true));
+            vcomponents.add(windowlabel);
+            vcomponents.add(Box.createHorizontalGlue());
 
-            final JComboBox<SimpleImageIcon> colorMapsComboBox = ColormapInterpreter.getLegendJComboBox(new Dimension(
-                    200, 25));
-            colorMapsComboBox.setSelectedItem(colorMapsComboBox.getItemAt(ColormapInterpreter
-                    .getIndexOfColormap(selectionDescription.getColorMap())));
-            colorMapsComboBox.setMinimumSize(new Dimension(100, 25));
-            colorMapsComboBox.setMaximumSize(new Dimension(200, 25));
-            screenVcomponents.add(colorMapsComboBox);
+            String[] screenSelection = new String[1 + settings.getNumScreensRows() * settings.getNumScreensCols()];
+            screenSelection[0] = "All Screens";
+            for (int i = 0; i < settings.getNumScreensRows() * settings.getNumScreensCols(); i++) {
+                screenSelection[i + 1] = "Screen Number " + i;
+            }
 
-            final RangeSlider selectionLegendSlider = new RangeSlider();
-            ((RangeSliderUI) selectionLegendSlider.getUI()).setRangeColorMap(selectionDescription.getColorMap());
-            selectionLegendSlider.setMinimum(0);
-            selectionLegendSlider.setMaximum(100);
-            selectionLegendSlider.setValue(settings.getRangeSliderLowerValue(currentScreen));
-            selectionLegendSlider.setUpperValue(settings.getRangeSliderUpperValue(currentScreen));
-
-            colorMapsComboBox.addItemListener(new ItemListener() {
+            final JComboBox<String> comboBox = new JComboBox<String>(screenSelection);
+            comboBox.addItemListener(new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent e) {
-                    settings.setColorMap(currentScreen, colorMaps[colorMapsComboBox.getSelectedIndex()]);
-
-                    ((RangeSliderUI) selectionLegendSlider.getUI()).setRangeColorMap(colorMaps[colorMapsComboBox
-                            .getSelectedIndex()]);
-                    selectionLegendSlider.invalidate();
+                    int selection = comboBox.getSelectedIndex();
+                    settings.setWindowSelection(selection);
                 }
             });
+            comboBox.setMaximumSize(new Dimension(200, 25));
+            vcomponents.add(comboBox);
+            vcomponents.add(GoggleSwing.verticalStrut(5));
 
-            selectionLegendSlider.addChangeListener(new ChangeListener() {
-                @Override
-                public void stateChanged(ChangeEvent e) {
-                    RangeSlider slider = (RangeSlider) e.getSource();
-                    SurfaceTextureDescription texDesc = settings.getSurfaceDescription(currentScreen);
+            dataConfig.add(GoggleSwing.vBoxedComponents(vcomponents, true));
 
-                    String var = texDesc.getVarName();
-                    settings.setVariableRange(currentScreen, var, slider.getValue(), slider.getUpperValue());
-                }
-            });
+            String[] dataModes = SurfaceTextureDescription.getDataModes();
 
-            variablesComboBox.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    String var = (String) ((JComboBox) e.getSource()).getSelectedItem();
+            final String[] colorMaps = JOCLColormapper.getColormapNames();
 
-                    settings.setVariable(currentScreen, var);
-                    selectionLegendSlider.setValue(settings.getRangeSliderLowerValue(currentScreen));
-                    selectionLegendSlider.setUpperValue(settings.getRangeSliderUpperValue(currentScreen));
-                }
-            });
+            for (int i = 0; i < settings.getNumScreensRows() * settings.getNumScreensCols(); i++) {
+                final int currentScreen = i;
 
-            screenVcomponents.add(selectionLegendSlider);
+                final ArrayList<Component> screenVcomponents = new ArrayList<Component>();
 
-            dataConfig.add(GoggleSwing.vBoxedComponents(screenVcomponents, true));
+                JLabel screenLabel = new JLabel("Screen " + currentScreen);
+                screenVcomponents.add(screenLabel);
+
+                SurfaceTextureDescription selectionDescription = settings.getSurfaceDescription(currentScreen);
+
+                final ArrayList<Component> screenHcomponents = new ArrayList<Component>();
+
+                JComboBox<String> dataModeComboBox = new JComboBox<String>(dataModes);
+                ActionListener al = new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        if (e != null && e.getSource() instanceof JComboBox
+                                && e.getSource().getClass().getComponentType() == String.class) {
+                            @SuppressWarnings("unchecked")
+                            JComboBox<String> cb = (JComboBox<String>) e.getSource();
+                            int selection = cb.getSelectedIndex();
+
+                            if (selection == 1) {
+                                settings.setDataMode(currentScreen, false, false, true);
+                            } else if (selection == 2) {
+                                settings.setDataMode(currentScreen, false, true, false);
+                            } else {
+                                settings.setDataMode(currentScreen, false, false, false);
+                            }
+                        }
+                    }
+                };
+                dataModeComboBox.addActionListener(al);
+                dataModeComboBox.setSelectedIndex(selectionDescription.getDataModeIndex());
+                dataModeComboBox.setMinimumSize(new Dimension(50, 25));
+                dataModeComboBox.setMaximumSize(new Dimension(100, 25));
+                screenHcomponents.add(dataModeComboBox);
+
+                final JComboBox<String> variablesComboBox = new JComboBox<String>(variables.toArray(new String[0]));
+                variablesComboBox.setSelectedItem(selectionDescription.getVarName());
+                variablesComboBox.setMinimumSize(new Dimension(50, 25));
+                variablesComboBox.setMaximumSize(new Dimension(100, 25));
+                screenHcomponents.add(variablesComboBox);
+
+                final JCheckBox logCheckBox = new JCheckBox("log?", false);
+                ItemListener logCheckboxListener = new ItemListener() {
+                    @Override
+                    public void itemStateChanged(ItemEvent e) {
+                        JCheckBox cb = (JCheckBox) e.getSource();
+                        settings.setLogScale(currentScreen, cb.isSelected());
+
+                    }
+                };
+                logCheckBox.addItemListener(logCheckboxListener);
+                screenHcomponents.add(logCheckBox);
+
+                screenVcomponents.add(GoggleSwing.hBoxedComponents(screenHcomponents, true));
+
+                final JComboBox<SimpleImageIcon> colorMapsComboBox = JOCLColormapper.getLegendJComboBox(new Dimension(
+                        200, 25));
+                colorMapsComboBox.setSelectedItem(colorMapsComboBox.getItemAt(JOCLColormapper
+                        .getIndexOfColormap(selectionDescription.getColorMap())));
+                colorMapsComboBox.setMinimumSize(new Dimension(100, 25));
+                colorMapsComboBox.setMaximumSize(new Dimension(200, 25));
+                screenVcomponents.add(colorMapsComboBox);
+
+                final RangeSlider selectionLegendSlider = new RangeSlider();
+                ((RangeSliderUI) selectionLegendSlider.getUI()).setRangeColorMap(selectionDescription.getColorMap());
+                selectionLegendSlider.setMinimum(0);
+                selectionLegendSlider.setMaximum(100);
+                selectionLegendSlider.setValue(settings.getRangeSliderLowerValue(currentScreen));
+                selectionLegendSlider.setUpperValue(settings.getRangeSliderUpperValue(currentScreen));
+
+                colorMapsComboBox.addItemListener(new ItemListener() {
+                    @Override
+                    public void itemStateChanged(ItemEvent e) {
+                        settings.setColorMap(currentScreen, colorMaps[colorMapsComboBox.getSelectedIndex()]);
+
+                        ((RangeSliderUI) selectionLegendSlider.getUI()).setRangeColorMap(colorMaps[colorMapsComboBox
+                                .getSelectedIndex()]);
+                        selectionLegendSlider.invalidate();
+                    }
+                });
+
+                selectionLegendSlider.addChangeListener(new ChangeListener() {
+                    @Override
+                    public void stateChanged(ChangeEvent e) {
+                        RangeSlider slider = (RangeSlider) e.getSource();
+                        SurfaceTextureDescription texDesc = settings.getSurfaceDescription(currentScreen);
+
+                        String var = texDesc.getVarName();
+                        settings.setVariableRange(currentScreen, var, slider.getValue(), slider.getUpperValue());
+                    }
+                });
+
+                variablesComboBox.addItemListener(new ItemListener() {
+                    @Override
+                    public void itemStateChanged(ItemEvent e) {
+                        String var = (String) e.getItem();
+
+                        settings.setVariable(currentScreen, var);
+                        selectionLegendSlider.setValue(settings.getRangeSliderLowerValue(currentScreen));
+                        selectionLegendSlider.setUpperValue(settings.getRangeSliderUpperValue(currentScreen));
+                    }
+                });
+
+                screenVcomponents.add(selectionLegendSlider);
+
+                dataConfig.add(GoggleSwing.vBoxedComponents(screenVcomponents, true));
+            }
+            dataConfig.add(Box.createVerticalGlue());
         }
-        dataConfig.add(Box.createVerticalGlue());
     }
 
     private void createVisualTweakPanel() {
@@ -687,100 +597,66 @@ public class ImauPanel extends NeonInterfacePanel {
                 settings.getHeightDistortionMin(), settings.getHeightDistortionMax(), heightDistortionSpacing,
                 settings.getHeightDistortion(), heightDistortionSetting));
 
-        // final ItemListener checkBoxListener = new ItemListener() {
-        // @Override
-        // public void itemStateChanged(ItemEvent e) {
-        // if (e.getStateChange() == ItemEvent.SELECTED) {
-        // settings.setDynamicDimensions(true);
-        // } else {
-        // settings.setDynamicDimensions(false);
-        // }
-        // timer.redraw();
-        // }
-        // };
-        // visualConfig.add(GoggleSwing.checkboxBox(
-        // "",
-        // new GoggleSwing.CheckBoxItem("Dynamic dimensions", settings
-        // .isDynamicDimensions(), checkBoxListener)));
-
     }
 
-    protected void handleFile(File file1, File file2) {
-        if (file1 != null && file2 != null && NetCDFUtil.isAcceptableFile(file1, new String[] { ".nc" })
-                && NetCDFUtil.isAcceptableFile(file2, new String[] { ".nc" })) {
+    private void handleFiles(File[] files) {
+        boolean accept = true;
+        for (File thisFile : files) {
+            if (!isAcceptableFile(thisFile, new String[] { ".nc" })) {
+                accept = false;
+            }
+        }
+
+        if (accept) {
+            CacheFileManager cacheAtDataLocation = new CacheFileManager(files[0].getParent());
+            logger.debug("settings cacheAtDataLocation " + files[0].getParent());
+            settings.setCacheFileManagerAtDataLocation(cacheAtDataLocation);
+            CacheFileManager cacheAtProgramLocation = new CacheFileManager(System.getProperty("user.dir"));
+            settings.setCacheFileManagerAtProgramLocation(cacheAtProgramLocation);
+
             if (timer.isInitialized()) {
                 timer.close();
             }
-            timer = new ImauTimedPlayer(timeBar, frameCounter);
 
-            timer.init(file1, file2);
-            new Thread(timer).start();
+            timer = new TimedPlayer(timeBar, frameCounter);
+            timer.init(files);
 
             variables = new ArrayList<String>();
             for (String v : timer.getVariables()) {
                 variables.add(v);
             }
+
+            settings.initDefaultVariables(variables, timer.getInitialFrameNumber());
+
             createDataTweakPanel();
 
-            final String path = NetCDFUtil.getPath(file1) + "screenshots/";
+            final String path = files[0].getParent() + "screenshots/";
 
             settings.setScreenshotPath(path);
-        } else {
-            if (null != file1 && null != file2) {
-                final JOptionPane pane = new JOptionPane();
-                pane.setMessage("Tried to open invalid file type.");
-                final JDialog dialog = pane.createDialog("Alert");
-                dialog.setVisible(true);
-            } else {
-                logger.error("File is null");
-                System.exit(1);
-            }
-        }
-    }
 
-    protected void handleFile(File file) {
-        if (file != null && NetCDFUtil.isAcceptableFile(file, new String[] { ".nc" })) {
-            if (timer.isInitialized()) {
-                timer.close();
-            }
-            timer = new ImauTimedPlayer(timeBar, frameCounter);
-
-            timer.init(file);
             new Thread(timer).start();
 
-            variables = new ArrayList<String>();
-            for (String v : timer.getVariables()) {
-                variables.add(v);
-            }
-            createDataTweakPanel();
-
-            final String path = NetCDFUtil.getPath(file) + "screenshots/";
-
-            settings.setScreenshotPath(path);
+            setTweakState(TweakState.DATA);
         } else {
-            if (null != file) {
-                final JOptionPane pane = new JOptionPane();
-                pane.setMessage("Tried to open invalid file type.");
-                final JDialog dialog = pane.createDialog("Alert");
-                dialog.setVisible(true);
-            } else {
-                logger.error("File is null");
-                System.exit(1);
-            }
+            final JOptionPane pane = new JOptionPane();
+            pane.setMessage("Tried to open invalid file type.");
+            final JDialog dialog = pane.createDialog("Alert");
+            dialog.setVisible(true);
         }
     }
 
-    private File openFile() {
-        final JFileChooser fileChooser = new JFileChooser();
+    private File[] openFile() {
+        final JFileChooser fileChooser = new JFileChooser();// "/media/maarten/diskhdd1/eSalsaDATA/01deg_prod_run3/");
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setMultiSelectionEnabled(true);
         final int result = fileChooser.showOpenDialog(this);
 
         // user clicked Cancel button on dialog
         if (result == JFileChooser.CANCEL_OPTION) {
             return null;
         } else {
-            return fileChooser.getSelectedFile();
+            return fileChooser.getSelectedFiles();
         }
     }
 
@@ -788,8 +664,6 @@ public class ImauPanel extends NeonInterfacePanel {
     public void setTweakState(TweakState newState) {
         configPanel.setVisible(false);
         configPanel.remove(dataConfig);
-        // configPanel.remove(visualConfig);
-        // configPanel.remove(movieConfig);
 
         currentConfigState = newState;
 
@@ -797,16 +671,36 @@ public class ImauPanel extends NeonInterfacePanel {
         } else if (currentConfigState == TweakState.DATA) {
             configPanel.setVisible(true);
             configPanel.add(dataConfig, BorderLayout.WEST);
-            // } else if (currentConfigState == TweakState.VISUAL) {
-            // configPanel.setVisible(true);
-            // configPanel.add(visualConfig, BorderLayout.WEST);
-            // } else if (currentConfigState == TweakState.MOVIE) {
-            // configPanel.setVisible(true);
-            // configPanel.add(movieConfig, BorderLayout.WEST);
         }
     }
 
-    public static ImauTimedPlayer getTimer() {
+    public static TimedPlayer getTimer() {
         return timer;
+    }
+
+    /**
+     * Check whether the file's extension is acceptable.
+     * 
+     * @param file
+     *            The file to check.
+     * @param accExts
+     *            The list of acceptable extensions.
+     * @return True if the file's extension is present in the list of acceptable
+     *         extensions.
+     */
+    public static boolean isAcceptableFile(File file, String[] accExts) {
+        final String path = file.getParent();
+        final String name = file.getName();
+        final String fullPath = path + name;
+        final String[] ext = fullPath.split("[.]");
+
+        boolean result = false;
+        for (int i = 0; i < accExts.length; i++) {
+            if (ext[ext.length - 1].compareTo(accExts[i]) != 0) {
+                result = true;
+            }
+        }
+
+        return result;
     }
 }
