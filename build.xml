@@ -14,6 +14,9 @@
 		<fileset dir="lib/jogl">
 			<include name="*.jar" />
 		</fileset>
+		<fileset dir="lib/jocl">
+			<include name="*.jar" />
+		</fileset>
 		<fileset dir="lib/netcdf">
 			<include name="*.jar" />
 		</fileset>
