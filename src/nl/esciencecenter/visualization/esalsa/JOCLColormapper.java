@@ -96,28 +96,28 @@ public class JOCLColormapper {
     /**
      * The OpenCL context
      */
-    private cl_context                context;
+    private cl_context context;
 
     /**
      * The OpenCL command queue
      */
-    private cl_command_queue          commandQueue;
+    private cl_command_queue commandQueue;
 
     /**
      * The OpenCL kernel which will actually compute the Colormap and store the
      * pixel data in a CL memory object
      */
-    private cl_kernel                 kernel;
-    private cl_kernel                 logKernel;
+    private cl_kernel kernel;
+    private cl_kernel logKernel;
 
     /**
      * An OpenCL memory object which stores a nifty color map, encoded as
      * integers combining the RGB components of the colors.
      */
-    private cl_mem                    colorMapMem;
+    private cl_mem colorMapMem;
 
     private class ReservedMemoryConstruct {
-        int                  width, height;
+        int width, height;
 
         /**
          * The OpenCL memory object which stores the pixel data
@@ -171,12 +171,12 @@ public class JOCLColormapper {
     }
 
     /** Storage for the statically built legend images. */
-    private static Map<String, Color[][]>  legends;
+    private static Map<String, Color[][]> legends;
     private static Map<String, ByteBuffer> legendByteBuffers;
 
-    private final static int               LEGEND_WIDTH           = 150;
-    private final static int               LEGEND_HEIGHT          = 150;
-    private final static int               COLORMAP_FINAL_ENTRIES = 500;
+    private final static int LEGEND_WIDTH = 150;
+    private final static int LEGEND_HEIGHT = 150;
+    private final static int COLORMAP_FINAL_ENTRIES = 500;
 
     /**
      * Initialize OpenCL: Create the context, the command queue and the kernel.
@@ -560,6 +560,7 @@ public class JOCLColormapper {
             cl_mem outputMem = clCreateBuffer(context, CL_MEM_WRITE_ONLY, width * height * Sizeof.cl_uint, null, null);
             cl_mem dataMem = clCreateBuffer(context, CL_MEM_READ_WRITE, width * height * Sizeof.cl_float, null, null);
             predefinedConstruct = new ReservedMemoryConstruct(width, height, outputMem, dataMem);
+            reservedMemory.add(predefinedConstruct);
         }
 
         cl_mem dataMem = predefinedConstruct.getDataMem();

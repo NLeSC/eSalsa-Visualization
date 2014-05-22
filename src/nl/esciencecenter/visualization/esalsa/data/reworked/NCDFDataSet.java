@@ -1,21 +1,84 @@
 package nl.esciencecenter.visualization.esalsa.data.reworked;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public class NCDFDataSet {
-    public NCDFDataSet(List<File> files) {
+import nl.esciencecenter.visualization.esalsa.CacheFileManager;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ucar.nc2.Dimension;
+import ucar.nc2.NetcdfFile;
+import ucar.nc2.Variable;
+
+public class NCDFDataSet {
+    private final static Logger logger = LoggerFactory.getLogger(NCDFDataSet.class);
+    private final CacheFileManager cache;
+    private final List<NCDFVariable> variables;
+
+    public NCDFDataSet(List<File> files) throws IOException, VariableNotCompatibleException {
+        cache = new CacheFileManager(files.get(0).getParent());
+        variables = new ArrayList<NCDFVariable>();
+        Collections.sort(files);
+
+        for (File file : files) {
+            logger.debug("Opening " + file.getName());
+            NetcdfFile ncfile = NetcdfFile.open(file.getAbsolutePath());
+
+            List<Variable> fileVariables = ncfile.getVariables();
+            for (Variable v : fileVariables) {
+                if (v.getShape().length > 2) {
+                    boolean hasLat = false;
+                    boolean hasLon = false;
+                    for (Dimension d : v.getDimensions()) {
+                        if (d.getFullName().contains("lat") || d.getFullName().contains("ni")) {
+                            hasLat = true;
+                        }
+
+                        if (d.getFullName().contains("lon") || d.getFullName().contains("nj")) {
+                            hasLon = true;
+                        }
+                    }
+
+                    if (hasLon && hasLat) {
+                        logger.debug("Variable " + v.getFullName());
+
+                        boolean alreadyAnalysed = false;
+                        for (NCDFVariable dataSetVariable : variables) {
+                            if (dataSetVariable.getName().compareTo(v.getFullName()) == 0) {
+                                alreadyAnalysed = true;
+                            }
+                        }
+                        if (!alreadyAnalysed) {
+                            NCDFVariable newVariable = new NCDFVariable(cache, v, files);
+                            variables.add(newVariable);
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    // variables dimensions(depth/lat/lon)
-    // timesteps
-    // files variables timesteps
-    // variables timesteps data
+    public synchronized List<String> getVariableNames() {
+        List<String> result = new ArrayList<String>();
+        for (NCDFVariable v : variables) {
+            result.add(v.getName());
+        }
+        return result;
+    }
 
-    public List<File> getFiles() {
-        // TODO Auto-generated method stub
-        return null;
+    public synchronized NCDFVariable getVariable(String name) {
+        NCDFVariable result = null;
+        for (NCDFVariable v : variables) {
+            if (v.getName().compareTo(name) == 0) {
+                result = v;
+            }
+        }
+        return result;
     }
 
 }

@@ -3,6 +3,7 @@ package nl.esciencecenter.visualization.esalsa.data;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFormattedTextField;
 import javax.swing.JSlider;
@@ -26,7 +27,7 @@ public class TimedPlayer implements Runnable {
     private final ImauSettings settings = ImauSettings.getInstance();
 
     private states currentState = states.UNOPENED;
-    private int frameNumber;
+    private long frameNumber;
 
     private final boolean running = true;
     private boolean initialized = false;
@@ -39,7 +40,6 @@ public class TimedPlayer implements Runnable {
     private final InputHandler inputHandler;
 
     private DatasetManager dsManager;
-    private TextureStorage effTexStorage;
 
     private boolean needsScreenshot = false;
     private String screenshotFilename = "";
@@ -105,9 +105,8 @@ public class TimedPlayer implements Runnable {
 
     public synchronized void init(File[] files) {
         this.dsManager = new DatasetManager(files);
-        this.effTexStorage = dsManager.getEfficientTextureStorage();
 
-        frameNumber = dsManager.getFrameNumberOfIndex(0);
+        frameNumber = dsManager.getFirstFrameNumber();
         final int initialMaxBar = dsManager.getNumFrames() - 1;
 
         timeBar.setMaximum(initialMaxBar);
@@ -136,7 +135,7 @@ public class TimedPlayer implements Runnable {
         stop();
 
         try {
-            int newFrameNumber = dsManager.getPreviousFrameNumber(frameNumber);
+            long newFrameNumber = dsManager.getPreviousFrameNumber(frameNumber);
             updateFrame(newFrameNumber, false);
         } catch (IOException e) {
             logger.debug("One back failed.");
@@ -147,7 +146,7 @@ public class TimedPlayer implements Runnable {
         stop();
 
         try {
-            int newFrameNumber = dsManager.getNextFrameNumber(frameNumber);
+            long newFrameNumber = dsManager.getNextFrameNumber(frameNumber);
             updateFrame(newFrameNumber, false);
         } catch (IOException e) {
             logger.debug("One forward failed.");
@@ -163,7 +162,7 @@ public class TimedPlayer implements Runnable {
 
     public synchronized void rewind() {
         stop();
-        int newFrameNumber = dsManager.getFrameNumberOfIndex(0);
+        long newFrameNumber = dsManager.getFirstFrameNumber();
         updateFrame(newFrameNumber, false);
     }
 
@@ -212,9 +211,11 @@ public class TimedPlayer implements Runnable {
                         if (currentState == states.MOVIEMAKING) {
                             final Float3Vector rotation = inputHandler.getRotation();
                             if (settings.getMovieRotate()) {
-                                inputHandler.setRotation(new Float3Vector(bezierPoints.get(frameNumber).getX(),
-                                        bezierPoints.get(frameNumber).getY(), 0f));
-                                inputHandler.setViewDist(bezierPoints.get(frameNumber).getZ());
+                                inputHandler.setRotation(new Float3Vector(bezierPoints.get(
+                                        dsManager.getIndexOfFrameNumber(frameNumber)).getX(), bezierPoints.get(
+                                        dsManager.getIndexOfFrameNumber(frameNumber)).getY(), 0f));
+                                inputHandler.setViewDist(bezierPoints.get(dsManager.getIndexOfFrameNumber(frameNumber))
+                                        .getZ());
                                 setScreenshotNeeded(true);
                             } else {
                                 setScreenshotNeeded(true);
@@ -223,14 +224,11 @@ public class TimedPlayer implements Runnable {
 
                         // Forward frame
                         if (currentState != states.REDRAWING) {
-                            int newFrameNumber;
+                            long newFrameNumber;
                             try {
                                 newFrameNumber = dsManager.getNextFrameNumber(frameNumber);
-                                if (effTexStorage.doneWithLastRequest()) {
-                                    updateFrame(newFrameNumber, false);
-                                } else {
-                                    Thread.sleep(100);
-                                }
+                                updateFrame(newFrameNumber, false);
+
                             } catch (IOException e) {
                                 logger.debug("Waiting on frame after " + frameNumber);
                                 currentState = states.WAITINGONFRAME;
@@ -263,10 +261,21 @@ public class TimedPlayer implements Runnable {
         }
     }
 
-    public synchronized void setFrame(int value, boolean overrideUpdate) {
+    public synchronized void setFrameByIndex(int value, boolean overrideUpdate) {
         stop();
 
-        updateFrame(dsManager.getFrameNumberOfIndex(value), overrideUpdate);
+        long frameNumberIndex;
+        try {
+            frameNumberIndex = dsManager.getFirstFrameNumber();
+            for (int i = 0; i < value; i++) {
+                frameNumberIndex = dsManager.getNextFrameNumber(frameNumberIndex);
+            }
+        } catch (IOException e) {
+            logger.error("Frame index of " + value + " not found.");
+            frameNumberIndex = dsManager.getFirstFrameNumber();
+        }
+
+        updateFrame(frameNumberIndex, overrideUpdate);
     }
 
     public synchronized void start() {
@@ -277,7 +286,7 @@ public class TimedPlayer implements Runnable {
         currentState = states.STOPPED;
     }
 
-    private synchronized void updateFrame(int newFrameNumber, boolean overrideUpdate) {
+    private synchronized void updateFrame(long newFrameNumber, boolean overrideUpdate) {
         if (dsManager != null) {
             if (newFrameNumber != frameNumber || overrideUpdate) {
                 if (!settings.isRequestedNewConfiguration()) {
@@ -292,11 +301,11 @@ public class TimedPlayer implements Runnable {
         }
     }
 
-    public synchronized TextureStorage getTextureStorage() {
-        return effTexStorage;
+    public synchronized TextureStorage getTextureStorage(String varName) {
+        return dsManager.getTextureStorage(varName);
     }
 
-    public synchronized ArrayList<String> getVariables() {
+    public synchronized List<String> getVariables() {
         return dsManager.getVariables();
     }
 
@@ -312,15 +321,7 @@ public class TimedPlayer implements Runnable {
         return dsManager.getMaxValueContainedInDataset(varName);
     }
 
-    public synchronized int getImageWidth() {
-        return dsManager.getImageWidth();
-    }
-
-    public synchronized int getImageHeight() {
-        return dsManager.getImageHeight();
-    }
-
-    public synchronized int getInitialFrameNumber() {
-        return dsManager.getFrameNumberOfIndex(0);
+    public long getInitialFrameNumber() {
+        return dsManager.getFirstFrameNumber();
     }
 }

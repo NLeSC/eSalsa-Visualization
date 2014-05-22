@@ -329,7 +329,8 @@ public class ImauPanel extends NeonInterfacePanel {
                 if (source.hasFocus()) {
                     if (source == frameCounter) {
                         if (timer.isInitialized()) {
-                            timer.setFrame(((Number) frameCounter.getValue()).intValue() - timeBar.getMinimum(), false);
+                            timer.setFrameByIndex(((Number) frameCounter.getValue()).intValue() - timeBar.getMinimum(),
+                                    false);
                         }
                         playButton.setIcon(playIcon);
                         playButton.invalidate();
@@ -345,7 +346,7 @@ public class ImauPanel extends NeonInterfacePanel {
             public void stateChanged(ChangeEvent e) {
                 final JSlider source = (JSlider) e.getSource();
                 if (source.hasFocus()) {
-                    timer.setFrame(timeBar.getValue() - timeBar.getMinimum(), false);
+                    timer.setFrameByIndex(timeBar.getValue() - timeBar.getMinimum(), false);
                     playButton.setIcon(playIcon);
                     playButton.invalidate();
                 }

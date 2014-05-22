@@ -28,102 +28,102 @@ public class ImauSettings {
         Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec
     };
 
-    private boolean                        STEREO_RENDERING                = true;
-    private boolean                        STEREO_SWITCHED                 = true;
+    private boolean STEREO_RENDERING = true;
+    private boolean STEREO_SWITCHED = true;
 
-    private float                          STEREO_OCULAR_DISTANCE_MIN      = 0f;
-    private float                          STEREO_OCULAR_DISTANCE_DEF      = .2f;
-    private float                          STEREO_OCULAR_DISTANCE_MAX      = 1f;
+    private float STEREO_OCULAR_DISTANCE_MIN = 0f;
+    private float STEREO_OCULAR_DISTANCE_DEF = .2f;
+    private float STEREO_OCULAR_DISTANCE_MAX = 1f;
 
     // Size settings for default startup and screenshots
-    private int                            DEFAULT_SCREEN_WIDTH            = 1024;
-    private int                            DEFAULT_SCREEN_HEIGHT           = 768;
+    private int DEFAULT_SCREEN_WIDTH = 1024;
+    private int DEFAULT_SCREEN_HEIGHT = 768;
 
-    private int                            INTERFACE_HEIGHT                = 88;
-    private int                            INTERFACE_WIDTH                 = 210;
+    private int INTERFACE_HEIGHT = 88;
+    private int INTERFACE_WIDTH = 210;
 
-    private final int                      SCREENSHOT_SCREEN_WIDTH         = 1280;
-    private final int                      SCREENSHOT_SCREEN_HEIGHT        = 720;
+    private final int SCREENSHOT_SCREEN_WIDTH = 1280;
+    private final int SCREENSHOT_SCREEN_HEIGHT = 720;
 
     // Settings for the initial view
-    private int                            INITIAL_SIMULATION_FRAME        = 0;
-    private float                          INITIAL_ROTATION_X              = 17f;
-    private float                          INITIAL_ROTATION_Y              = -25f;
-    private float                          INITIAL_ZOOM                    = -390.0f;
+    private int INITIAL_SIMULATION_FRAME = 0;
+    private float INITIAL_ROTATION_X = 17f;
+    private float INITIAL_ROTATION_Y = -25f;
+    private float INITIAL_ZOOM = -390.0f;
 
     // Setting per movie frame
-    private boolean                        MOVIE_ROTATE                    = true;
-    private float                          MOVIE_ROTATION_SPEED_MIN        = -1f;
-    private float                          MOVIE_ROTATION_SPEED_MAX        = 1f;
-    private float                          MOVIE_ROTATION_SPEED_DEF        = -0.25f;
+    private boolean MOVIE_ROTATE = true;
+    private float MOVIE_ROTATION_SPEED_MIN = -1f;
+    private float MOVIE_ROTATION_SPEED_MAX = 1f;
+    private float MOVIE_ROTATION_SPEED_DEF = -0.25f;
 
     // Settings for the gas cloud octree
-    private int                            MAX_OCTREE_DEPTH                = 25;
-    private float                          OCTREE_EDGES                    = 800f;
+    private int MAX_OCTREE_DEPTH = 25;
+    private float OCTREE_EDGES = 800f;
 
     // Settings that should never change, but are listed here to make sure they
     // can be found if necessary
-    private int                            MAX_EXPECTED_MODELS             = 1000;
+    private int MAX_EXPECTED_MODELS = 1000;
 
-    protected String                       SCREENSHOT_PATH                 = System.getProperty("user.dir")
-                                                                                   + System.getProperty("path.separator");
+    protected String SCREENSHOT_PATH = System.getProperty("user.dir") + System.getProperty("path.separator");
 
-    private long                           WAITTIME_FOR_RETRY              = 10000;
-    private long                           WAITTIME_FOR_MOVIE              = 1000;
-    private int                            TIME_STEP_SIZE                  = 1;
-    private float                          EPSILON                         = 1.0E-7f;
+    private long WAITTIME_FOR_RETRY = 10000;
+    private long WAITTIME_FOR_MOVIE = 1000;
+    private int TIME_STEP_SIZE = 1;
+    private float EPSILON = 1.0E-7f;
 
-    private int                            FILE_EXTENSION_LENGTH           = 2;
-    private int                            FILE_NUMBER_LENGTH              = 4;
+    private int FILE_EXTENSION_LENGTH = 2;
+    private int FILE_NUMBER_LENGTH = 4;
 
-    private final String[]                 ACCEPTABLE_POSTFIXES            = { ".nc" };
+    private final String[] ACCEPTABLE_POSTFIXES = { ".nc" };
 
-    private String                         CURRENT_POSTFIX                 = "nc";
+    private String CURRENT_POSTFIX = "nc";
 
-    private int                            PREPROCESSING_AMOUNT            = 2;
+    private int PREPROCESSING_AMOUNT = 2;
 
-    private final HashMap<String, Float>   minValues;
-    private final HashMap<String, Float>   diffMinValues;
-    private final HashMap<String, Float>   maxValues;
-    private final HashMap<String, Float>   diffMaxValues;
-    private final HashMap<String, Float>   currentMinValues;
-    private final HashMap<String, Float>   currentDiffMinValues;
-    private final HashMap<String, Float>   currentMaxValues;
-    private final HashMap<String, Float>   currentDiffMaxValues;
-    private final HashMap<String, String>  currentColormap;
+    private final HashMap<String, Float> minValues;
+    private final HashMap<String, Float> diffMinValues;
+    private final HashMap<String, Float> maxValues;
+    private final HashMap<String, Float> diffMaxValues;
+    private final HashMap<String, Float> currentMinValues;
+    private final HashMap<String, Float> currentDiffMinValues;
+    private final HashMap<String, Float> currentMaxValues;
+    private final HashMap<String, Float> currentDiffMaxValues;
+    private final HashMap<String, String> currentColormap;
     private final HashMap<String, Boolean> logarithmicScale;
 
-    private int                            DEPTH_MIN                       = 0;
-    private int                            DEPTH_DEF                       = 0;
-    private int                            DEPTH_MAX                       = 41;
+    private int DEPTH_MIN = 0;
+    private int DEPTH_DEF = 0;
+    private int DEPTH_MAX = 41;
 
-    private int                            WINDOW_SELECTION                = 0;
+    private int WINDOW_SELECTION = 0;
 
-    private boolean                        IMAGE_STREAM_OUTPUT             = false;
-    private final int                      SAGE_FRAMES_PER_SECOND          = 10;
-    private boolean                        IMAGE_STREAM_GL_ONLY            = true;
+    private boolean IMAGE_STREAM_OUTPUT = false;
+    private final int SAGE_FRAMES_PER_SECOND = 10;
+    private boolean IMAGE_STREAM_GL_ONLY = true;
 
-    private float                          HEIGHT_DISTORION                = 0f;
-    private final float                    HEIGHT_DISTORION_MIN            = 0f;
-    private final float                    HEIGHT_DISTORION_MAX            = .01f;
+    private float HEIGHT_DISTORION = 0f;
+    private final float HEIGHT_DISTORION_MIN = 0f;
+    private final float HEIGHT_DISTORION_MAX = .01f;
 
-    private String                         SAGE_DIRECTORY                  = "/home/maarten/sage-code/sage";
+    private String SAGE_DIRECTORY = "/home/maarten/sage-code/sage";
 
-    private final boolean                  TOUCH_CONNECTED                 = false;
+    private final boolean TOUCH_CONNECTED = false;
 
-    private SurfaceTextureDescription[]    screenDescriptions;
+    private SurfaceTextureDescription[] screenDescriptions;
 
-    private final String                   grid_width_dimension_substring  = "lon";
-    private final String                   grid_height_dimension_substring = "lat";
+    private final String grid_width_dimension_substring = "lon";
+    private final String grid_height_dimension_substring = "lat";
 
-    private int                            number_of_screens_col           = 2;
-    private int                            number_of_screens_row           = 2;
+    private int number_of_screens_col = 2;
+    private int number_of_screens_row = 2;
 
-    private CacheFileManager               cacheFileManager;
-    private boolean                        requestedNewConfiguration;
+    private CacheFileManager cacheFileManager;
+    private boolean requestedNewConfiguration;
 
     private ImauSettings() {
         super();
+
         minValues = new HashMap<String, Float>();
         maxValues = new HashMap<String, Float>();
         currentMinValues = new HashMap<String, Float>();
@@ -184,140 +184,214 @@ public class ImauSettings {
 
             System.out.println(IMAGE_STREAM_OUTPUT ? "true" : "false");
 
-            minValues.put("SSH", props.getFloatProperty("MIN_SSH"));
-            maxValues.put("SSH", props.getFloatProperty("MAX_SSH"));
-            currentMinValues.put("SSH", props.getFloatProperty("SET_MIN_SSH"));
-            currentMaxValues.put("SSH", props.getFloatProperty("SET_MAX_SSH"));
-            diffMinValues.put("SSH", props.getFloatProperty("DIFF_MIN_SSH"));
-            diffMaxValues.put("SSH", props.getFloatProperty("DIFF_MAX_SSH"));
-            currentDiffMinValues.put("SSH", props.getFloatProperty("SET_DIFF_MIN_SSH"));
-            currentDiffMaxValues.put("SSH", props.getFloatProperty("SET_DIFF_MAX_SSH"));
-
-            minValues.put("SHF", props.getFloatProperty("MIN_SHF"));
-            maxValues.put("SHF", props.getFloatProperty("MAX_SHF"));
-            currentMinValues.put("SHF", props.getFloatProperty("SET_MIN_SHF"));
-            currentMaxValues.put("SHF", props.getFloatProperty("SET_MAX_SHF"));
-            diffMinValues.put("SHF", props.getFloatProperty("DIFF_MIN_SHF"));
-            diffMaxValues.put("SHF", props.getFloatProperty("DIFF_MAX_SHF"));
-            currentDiffMinValues.put("SHF", props.getFloatProperty("SET_DIFF_MIN_SHF"));
-            currentDiffMaxValues.put("SHF", props.getFloatProperty("SET_DIFF_MAX_SHF"));
-
-            minValues.put("SFWF", props.getFloatProperty("MIN_SFWF"));
-            maxValues.put("SFWF", props.getFloatProperty("MAX_SFWF"));
-            currentMinValues.put("SFWF", props.getFloatProperty("SET_MIN_SFWF"));
-            currentMaxValues.put("SFWF", props.getFloatProperty("SET_MAX_SFWF"));
-            diffMinValues.put("SFWF", props.getFloatProperty("DIFF_MIN_SFWF"));
-            diffMaxValues.put("SFWF", props.getFloatProperty("DIFF_MAX_SFWF"));
-            currentDiffMinValues.put("SFWF", props.getFloatProperty("SET_DIFF_MIN_SFWF"));
-            currentDiffMaxValues.put("SFWF", props.getFloatProperty("SET_DIFF_MAX_SFWF"));
-
-            minValues.put("HMXL", props.getFloatProperty("MIN_HMXL"));
-            maxValues.put("HMXL", props.getFloatProperty("MAX_HMXL"));
-            currentMinValues.put("HMXL", props.getFloatProperty("SET_MIN_HMXL"));
-            currentMaxValues.put("HMXL", props.getFloatProperty("SET_MAX_HMXL"));
-            diffMinValues.put("HMXL", props.getFloatProperty("DIFF_MIN_HMXL"));
-            diffMaxValues.put("HMXL", props.getFloatProperty("DIFF_MAX_HMXL"));
-            currentDiffMinValues.put("HMXL", props.getFloatProperty("SET_DIFF_MIN_HMXL"));
-            currentDiffMaxValues.put("HMXL", props.getFloatProperty("SET_DIFF_MAX_HMXL"));
-
-            minValues.put("XMXL", props.getFloatProperty("MIN_XMXL"));
-            maxValues.put("XMXL", props.getFloatProperty("MAX_XMXL"));
-            currentMinValues.put("XMXL", props.getFloatProperty("SET_MIN_XMXL"));
-            currentMaxValues.put("XMXL", props.getFloatProperty("SET_MAX_XMXL"));
-            diffMinValues.put("XMXL", props.getFloatProperty("DIFF_MIN_XMXL"));
-            diffMaxValues.put("XMXL", props.getFloatProperty("DIFF_MAX_XMXL"));
-            currentDiffMinValues.put("XMXL", props.getFloatProperty("SET_DIFF_MIN_XMXL"));
-            currentDiffMaxValues.put("XMXL", props.getFloatProperty("SET_DIFF_MAX_XMXL"));
-
-            minValues.put("TMXL", props.getFloatProperty("MIN_TMXL"));
-            maxValues.put("TMXL", props.getFloatProperty("MAX_TMXL"));
-            currentMinValues.put("TMXL", props.getFloatProperty("SET_MIN_TMXL"));
-            currentMaxValues.put("TMXL", props.getFloatProperty("SET_MAX_TMXL"));
-            diffMinValues.put("TMXL", props.getFloatProperty("DIFF_MIN_TMXL"));
-            diffMaxValues.put("TMXL", props.getFloatProperty("DIFF_MAX_TMXL"));
-            currentDiffMinValues.put("TMXL", props.getFloatProperty("SET_DIFF_MIN_TMXL"));
-            currentDiffMaxValues.put("TMXL", props.getFloatProperty("SET_DIFF_MAX_TMXL"));
-
-            minValues.put("SALT", props.getFloatProperty("MIN_SALT"));
-            maxValues.put("SALT", props.getFloatProperty("MAX_SALT"));
-            currentMinValues.put("SALT", props.getFloatProperty("SET_MIN_SALT"));
-            currentMaxValues.put("SALT", props.getFloatProperty("SET_MAX_SALT"));
-            diffMinValues.put("SALT", props.getFloatProperty("DIFF_MIN_SALT"));
-            diffMaxValues.put("SALT", props.getFloatProperty("DIFF_MAX_SALT"));
-            currentDiffMinValues.put("SALT", props.getFloatProperty("SET_DIFF_MIN_SALT"));
-            currentDiffMaxValues.put("SALT", props.getFloatProperty("SET_DIFF_MAX_SALT"));
-
-            minValues.put("TEMP", props.getFloatProperty("MIN_TEMP"));
-            maxValues.put("TEMP", props.getFloatProperty("MAX_TEMP"));
-            currentMinValues.put("TEMP", props.getFloatProperty("SET_MIN_TEMP"));
-            currentMaxValues.put("TEMP", props.getFloatProperty("SET_MAX_TEMP"));
-            diffMinValues.put("TEMP", props.getFloatProperty("DIFF_MIN_TEMP"));
-            diffMaxValues.put("TEMP", props.getFloatProperty("DIFF_MAX_TEMP"));
-            currentDiffMinValues.put("TEMP", props.getFloatProperty("SET_DIFF_MIN_TEMP"));
-            currentDiffMaxValues.put("TEMP", props.getFloatProperty("SET_DIFF_MAX_TEMP"));
-
-            minValues.put("UVEL", props.getFloatProperty("MIN_UVEL"));
-            maxValues.put("UVEL", props.getFloatProperty("MAX_UVEL"));
-            currentMinValues.put("UVEL", props.getFloatProperty("SET_MIN_UVEL"));
-            currentMaxValues.put("UVEL", props.getFloatProperty("SET_MAX_UVEL"));
-            diffMinValues.put("UVEL", props.getFloatProperty("DIFF_MIN_UVEL"));
-            diffMaxValues.put("UVEL", props.getFloatProperty("DIFF_MAX_UVEL"));
-            currentDiffMinValues.put("UVEL", props.getFloatProperty("SET_DIFF_MIN_UVEL"));
-            currentDiffMaxValues.put("UVEL", props.getFloatProperty("SET_DIFF_MAX_UVEL"));
-
-            minValues.put("VVEL", props.getFloatProperty("MIN_VVEL"));
-            maxValues.put("VVEL", props.getFloatProperty("MAX_VVEL"));
-            currentMinValues.put("VVEL", props.getFloatProperty("SET_MIN_VVEL"));
-            currentMaxValues.put("VVEL", props.getFloatProperty("SET_MAX_VVEL"));
-            diffMinValues.put("VVEL", props.getFloatProperty("DIFF_MIN_VVEL"));
-            diffMaxValues.put("VVEL", props.getFloatProperty("DIFF_MAX_VVEL"));
-            currentDiffMinValues.put("VVEL", props.getFloatProperty("SET_DIFF_MIN_VVEL"));
-            currentDiffMaxValues.put("VVEL", props.getFloatProperty("SET_DIFF_MAX_VVEL"));
-
-            minValues.put("KE", props.getFloatProperty("MIN_KE"));
-            maxValues.put("KE", props.getFloatProperty("MAX_KE"));
-            currentMinValues.put("KE", props.getFloatProperty("SET_MIN_KE"));
-            currentMaxValues.put("KE", props.getFloatProperty("SET_MAX_KE"));
-            diffMinValues.put("KE", props.getFloatProperty("DIFF_MIN_KE"));
-            diffMaxValues.put("KE", props.getFloatProperty("DIFF_MAX_KE"));
-            currentDiffMinValues.put("KE", props.getFloatProperty("SET_DIFF_MIN_KE"));
-            currentDiffMaxValues.put("KE", props.getFloatProperty("SET_DIFF_MAX_KE"));
-
-            minValues.put("PD", props.getFloatProperty("MIN_PD"));
-            maxValues.put("PD", props.getFloatProperty("MAX_PD"));
-            currentMinValues.put("PD", props.getFloatProperty("SET_MIN_PD"));
-            currentMaxValues.put("PD", props.getFloatProperty("SET_MAX_PD"));
-            diffMinValues.put("PD", props.getFloatProperty("DIFF_MIN_PD"));
-            diffMaxValues.put("PD", props.getFloatProperty("DIFF_MAX_PD"));
-            currentDiffMinValues.put("PD", props.getFloatProperty("SET_DIFF_MIN_PD"));
-            currentDiffMaxValues.put("PD", props.getFloatProperty("SET_DIFF_MAX_PD"));
-
-            minValues.put("TAUX", props.getFloatProperty("MIN_TAUX"));
-            maxValues.put("TAUX", props.getFloatProperty("MAX_TAUX"));
-            currentMinValues.put("TAUX", props.getFloatProperty("SET_MIN_TAUX"));
-            currentMaxValues.put("TAUX", props.getFloatProperty("SET_MAX_TAUX"));
-            diffMinValues.put("TAUX", props.getFloatProperty("DIFF_MIN_TAUX"));
-            diffMaxValues.put("TAUX", props.getFloatProperty("DIFF_MAX_TAUX"));
-            currentDiffMinValues.put("TAUX", props.getFloatProperty("SET_DIFF_MIN_TAUX"));
-            currentDiffMaxValues.put("TAUX", props.getFloatProperty("SET_DIFF_MAX_TAUX"));
-
-            minValues.put("TAUY", props.getFloatProperty("MIN_TAUY"));
-            maxValues.put("TAUY", props.getFloatProperty("MAX_TAUY"));
-            currentMinValues.put("TAUY", props.getFloatProperty("SET_MIN_TAUY"));
-            currentMaxValues.put("TAUY", props.getFloatProperty("SET_MAX_TAUY"));
-            diffMinValues.put("TAUY", props.getFloatProperty("DIFF_MIN_TAUY"));
-            diffMaxValues.put("TAUY", props.getFloatProperty("DIFF_MAX_TAUY"));
-            currentDiffMinValues.put("TAUY", props.getFloatProperty("SET_DIFF_MIN_TAUY"));
-            currentDiffMaxValues.put("TAUY", props.getFloatProperty("SET_DIFF_MAX_TAUY"));
-
-            minValues.put("H2", props.getFloatProperty("MIN_H2"));
-            maxValues.put("H2", props.getFloatProperty("MAX_H2"));
-            currentMinValues.put("H2", props.getFloatProperty("SET_MIN_H2"));
-            currentMaxValues.put("H2", props.getFloatProperty("SET_MAX_H2"));
-            diffMinValues.put("H2", props.getFloatProperty("DIFF_MIN_H2"));
-            diffMaxValues.put("H2", props.getFloatProperty("DIFF_MAX_H2"));
-            currentDiffMinValues.put("H2", props.getFloatProperty("SET_DIFF_MIN_H2"));
-            currentDiffMaxValues.put("H2", props.getFloatProperty("SET_DIFF_MAX_H2"));
+            // minValues.put("SSH", props.getFloatProperty("MIN_SSH"));
+            // maxValues.put("SSH", props.getFloatProperty("MAX_SSH"));
+            // currentMinValues.put("SSH",
+            // props.getFloatProperty("SET_MIN_SSH"));
+            // currentMaxValues.put("SSH",
+            // props.getFloatProperty("SET_MAX_SSH"));
+            // diffMinValues.put("SSH", props.getFloatProperty("DIFF_MIN_SSH"));
+            // diffMaxValues.put("SSH", props.getFloatProperty("DIFF_MAX_SSH"));
+            // currentDiffMinValues.put("SSH",
+            // props.getFloatProperty("SET_DIFF_MIN_SSH"));
+            // currentDiffMaxValues.put("SSH",
+            // props.getFloatProperty("SET_DIFF_MAX_SSH"));
+            //
+            // minValues.put("SHF", props.getFloatProperty("MIN_SHF"));
+            // maxValues.put("SHF", props.getFloatProperty("MAX_SHF"));
+            // currentMinValues.put("SHF",
+            // props.getFloatProperty("SET_MIN_SHF"));
+            // currentMaxValues.put("SHF",
+            // props.getFloatProperty("SET_MAX_SHF"));
+            // diffMinValues.put("SHF", props.getFloatProperty("DIFF_MIN_SHF"));
+            // diffMaxValues.put("SHF", props.getFloatProperty("DIFF_MAX_SHF"));
+            // currentDiffMinValues.put("SHF",
+            // props.getFloatProperty("SET_DIFF_MIN_SHF"));
+            // currentDiffMaxValues.put("SHF",
+            // props.getFloatProperty("SET_DIFF_MAX_SHF"));
+            //
+            // minValues.put("SFWF", props.getFloatProperty("MIN_SFWF"));
+            // maxValues.put("SFWF", props.getFloatProperty("MAX_SFWF"));
+            // currentMinValues.put("SFWF",
+            // props.getFloatProperty("SET_MIN_SFWF"));
+            // currentMaxValues.put("SFWF",
+            // props.getFloatProperty("SET_MAX_SFWF"));
+            // diffMinValues.put("SFWF",
+            // props.getFloatProperty("DIFF_MIN_SFWF"));
+            // diffMaxValues.put("SFWF",
+            // props.getFloatProperty("DIFF_MAX_SFWF"));
+            // currentDiffMinValues.put("SFWF",
+            // props.getFloatProperty("SET_DIFF_MIN_SFWF"));
+            // currentDiffMaxValues.put("SFWF",
+            // props.getFloatProperty("SET_DIFF_MAX_SFWF"));
+            //
+            // minValues.put("HMXL", props.getFloatProperty("MIN_HMXL"));
+            // maxValues.put("HMXL", props.getFloatProperty("MAX_HMXL"));
+            // currentMinValues.put("HMXL",
+            // props.getFloatProperty("SET_MIN_HMXL"));
+            // currentMaxValues.put("HMXL",
+            // props.getFloatProperty("SET_MAX_HMXL"));
+            // diffMinValues.put("HMXL",
+            // props.getFloatProperty("DIFF_MIN_HMXL"));
+            // diffMaxValues.put("HMXL",
+            // props.getFloatProperty("DIFF_MAX_HMXL"));
+            // currentDiffMinValues.put("HMXL",
+            // props.getFloatProperty("SET_DIFF_MIN_HMXL"));
+            // currentDiffMaxValues.put("HMXL",
+            // props.getFloatProperty("SET_DIFF_MAX_HMXL"));
+            //
+            // minValues.put("XMXL", props.getFloatProperty("MIN_XMXL"));
+            // maxValues.put("XMXL", props.getFloatProperty("MAX_XMXL"));
+            // currentMinValues.put("XMXL",
+            // props.getFloatProperty("SET_MIN_XMXL"));
+            // currentMaxValues.put("XMXL",
+            // props.getFloatProperty("SET_MAX_XMXL"));
+            // diffMinValues.put("XMXL",
+            // props.getFloatProperty("DIFF_MIN_XMXL"));
+            // diffMaxValues.put("XMXL",
+            // props.getFloatProperty("DIFF_MAX_XMXL"));
+            // currentDiffMinValues.put("XMXL",
+            // props.getFloatProperty("SET_DIFF_MIN_XMXL"));
+            // currentDiffMaxValues.put("XMXL",
+            // props.getFloatProperty("SET_DIFF_MAX_XMXL"));
+            //
+            // minValues.put("TMXL", props.getFloatProperty("MIN_TMXL"));
+            // maxValues.put("TMXL", props.getFloatProperty("MAX_TMXL"));
+            // currentMinValues.put("TMXL",
+            // props.getFloatProperty("SET_MIN_TMXL"));
+            // currentMaxValues.put("TMXL",
+            // props.getFloatProperty("SET_MAX_TMXL"));
+            // diffMinValues.put("TMXL",
+            // props.getFloatProperty("DIFF_MIN_TMXL"));
+            // diffMaxValues.put("TMXL",
+            // props.getFloatProperty("DIFF_MAX_TMXL"));
+            // currentDiffMinValues.put("TMXL",
+            // props.getFloatProperty("SET_DIFF_MIN_TMXL"));
+            // currentDiffMaxValues.put("TMXL",
+            // props.getFloatProperty("SET_DIFF_MAX_TMXL"));
+            //
+            // minValues.put("SALT", props.getFloatProperty("MIN_SALT"));
+            // maxValues.put("SALT", props.getFloatProperty("MAX_SALT"));
+            // currentMinValues.put("SALT",
+            // props.getFloatProperty("SET_MIN_SALT"));
+            // currentMaxValues.put("SALT",
+            // props.getFloatProperty("SET_MAX_SALT"));
+            // diffMinValues.put("SALT",
+            // props.getFloatProperty("DIFF_MIN_SALT"));
+            // diffMaxValues.put("SALT",
+            // props.getFloatProperty("DIFF_MAX_SALT"));
+            // currentDiffMinValues.put("SALT",
+            // props.getFloatProperty("SET_DIFF_MIN_SALT"));
+            // currentDiffMaxValues.put("SALT",
+            // props.getFloatProperty("SET_DIFF_MAX_SALT"));
+            //
+            // minValues.put("TEMP", props.getFloatProperty("MIN_TEMP"));
+            // maxValues.put("TEMP", props.getFloatProperty("MAX_TEMP"));
+            // currentMinValues.put("TEMP",
+            // props.getFloatProperty("SET_MIN_TEMP"));
+            // currentMaxValues.put("TEMP",
+            // props.getFloatProperty("SET_MAX_TEMP"));
+            // diffMinValues.put("TEMP",
+            // props.getFloatProperty("DIFF_MIN_TEMP"));
+            // diffMaxValues.put("TEMP",
+            // props.getFloatProperty("DIFF_MAX_TEMP"));
+            // currentDiffMinValues.put("TEMP",
+            // props.getFloatProperty("SET_DIFF_MIN_TEMP"));
+            // currentDiffMaxValues.put("TEMP",
+            // props.getFloatProperty("SET_DIFF_MAX_TEMP"));
+            //
+            // minValues.put("UVEL", props.getFloatProperty("MIN_UVEL"));
+            // maxValues.put("UVEL", props.getFloatProperty("MAX_UVEL"));
+            // currentMinValues.put("UVEL",
+            // props.getFloatProperty("SET_MIN_UVEL"));
+            // currentMaxValues.put("UVEL",
+            // props.getFloatProperty("SET_MAX_UVEL"));
+            // diffMinValues.put("UVEL",
+            // props.getFloatProperty("DIFF_MIN_UVEL"));
+            // diffMaxValues.put("UVEL",
+            // props.getFloatProperty("DIFF_MAX_UVEL"));
+            // currentDiffMinValues.put("UVEL",
+            // props.getFloatProperty("SET_DIFF_MIN_UVEL"));
+            // currentDiffMaxValues.put("UVEL",
+            // props.getFloatProperty("SET_DIFF_MAX_UVEL"));
+            //
+            // minValues.put("VVEL", props.getFloatProperty("MIN_VVEL"));
+            // maxValues.put("VVEL", props.getFloatProperty("MAX_VVEL"));
+            // currentMinValues.put("VVEL",
+            // props.getFloatProperty("SET_MIN_VVEL"));
+            // currentMaxValues.put("VVEL",
+            // props.getFloatProperty("SET_MAX_VVEL"));
+            // diffMinValues.put("VVEL",
+            // props.getFloatProperty("DIFF_MIN_VVEL"));
+            // diffMaxValues.put("VVEL",
+            // props.getFloatProperty("DIFF_MAX_VVEL"));
+            // currentDiffMinValues.put("VVEL",
+            // props.getFloatProperty("SET_DIFF_MIN_VVEL"));
+            // currentDiffMaxValues.put("VVEL",
+            // props.getFloatProperty("SET_DIFF_MAX_VVEL"));
+            //
+            // minValues.put("KE", props.getFloatProperty("MIN_KE"));
+            // maxValues.put("KE", props.getFloatProperty("MAX_KE"));
+            // currentMinValues.put("KE", props.getFloatProperty("SET_MIN_KE"));
+            // currentMaxValues.put("KE", props.getFloatProperty("SET_MAX_KE"));
+            // diffMinValues.put("KE", props.getFloatProperty("DIFF_MIN_KE"));
+            // diffMaxValues.put("KE", props.getFloatProperty("DIFF_MAX_KE"));
+            // currentDiffMinValues.put("KE",
+            // props.getFloatProperty("SET_DIFF_MIN_KE"));
+            // currentDiffMaxValues.put("KE",
+            // props.getFloatProperty("SET_DIFF_MAX_KE"));
+            //
+            // minValues.put("PD", props.getFloatProperty("MIN_PD"));
+            // maxValues.put("PD", props.getFloatProperty("MAX_PD"));
+            // currentMinValues.put("PD", props.getFloatProperty("SET_MIN_PD"));
+            // currentMaxValues.put("PD", props.getFloatProperty("SET_MAX_PD"));
+            // diffMinValues.put("PD", props.getFloatProperty("DIFF_MIN_PD"));
+            // diffMaxValues.put("PD", props.getFloatProperty("DIFF_MAX_PD"));
+            // currentDiffMinValues.put("PD",
+            // props.getFloatProperty("SET_DIFF_MIN_PD"));
+            // currentDiffMaxValues.put("PD",
+            // props.getFloatProperty("SET_DIFF_MAX_PD"));
+            //
+            // minValues.put("TAUX", props.getFloatProperty("MIN_TAUX"));
+            // maxValues.put("TAUX", props.getFloatProperty("MAX_TAUX"));
+            // currentMinValues.put("TAUX",
+            // props.getFloatProperty("SET_MIN_TAUX"));
+            // currentMaxValues.put("TAUX",
+            // props.getFloatProperty("SET_MAX_TAUX"));
+            // diffMinValues.put("TAUX",
+            // props.getFloatProperty("DIFF_MIN_TAUX"));
+            // diffMaxValues.put("TAUX",
+            // props.getFloatProperty("DIFF_MAX_TAUX"));
+            // currentDiffMinValues.put("TAUX",
+            // props.getFloatProperty("SET_DIFF_MIN_TAUX"));
+            // currentDiffMaxValues.put("TAUX",
+            // props.getFloatProperty("SET_DIFF_MAX_TAUX"));
+            //
+            // minValues.put("TAUY", props.getFloatProperty("MIN_TAUY"));
+            // maxValues.put("TAUY", props.getFloatProperty("MAX_TAUY"));
+            // currentMinValues.put("TAUY",
+            // props.getFloatProperty("SET_MIN_TAUY"));
+            // currentMaxValues.put("TAUY",
+            // props.getFloatProperty("SET_MAX_TAUY"));
+            // diffMinValues.put("TAUY",
+            // props.getFloatProperty("DIFF_MIN_TAUY"));
+            // diffMaxValues.put("TAUY",
+            // props.getFloatProperty("DIFF_MAX_TAUY"));
+            // currentDiffMinValues.put("TAUY",
+            // props.getFloatProperty("SET_DIFF_MIN_TAUY"));
+            // currentDiffMaxValues.put("TAUY",
+            // props.getFloatProperty("SET_DIFF_MAX_TAUY"));
+            //
+            // minValues.put("H2", props.getFloatProperty("MIN_H2"));
+            // maxValues.put("H2", props.getFloatProperty("MAX_H2"));
+            // currentMinValues.put("H2", props.getFloatProperty("SET_MIN_H2"));
+            // currentMaxValues.put("H2", props.getFloatProperty("SET_MAX_H2"));
+            // diffMinValues.put("H2", props.getFloatProperty("DIFF_MIN_H2"));
+            // diffMaxValues.put("H2", props.getFloatProperty("DIFF_MAX_H2"));
+            // currentDiffMinValues.put("H2",
+            // props.getFloatProperty("SET_DIFF_MIN_H2"));
+            // currentDiffMaxValues.put("H2",
+            // props.getFloatProperty("SET_DIFF_MAX_H2"));
 
         } catch (NumberFormatException e) {
             logger.warn(e.getMessage());
@@ -410,14 +484,13 @@ public class ImauSettings {
         return DEPTH_DEF;
     }
 
-    public synchronized void setFrameNumber(int value) {
+    public synchronized void setFrameNumber(long newFrameNumber) {
         for (int i = 0; i < number_of_screens_col * number_of_screens_row; i++) {
             SurfaceTextureDescription currentState = screenDescriptions[i];
-            screenDescriptions[i] = new SurfaceTextureDescription(value, currentState.getLatitudes(),
-                    currentState.getLongitudes(), currentState.getDepth(), currentState.getVarName(),
-                    currentState.getColorMap(), currentState.isDynamicDimensions(), currentState.isDiff(),
-                    currentState.isSecondSet(), currentState.getLowerBound(), currentState.getUpperBound(),
-                    currentState.isLogScale());
+            screenDescriptions[i] = new SurfaceTextureDescription(newFrameNumber, currentState.getDepth(),
+                    currentState.getVarName(), currentState.getColorMap(), currentState.isDynamicDimensions(),
+                    currentState.isDiff(), currentState.isSecondSet(), currentState.getLowerBound(),
+                    currentState.getUpperBound(), currentState.isLogScale());
         }
         setRequestedNewConfiguration(true);
     }
@@ -425,14 +498,13 @@ public class ImauSettings {
     public synchronized void setDepth(int value) {
         for (int i = 0; i < number_of_screens_col * number_of_screens_row; i++) {
             SurfaceTextureDescription currentState = screenDescriptions[i];
-            screenDescriptions[i] = new SurfaceTextureDescription(currentState.getFrameNumber(), value,
-                    currentState.getLatitudes(), currentState.getLongitudes(), currentState.getVarName(),
-                    currentState.getColorMap(), currentState.isDynamicDimensions(), currentState.isDiff(),
-                    currentState.isSecondSet(), currentState.getLowerBound(), currentState.getUpperBound(),
-                    currentState.isLogScale());
+            screenDescriptions[i] = new SurfaceTextureDescription(currentState.getFrameNumber(), value - 1,
+                    currentState.getVarName(), currentState.getColorMap(), currentState.isDynamicDimensions(),
+                    currentState.isDiff(), currentState.isSecondSet(), currentState.getLowerBound(),
+                    currentState.getUpperBound(), currentState.isLogScale());
         }
 
-        DEPTH_DEF = value;
+        DEPTH_DEF = value - 1;
         setRequestedNewConfiguration(true);
     }
 
@@ -470,19 +542,18 @@ public class ImauSettings {
         SurfaceTextureDescription state = screenDescriptions[screenNumber];
 
         SurfaceTextureDescription result;
-        result = new SurfaceTextureDescription(state.getFrameNumber(), state.getLatitudes(), state.getLongitudes(),
-                state.getDepth(), state.getVarName(), state.getColorMap(), dynamic, diff, secondSet,
-                state.getLowerBound(), state.getUpperBound(), state.isLogScale());
+        result = new SurfaceTextureDescription(state.getFrameNumber(), state.getDepth(), state.getVarName(),
+                state.getColorMap(), dynamic, diff, secondSet, state.getLowerBound(), state.getUpperBound(),
+                state.isLogScale());
         screenDescriptions[screenNumber] = result;
         setRequestedNewConfiguration(true);
     }
 
     public synchronized void setVariable(int screenNumber, String variable) {
         SurfaceTextureDescription state = screenDescriptions[screenNumber];
-        SurfaceTextureDescription result = new SurfaceTextureDescription(state.getFrameNumber(), state.getLatitudes(),
-                state.getLongitudes(), state.getDepth(), variable, getCurrentColormap(variable),
-                state.isDynamicDimensions(), state.isDiff(), state.isSecondSet(), state.getLowerBound(),
-                state.getUpperBound(), state.isLogScale());
+        SurfaceTextureDescription result = new SurfaceTextureDescription(state.getFrameNumber(), state.getDepth(),
+                variable, getCurrentColormap(variable), state.isDynamicDimensions(), state.isDiff(),
+                state.isSecondSet(), state.getLowerBound(), state.getUpperBound(), state.isLogScale());
         screenDescriptions[screenNumber] = result;
         setRequestedNewConfiguration(true);
     }
@@ -493,10 +564,9 @@ public class ImauSettings {
 
     public synchronized void setColorMap(int screenNumber, String selectedColorMap) {
         SurfaceTextureDescription state = screenDescriptions[screenNumber];
-        SurfaceTextureDescription result = new SurfaceTextureDescription(state.getFrameNumber(), state.getLatitudes(),
-                state.getLongitudes(), state.getDepth(), state.getVarName(), selectedColorMap,
-                state.isDynamicDimensions(), state.isDiff(), state.isSecondSet(), state.getLowerBound(),
-                state.getUpperBound(), state.isLogScale());
+        SurfaceTextureDescription result = new SurfaceTextureDescription(state.getFrameNumber(), state.getDepth(),
+                state.getVarName(), selectedColorMap, state.isDynamicDimensions(), state.isDiff(), state.isSecondSet(),
+                state.getLowerBound(), state.getUpperBound(), state.isLogScale());
         screenDescriptions[screenNumber] = result;
         currentColormap.put(state.getVarName(), selectedColorMap);
 
@@ -550,12 +620,12 @@ public class ImauSettings {
         return TOUCH_CONNECTED;
     }
 
-    public synchronized String getFancyDate(int frameNumber) {
+    public synchronized String getFancyDate(long l) {
         String result = "";
 
-        int year = (int) Math.floor(frameNumber / 100);
+        int year = (int) Math.floor(l / 100);
 
-        int month = frameNumber - year * 100;
+        long month = l - year * 100;
 
         if (month == 1) {
             result = "Jan";
@@ -906,7 +976,7 @@ public class ImauSettings {
 
     }
 
-    public synchronized void initDefaultVariables(ArrayList<String> variables, int initialFrameNumber) {
+    public synchronized void initDefaultVariables(ArrayList<String> variables, long l) {
         screenDescriptions = new SurfaceTextureDescription[number_of_screens_col * number_of_screens_row];
 
         if (variables.size() != 0) {
@@ -917,9 +987,8 @@ public class ImauSettings {
                 } else {
                     var = variables.get(0);
                 }
-                screenDescriptions[j] = new SurfaceTextureDescription(initialFrameNumber, 0, var,
-                        getCurrentColormap(var), false, false, false, getCurrentVarMin(var), getCurrentVarMax(var),
-                        false);
+                screenDescriptions[j] = new SurfaceTextureDescription(l, 0, var, getCurrentColormap(var), false, false,
+                        false, getCurrentVarMin(var), getCurrentVarMax(var), false);
 
                 logger.debug(screenDescriptions[j].toString());
             }
@@ -928,10 +997,9 @@ public class ImauSettings {
 
     public synchronized void setLogScale(int screenNumber, boolean selected) {
         SurfaceTextureDescription state = screenDescriptions[screenNumber];
-        SurfaceTextureDescription result = new SurfaceTextureDescription(state.getFrameNumber(), state.getLatitudes(),
-                state.getLongitudes(), state.getDepth(), state.getVarName(), state.getColorMap(),
-                state.isDynamicDimensions(), state.isDiff(), state.isSecondSet(), state.getLowerBound(),
-                state.getUpperBound(), selected);
+        SurfaceTextureDescription result = new SurfaceTextureDescription(state.getFrameNumber(), state.getDepth(),
+                state.getVarName(), state.getColorMap(), state.isDynamicDimensions(), state.isDiff(),
+                state.isSecondSet(), state.getLowerBound(), state.getUpperBound(), selected);
         screenDescriptions[screenNumber] = result;
         setRequestedNewConfiguration(true);
     }

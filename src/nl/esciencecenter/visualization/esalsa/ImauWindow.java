@@ -203,17 +203,17 @@ public class ImauWindow implements GLEventListener {
                 if (currentDesc != null) {
                     // Ask the TextureStorage for the currently displayed/ready
                     // image
-                    TextureCombo result = timer.getTextureStorage().getImages(i);
+                    TextureCombo result = timer.getTextureStorage(currentDesc.getVarName()).getImages(i);
 
                     if (result.getDescription() != currentDesc) {
                         // Check if we need to request new images, or if we are
                         // waiting for new images
-                        if (!timer.getTextureStorage().isRequested(currentDesc)) {
+                        if (!timer.getTextureStorage(currentDesc.getVarName()).isRequested(currentDesc)) {
                             // We need to request new ones
                             logger.debug("requesting: " + currentDesc.toString());
 
-                            List<Texture2D> oldTextures = timer.getTextureStorage().requestNewConfiguration(i,
-                                    currentDesc);
+                            List<Texture2D> oldTextures = timer.getTextureStorage(currentDesc.getVarName())
+                                    .requestNewConfiguration(i, currentDesc);
                             // Remove all of the (now unused) textures
                             for (Texture2D tex : oldTextures) {
                                 try {

@@ -1,21 +1,21 @@
 package nl.esciencecenter.visualization.esalsa.data;
 
 public class SurfaceTextureDescription {
-    protected final int     frameNumber;
-    protected final int     depth;
-    protected final String  varName;
-    protected final String  colorMap;
+    protected final long frameNumber;
+    protected final int depth;
+    protected final String varName;
+    protected final String colorMap;
     protected final boolean dynamicDimensions;
     protected final boolean diff;
     protected final boolean secondSet;
-    protected final float   lowerBound;
-    protected final float   upperBound;
+    protected final float lowerBound;
+    protected final float upperBound;
     protected final boolean logScale;
 
-    public SurfaceTextureDescription(int frameNumber, int depth, String varName, String colorMap,
+    public SurfaceTextureDescription(long newFrameNumber, int depth, String varName, String colorMap,
             boolean dynamicDimensions, boolean diff, boolean secondSet, float lowerBound, float upperBound,
             boolean logScale) {
-        this.frameNumber = frameNumber;
+        this.frameNumber = newFrameNumber;
         this.depth = depth;
         this.varName = varName;
         this.colorMap = colorMap;
@@ -27,7 +27,7 @@ public class SurfaceTextureDescription {
         this.logScale = logScale;
     }
 
-    public int getFrameNumber() {
+    public long getFrameNumber() {
         return frameNumber;
     }
 
@@ -69,20 +69,19 @@ public class SurfaceTextureDescription {
 
     @Override
     public int hashCode() {
-        int dataModePrime = (frameNumber + 3) * 23;
         int dynamicPrime = ((dynamicDimensions ? 1 : 3) + 41) * 313;
         int diffPrime = ((diff ? 3 : 5) + 43) * 313;
         int secondPrime = ((diff ? 5 : 7) + 53) * 313;
         int variablePrime = (varName.hashCode() + 67) * 859;
-        int frameNumberPrime = (frameNumber + 131) * 1543;
+        int frameNumberPrime = (int) ((frameNumber + 131) * 1543);
         int depthPrime = (depth + 251) * 2957;
         int colorMapPrime = (colorMap.hashCode() + 919) * 7883;
         int lowerBoundPrime = (int) ((lowerBound + 41) * 1543);
         int upperBoundPrime = (int) ((upperBound + 67) * 2957);
         int logScalePrime = (logScale ? 251 : 43) * 7883;
 
-        int hashCode = frameNumberPrime + dynamicPrime + diffPrime + secondPrime + depthPrime + dataModePrime
-                + variablePrime + colorMapPrime + lowerBoundPrime + upperBoundPrime + logScalePrime;
+        int hashCode = frameNumberPrime + dynamicPrime + diffPrime + secondPrime + depthPrime + variablePrime
+                + colorMapPrime + lowerBoundPrime + upperBoundPrime + logScalePrime;
 
         return hashCode;
     }

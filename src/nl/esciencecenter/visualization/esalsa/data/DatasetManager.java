@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -12,24 +15,110 @@ import javax.media.opengl.GL3;
 import nl.esciencecenter.neon.swing.ColormapInterpreter.Dimensions;
 import nl.esciencecenter.visualization.esalsa.ImauSettings;
 import nl.esciencecenter.visualization.esalsa.JOCLColormapper;
+import nl.esciencecenter.visualization.esalsa.data.reworked.NCDFDataSet;
+import nl.esciencecenter.visualization.esalsa.data.reworked.NCDFVariable;
+import nl.esciencecenter.visualization.esalsa.data.reworked.NoSuchSequenceNumberException;
+import nl.esciencecenter.visualization.esalsa.data.reworked.VariableNotCompatibleException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ucar.ma2.InvalidRangeException;
+
 public class DatasetManager {
-    private final static Logger     logger   = LoggerFactory.getLogger(DatasetManager.class);
-    private final ImauSettings      settings = ImauSettings.getInstance();
+    private final static Logger logger = LoggerFactory.getLogger(DatasetManager.class);
+    private final ImauSettings settings = ImauSettings.getInstance();
 
-    private ArrayList<String>       variables;
-    private ArrayList<NetCDFReader> readers;
-    private ArrayList<Integer>      availableFrameSequenceNumbers;
-    private TextureStorage          texStorage;
+    private NCDFDataSet dataset;
+    private final ExecutorService executor;
+    private final List<Long> masterTimeList;
 
-    private int                     latArraySize;
-    private int                     lonArraySize;
+    private final LinkedList<CachedData> cachedData;
 
-    private final ExecutorService   executor;
-    private final JOCLColormapper   mapper;
+    private class CachedData {
+        private final String varname;
+        private final long frameNumber;
+        private final int depth;
+
+        private float[] data;
+
+        public CachedData(SurfaceTextureDescription desc, float[] data) {
+            varname = desc.varName;
+            frameNumber = desc.frameNumber;
+            depth = desc.depth;
+
+            data = data;
+        }
+
+        public synchronized String getVarname() {
+            return varname;
+        }
+
+        public synchronized long getFrameNumber() {
+            return frameNumber;
+        }
+
+        public synchronized int getDepth() {
+            return depth;
+        }
+
+        public synchronized float[] getData() {
+            return data;
+        }
+
+        @Override
+        public int hashCode() {
+            int variablePrime = (varname.hashCode() + 67) * 859;
+            int frameNumberPrime = (int) ((frameNumber + 131) * 1543);
+            int depthPrime = (depth + 251) * 2957;
+
+            int hashCode = frameNumberPrime + depthPrime + variablePrime;
+
+            return hashCode;
+        }
+
+        @Override
+        public boolean equals(Object thatObject) {
+            if (this == thatObject)
+                return true;
+            if (!(thatObject instanceof CachedData))
+                return false;
+
+            // cast to native object is now safe
+            CachedData that = (CachedData) thatObject;
+
+            // now a proper field-by-field evaluation can be made
+            return (varname.compareTo(that.varname) == 0 && frameNumber == that.frameNumber && depth == that.depth);
+        }
+    }
+
+    private class TexturedataStorage {
+        private final int width;
+        private final int height;
+        private final TextureStorage texStorage;
+
+        public TexturedataStorage(DatasetManager manager, int width, int height) {
+            this.width = width;
+            this.height = height;
+            texStorage = new TextureStorage(manager, settings.getNumScreensRows() * settings.getNumScreensCols(),
+                    width, height, GL3.GL_TEXTURE4, GL3.GL_TEXTURE5);
+        }
+
+        public synchronized int getWidth() {
+            return width;
+        }
+
+        public synchronized int getHeight() {
+            return height;
+        }
+
+        public synchronized TextureStorage getTexStorage() {
+            return texStorage;
+        }
+    }
+
+    private final JOCLColormapper mapper;
+    private final List<TexturedataStorage> textureDatastorageList;
 
     private class Worker implements Runnable {
         private final SurfaceTextureDescription desc;
@@ -40,34 +129,92 @@ public class DatasetManager {
 
         @Override
         public void run() {
-            int frameNumber = desc.getFrameNumber();
             String varName = desc.getVarName();
-            int requestedDepth = desc.getDepth();
-
-            int frameIndex = getIndexOfFrameNumber(frameNumber);
-            NetCDFReader currentReader = readers.get(frameIndex);
+            NCDFVariable ncdfVar = dataset.getVariable(varName);
 
             Dimensions colormapDims = new Dimensions(settings.getCurrentVarMin(varName),
                     settings.getCurrentVarMax(varName));
-            float[] surfaceArray = null;
-            while (surfaceArray == null) {
-                surfaceArray = currentReader.getData(varName, requestedDepth);
-            }
 
-            int[] pixelArray = mapper.makeImage(desc.getColorMap(), colormapDims, surfaceArray,
-                    currentReader.getFillValue(varName), desc.isLogScale(), desc.getLongitudes(), desc.getLatitudes());
+            float[] surfaceArray = getDataCached(desc, ncdfVar);
+
+            int[] pixelArray = mapper.makeImage(desc.getColorMap(), colormapDims, surfaceArray, ncdfVar.getFillValue(),
+                    desc.isLogScale(), ncdfVar.getLonDimensionSize(), ncdfVar.getLatDimensionSize());
 
             ByteBuffer legendBuf = mapper.getColormapForLegendTexture(desc.getColorMap());
 
-            texStorage.setImageCombo(desc, pixelArray, legendBuf);
+            for (TexturedataStorage tds : textureDatastorageList) {
+                if (tds.getWidth() == ncdfVar.getLonDimensionSize() && tds.getHeight() == ncdfVar.getLatDimensionSize()) {
+                    tds.getTexStorage().setImageCombo(desc, pixelArray, legendBuf);
+                }
+            }
+        }
+
+        private float[] getDataCached(SurfaceTextureDescription desc, NCDFVariable ncdfVar) {
+            float[] result = null;
+            if (cachedData.contains(desc)) {
+                return cachedData.get(cachedData.indexOf(desc)).getData();
+            } else {
+                long frameNumber = desc.getFrameNumber();
+                int requestedDepth = desc.getDepth();
+                try {
+                    result = ncdfVar.getData(frameNumber, requestedDepth);
+                    cachedData.addLast(new CachedData(desc, result));
+                    while (cachedData.size() > (settings.getNumScreensCols() * settings.getNumScreensRows())) {
+                        cachedData.removeFirst();
+                    }
+                    return result;
+                } catch (NoSuchSequenceNumberException | InvalidRangeException | IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+
+            return result;
         }
 
     }
 
     public DatasetManager(File[] files) {
+        cachedData = new LinkedList<CachedData>();
         executor = Executors.newFixedThreadPool(4);
 
-        init(files);
+        masterTimeList = new ArrayList<Long>();
+        textureDatastorageList = new ArrayList<TexturedataStorage>();
+
+        List<File> filesList = new ArrayList<File>();
+        for (int i = 0; i < files.length; i++) {
+            filesList.add(files[i]);
+        }
+        try {
+            logger.debug("Now opening dataset");
+            dataset = new NCDFDataSet(filesList);
+
+            for (String varName : dataset.getVariableNames()) {
+                NCDFVariable ncdfVar = dataset.getVariable(varName);
+                int varWidth = ncdfVar.getLonDimensionSize();
+                int varHeight = ncdfVar.getLatDimensionSize();
+
+                boolean tdsFound = false;
+                for (TexturedataStorage tds : textureDatastorageList) {
+                    if (tds.getWidth() == varWidth && tds.getHeight() == varHeight) {
+                        tdsFound = true;
+                    }
+                }
+                if (!tdsFound) {
+                    textureDatastorageList.add(new TexturedataStorage(this, varWidth, varHeight));
+                }
+
+                List<Long> times = ncdfVar.getSequenceNumbers();
+                for (long time : times) {
+                    if (!masterTimeList.contains(time)) {
+                        masterTimeList.add(time);
+                    }
+                }
+                Collections.sort(masterTimeList);
+            }
+        } catch (IOException | VariableNotCompatibleException e) {
+            e.printStackTrace();
+        }
 
         mapper = new JOCLColormapper();
     }
@@ -79,164 +226,81 @@ public class DatasetManager {
         }
     }
 
-    private synchronized void init(File[] files) {
-        variables = new ArrayList<String>();
-        readers = new ArrayList<NetCDFReader>();
-        availableFrameSequenceNumbers = new ArrayList<Integer>();
-
-        latArraySize = 0;
-        lonArraySize = 0;
-        int frames = 0;
-
-        for (File file : files) {
-            boolean accept = true;
-            NetCDFReader ncr = new NetCDFReader(file);
-
-            // If this is the first file, use it to set the standard
-            if (latArraySize == 0) {
-                latArraySize = ncr.getLatSize();
-            }
-
-            if (lonArraySize == 0) {
-                lonArraySize = ncr.getLonSize();
-            }
-
-            // if (frames == 0) {
-            // frames = ncr.getAvailableFrames();
-            // }
-
-            if (variables.size() == 0) {
-                variables = ncr.getVariableNames();
-            }
-
-            // If it is a subsequent file, check if it adheres to the standards
-            // set by the first file.
-            if (latArraySize != ncr.getLatSize()) {
-                logger.debug("LAT ARRAY SIZES NOT EQUAL");
-                accept = false;
-            }
-
-            if (lonArraySize != ncr.getLonSize()) {
-                logger.debug("LON ARRAY SIZES NOT EQUAL");
-                accept = false;
-            }
-
-            boolean stillGood = true;
-            ArrayList<String> varNames = ncr.getVariableNames();
-            for (String varName : varNames) {
-                if (!variables.contains(varName)) {
-                    stillGood = false;
-                }
-            }
-            for (String varName : variables) {
-                if (!varNames.contains(varName)) {
-                    stillGood = false;
-                }
-            }
-            if (!stillGood) {
-                logger.debug("VARIABLES NOT EQUAL");
-                accept = false;
-            }
-
-            // if (frames != ncr.getAvailableFrames()) {
-            // logger.debug("NUMBER OF FRAMES NOT EQUAL");
-            // accept = false;
-            // }
-
-            // If it does adhere to the standard, add the variables to the
-            // datastore and associate them with the netcdf readers they came
-            // from.
-            if (accept) {
-                availableFrameSequenceNumbers.add(ncr.getThisParticularFrameNumber());
-                readers.add(ncr);
-                for (String varName : varNames) {
-                    // And determine the bounds
-                    ncr.determineMinMax(varName);
-                }
-            }
-        }
-
-        texStorage = new TextureStorage(this, settings.getNumScreensRows() * settings.getNumScreensCols(),
-                lonArraySize, latArraySize, GL3.GL_TEXTURE4, GL3.GL_TEXTURE5);
-
-    }
-
     public synchronized void buildImages(SurfaceTextureDescription desc) {
         Runnable worker = new Worker(desc);
         executor.execute(worker);
     }
 
-    public synchronized TextureStorage getEfficientTextureStorage() {
-        return texStorage;
+    public synchronized TextureStorage getTextureStorage(String varName) {
+        NCDFVariable ncdfVar = dataset.getVariable(varName);
+        for (TexturedataStorage tds : textureDatastorageList) {
+            if (tds.getWidth() == ncdfVar.getLonDimensionSize() && tds.getHeight() == ncdfVar.getLatDimensionSize()) {
+                return tds.getTexStorage();
+            }
+        }
+
+        return null;
     }
 
-    public synchronized int getFrameNumberOfIndex(int index) {
-        return availableFrameSequenceNumbers.get(index);
-    }
+    public synchronized long getPreviousFrameNumber(long frameNumber) throws IOException {
+        if (masterTimeList.contains(frameNumber)) {
+            int indexOfFrameNumber = masterTimeList.indexOf(frameNumber);
 
-    public synchronized int getIndexOfFrameNumber(int frameNumber) {
-        return availableFrameSequenceNumbers.indexOf(frameNumber);
-    }
-
-    public synchronized int getPreviousFrameNumber(int frameNumber) throws IOException {
-        int nextNumber = getIndexOfFrameNumber(frameNumber) - 1;
-
-        if (nextNumber >= 0 && nextNumber < availableFrameSequenceNumbers.size()) {
-            return getFrameNumberOfIndex(nextNumber);
+            try {
+                return masterTimeList.get(indexOfFrameNumber - 1);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                return frameNumber;
+            }
         } else {
-            throw new IOException("Frame number not available: " + nextNumber);
+            throw new IOException("Given frame number not valid: " + frameNumber);
         }
     }
 
-    public synchronized int getNextFrameNumber(int frameNumber) throws IOException {
-        int nextNumber = getIndexOfFrameNumber(frameNumber) + 1;
+    public synchronized long getNextFrameNumber(long frameNumber) throws IOException {
+        if (masterTimeList.contains(frameNumber)) {
+            int indexOfFrameNumber = masterTimeList.indexOf(frameNumber);
 
-        if (nextNumber >= 0 && nextNumber < availableFrameSequenceNumbers.size()) {
-            return getFrameNumberOfIndex(nextNumber);
+            try {
+                return masterTimeList.get(indexOfFrameNumber + 1);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                return frameNumber;
+            }
         } else {
-            throw new IOException("Frame number not available: " + nextNumber);
+            throw new IOException("Given frame number not valid: " + frameNumber);
         }
     }
 
     public synchronized int getNumFrames() {
-        return availableFrameSequenceNumbers.size();
+        return masterTimeList.size();
     }
 
-    public synchronized ArrayList<String> getVariables() {
-        return variables;
+    public synchronized List<String> getVariables() {
+        return dataset.getVariableNames();
     }
 
     public synchronized String getVariableUnits(String varName) {
-        return readers.get(0).getUnits(varName);
-    }
-
-    public synchronized int getImageWidth() {
-        return lonArraySize;
-    }
-
-    public synchronized int getImageHeight() {
-        return latArraySize;
+        NCDFVariable ncdfVar = dataset.getVariable(varName);
+        return ncdfVar.getUnits();
     }
 
     public synchronized float getMinValueContainedInDataset(String varName) {
-        float min = Float.MAX_VALUE;
-        for (NetCDFReader reader : readers) {
-            float readerMin = reader.getMinValue(varName);
-            if (readerMin < min) {
-                min = readerMin;
-            }
-        }
-        return min;
+        NCDFVariable ncdfVar = dataset.getVariable(varName);
+        return ncdfVar.getMinimumValue();
     }
 
     public synchronized float getMaxValueContainedInDataset(String varName) {
-        float max = Float.MIN_VALUE;
-        for (NetCDFReader reader : readers) {
-            float readerMax = reader.getMaxValue(varName);
-            if (readerMax > max) {
-                max = readerMax;
-            }
+        NCDFVariable ncdfVar = dataset.getVariable(varName);
+        return ncdfVar.getMaximumValue();
+    }
+
+    public long getFirstFrameNumber() {
+        return masterTimeList.get(0);
+    }
+
+    public int getIndexOfFrameNumber(long frameNumber) {
+        if (masterTimeList.contains(frameNumber)) {
+            return masterTimeList.indexOf(frameNumber);
         }
-        return max;
+        return 0;
     }
 }
