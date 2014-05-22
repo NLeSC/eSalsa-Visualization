@@ -646,7 +646,7 @@ public class ImauPanel extends NeonInterfacePanel {
     }
 
     private File[] openFile() {
-        final JFileChooser fileChooser = new JFileChooser();// "/media/maarten/diskhdd1/eSalsaDATA/01deg_prod_run3/");
+        final JFileChooser fileChooser = new JFileChooser("/media/maarten/diskhdd1/eSalsaDATA/01deg_prod_run3/");
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(true);

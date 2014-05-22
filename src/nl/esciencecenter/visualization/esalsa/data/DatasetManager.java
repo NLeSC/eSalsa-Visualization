@@ -181,13 +181,42 @@ public class DatasetManager {
         masterTimeList = new ArrayList<Long>();
         textureDatastorageList = new ArrayList<TexturedataStorage>();
 
-        List<File> filesList = new ArrayList<File>();
+        List<List<File>> filesets = new ArrayList<List<File>>();
+        List<File> firstFileset = new ArrayList<File>();
+        firstFileset.add(files[0]);
+
         for (int i = 0; i < files.length; i++) {
-            filesList.add(files[i]);
+            for (List<File> currentFileset : filesets) {
+                // extract all NON_NUMBER parts from the filename and compare
+                // them
+                // to see if this is the same dataset
+                String[] stringsRef = currentFileset.get(0).getName().split("(?=[0-9])([0-9]*)");
+                String[] strings1 = files[i].getName().split("(?=[0-9])([0-9]*)");
+                boolean same = true;
+                for (int j = 0; j < strings1.length; j++) {
+                    if (strings1[j].compareTo(stringsRef[j]) == 0) {
+                        same = false;
+                    }
+                }
+
+                if (same) {
+                    currentFileset.add(files[i]);
+                }
+            }
+
         }
+        // String[] strings2 = files[i].getName().split("(?=[^0-9])([^0-9]*)");
+        // for (int j = 0; j < strings2.length; j++) {
+        // System.out.println(strings2[j]);
+        // }
+        //
+        // for (int j = 0; j < strings1.length; j++) {
+        // System.out.print(strings2[j] + strings1[j]);
+        // }
+
         try {
             logger.debug("Now opening dataset");
-            dataset = new NCDFDataSet(filesList);
+            dataset = new NCDFDataSet(firstFileset);
 
             for (String varName : dataset.getVariableNames()) {
                 NCDFVariable ncdfVar = dataset.getVariable(varName);
