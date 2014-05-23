@@ -29,7 +29,7 @@ public class DatasetManager {
     private final static Logger logger = LoggerFactory.getLogger(DatasetManager.class);
     private final ImauSettings settings = ImauSettings.getInstance();
 
-    private NCDFDataSet dataset;
+    private final List<NCDFDataSet> datasets;
     private final ExecutorService executor;
     private final List<Long> masterTimeList;
 
@@ -130,23 +130,32 @@ public class DatasetManager {
         @Override
         public void run() {
             String varName = desc.getVarName();
-            NCDFVariable ncdfVar = dataset.getVariable(varName);
 
-            Dimensions colormapDims = new Dimensions(settings.getCurrentVarMin(varName),
-                    settings.getCurrentVarMax(varName));
+            try {
+                NCDFDataSet dataset = findDataset(varName);
+                NCDFVariable ncdfVar = dataset.getVariable(varName);
 
-            float[] surfaceArray = getDataCached(desc, ncdfVar);
+                Dimensions colormapDims = new Dimensions(settings.getCurrentVarMin(varName),
+                        settings.getCurrentVarMax(varName));
 
-            int[] pixelArray = mapper.makeImage(desc.getColorMap(), colormapDims, surfaceArray, ncdfVar.getFillValue(),
-                    desc.isLogScale(), ncdfVar.getLonDimensionSize(), ncdfVar.getLatDimensionSize());
+                float[] surfaceArray = getDataCached(desc, ncdfVar);
 
-            ByteBuffer legendBuf = mapper.getColormapForLegendTexture(desc.getColorMap());
+                int[] pixelArray = mapper.makeImage(desc.getColorMap(), colormapDims, surfaceArray,
+                        ncdfVar.getFillValue(), desc.isLogScale(), ncdfVar.getLonDimensionSize(),
+                        ncdfVar.getLatDimensionSize());
 
-            for (TexturedataStorage tds : textureDatastorageList) {
-                if (tds.getWidth() == ncdfVar.getLonDimensionSize() && tds.getHeight() == ncdfVar.getLatDimensionSize()) {
-                    tds.getTexStorage().setImageCombo(desc, pixelArray, legendBuf);
+                ByteBuffer legendBuf = mapper.getColormapForLegendTexture(desc.getColorMap());
+
+                for (TexturedataStorage tds : textureDatastorageList) {
+                    if (tds.getWidth() == ncdfVar.getLonDimensionSize()
+                            && tds.getHeight() == ncdfVar.getLatDimensionSize()) {
+                        tds.getTexStorage().setImageCombo(desc, pixelArray, legendBuf);
+                    }
                 }
+            } catch (DatasetNotFoundException e) {
+                e.printStackTrace();
             }
+
         }
 
         private float[] getDataCached(SurfaceTextureDescription desc, NCDFVariable ncdfVar) {
@@ -184,65 +193,71 @@ public class DatasetManager {
         List<List<File>> filesets = new ArrayList<List<File>>();
         List<File> firstFileset = new ArrayList<File>();
         firstFileset.add(files[0]);
+        filesets.add(firstFileset);
 
-        for (int i = 0; i < files.length; i++) {
+        // start comparing from the second file onwards.
+        for (int i = 1; i < files.length; i++) {
+            boolean fileSetFound = false;
             for (List<File> currentFileset : filesets) {
                 // extract all NON_NUMBER parts from the filename and compare
-                // them
-                // to see if this is the same dataset
+                // them to see if this is the same dataset
                 String[] stringsRef = currentFileset.get(0).getName().split("(?=[0-9])([0-9]*)");
                 String[] strings1 = files[i].getName().split("(?=[0-9])([0-9]*)");
-                boolean same = true;
+                boolean sameExceptForNumbers = true;
                 for (int j = 0; j < strings1.length; j++) {
-                    if (strings1[j].compareTo(stringsRef[j]) == 0) {
-                        same = false;
+                    if (strings1[j].compareTo(stringsRef[j]) != 0) {
+                        sameExceptForNumbers = false;
                     }
                 }
 
-                if (same) {
+                if (sameExceptForNumbers) {
+                    logger.debug("Adding " + files[i].getName() + " to fileset: " + currentFileset.get(0).getName());
                     currentFileset.add(files[i]);
+                    fileSetFound = true;
                 }
             }
-
+            if (!fileSetFound) {
+                logger.info("New fileset found: " + files[i].getName());
+                List<File> secondaryFileset = new ArrayList<File>();
+                secondaryFileset.add(files[i]);
+                filesets.add(secondaryFileset);
+            }
         }
-        // String[] strings2 = files[i].getName().split("(?=[^0-9])([^0-9]*)");
-        // for (int j = 0; j < strings2.length; j++) {
-        // System.out.println(strings2[j]);
-        // }
-        //
-        // for (int j = 0; j < strings1.length; j++) {
-        // System.out.print(strings2[j] + strings1[j]);
-        // }
 
-        try {
-            logger.debug("Now opening dataset");
-            dataset = new NCDFDataSet(firstFileset);
+        datasets = new ArrayList<NCDFDataSet>();
 
-            for (String varName : dataset.getVariableNames()) {
-                NCDFVariable ncdfVar = dataset.getVariable(varName);
-                int varWidth = ncdfVar.getLonDimensionSize();
-                int varHeight = ncdfVar.getLatDimensionSize();
+        for (List<File> currentFileset : filesets) {
+            try {
+                logger.debug("Now opening dataset");
+                NCDFDataSet currentDataset = new NCDFDataSet(currentFileset);
+                datasets.add(currentDataset);
 
-                boolean tdsFound = false;
-                for (TexturedataStorage tds : textureDatastorageList) {
-                    if (tds.getWidth() == varWidth && tds.getHeight() == varHeight) {
-                        tdsFound = true;
+                for (String varName : currentDataset.getVariableNames()) {
+                    NCDFVariable ncdfVar = currentDataset.getVariable(varName);
+                    int varWidth = ncdfVar.getLonDimensionSize();
+                    int varHeight = ncdfVar.getLatDimensionSize();
+
+                    boolean tdsFound = false;
+                    for (TexturedataStorage tds : textureDatastorageList) {
+                        if (tds.getWidth() == varWidth && tds.getHeight() == varHeight) {
+                            tdsFound = true;
+                        }
                     }
-                }
-                if (!tdsFound) {
-                    textureDatastorageList.add(new TexturedataStorage(this, varWidth, varHeight));
-                }
-
-                List<Long> times = ncdfVar.getSequenceNumbers();
-                for (long time : times) {
-                    if (!masterTimeList.contains(time)) {
-                        masterTimeList.add(time);
+                    if (!tdsFound) {
+                        textureDatastorageList.add(new TexturedataStorage(this, varWidth, varHeight));
                     }
+
+                    List<Long> times = ncdfVar.getSequenceNumbers();
+                    for (long time : times) {
+                        if (!masterTimeList.contains(time)) {
+                            masterTimeList.add(time);
+                        }
+                    }
+                    Collections.sort(masterTimeList);
                 }
-                Collections.sort(masterTimeList);
+            } catch (IOException | VariableNotCompatibleException e) {
+                e.printStackTrace();
             }
-        } catch (IOException | VariableNotCompatibleException e) {
-            e.printStackTrace();
         }
 
         mapper = new JOCLColormapper();
@@ -260,7 +275,9 @@ public class DatasetManager {
         executor.execute(worker);
     }
 
-    public synchronized TextureStorage getTextureStorage(String varName) {
+    public synchronized TextureStorage getTextureStorage(String varName) throws DatasetNotFoundException {
+        NCDFDataSet dataset = findDataset(varName);
+
         NCDFVariable ncdfVar = dataset.getVariable(varName);
         for (TexturedataStorage tds : textureDatastorageList) {
             if (tds.getWidth() == ncdfVar.getLonDimensionSize() && tds.getHeight() == ncdfVar.getLatDimensionSize()) {
@@ -304,20 +321,27 @@ public class DatasetManager {
     }
 
     public synchronized List<String> getVariables() {
-        return dataset.getVariableNames();
+        List<String> varNamesFromAllDatasets = new ArrayList<String>();
+        for (NCDFDataSet ds : datasets) {
+            varNamesFromAllDatasets.addAll(ds.getVariableNames());
+        }
+        return varNamesFromAllDatasets;
     }
 
-    public synchronized String getVariableUnits(String varName) {
+    public synchronized String getVariableUnits(String varName) throws DatasetNotFoundException {
+        NCDFDataSet dataset = findDataset(varName);
         NCDFVariable ncdfVar = dataset.getVariable(varName);
         return ncdfVar.getUnits();
     }
 
-    public synchronized float getMinValueContainedInDataset(String varName) {
+    public synchronized float getMinValueContainedInDataset(String varName) throws DatasetNotFoundException {
+        NCDFDataSet dataset = findDataset(varName);
         NCDFVariable ncdfVar = dataset.getVariable(varName);
         return ncdfVar.getMinimumValue();
     }
 
-    public synchronized float getMaxValueContainedInDataset(String varName) {
+    public synchronized float getMaxValueContainedInDataset(String varName) throws DatasetNotFoundException {
+        NCDFDataSet dataset = findDataset(varName);
         NCDFVariable ncdfVar = dataset.getVariable(varName);
         return ncdfVar.getMaximumValue();
     }
@@ -331,5 +355,19 @@ public class DatasetManager {
             return masterTimeList.indexOf(frameNumber);
         }
         return 0;
+    }
+
+    private NCDFDataSet findDataset(String varName) throws DatasetNotFoundException {
+        NCDFDataSet datasetThatContainsTheVariable = null;
+        for (NCDFDataSet ds : datasets) {
+            if (ds.getVariableNames().contains(varName)) {
+                datasetThatContainsTheVariable = ds;
+            }
+        }
+        if (datasetThatContainsTheVariable == null) {
+            throw new DatasetNotFoundException("What did you do? " + varName
+                    + " doesn't exist? This should not have happened.");
+        }
+        return datasetThatContainsTheVariable;
     }
 }
