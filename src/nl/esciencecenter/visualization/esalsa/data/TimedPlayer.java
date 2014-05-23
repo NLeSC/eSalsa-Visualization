@@ -301,7 +301,7 @@ public class TimedPlayer implements Runnable {
         }
     }
 
-    public synchronized TextureStorage getTextureStorage(String varName) {
+    public synchronized TextureStorage getTextureStorage(String varName) throws DatasetNotFoundException {
         return dsManager.getTextureStorage(varName);
     }
 
@@ -309,15 +309,15 @@ public class TimedPlayer implements Runnable {
         return dsManager.getVariables();
     }
 
-    public synchronized String getVariableUnits(String varName) {
+    public synchronized String getVariableUnits(String varName) throws DatasetNotFoundException {
         return dsManager.getVariableUnits(varName);
     }
 
-    public synchronized float getMinValueContainedInDataset(String varName) {
+    public synchronized float getMinValueContainedInDataset(String varName) throws DatasetNotFoundException {
         return dsManager.getMinValueContainedInDataset(varName);
     }
 
-    public synchronized float getMaxValueContainedInDataset(String varName) {
+    public synchronized float getMaxValueContainedInDataset(String varName) throws DatasetNotFoundException {
         return dsManager.getMaxValueContainedInDataset(varName);
     }
 

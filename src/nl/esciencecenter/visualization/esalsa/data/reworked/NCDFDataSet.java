@@ -31,11 +31,11 @@ public class NCDFDataSet {
                     boolean hasLat = false;
                     boolean hasLon = false;
                     for (Dimension d : v.getDimensions()) {
-                        if (d.getFullName().contains("lat") || d.getFullName().contains("ni")) {
+                        if (d.getFullName().contains("lat") || d.getFullName().contains("nj")) {
                             hasLat = true;
                         }
 
-                        if (d.getFullName().contains("lon") || d.getFullName().contains("nj")) {
+                        if (d.getFullName().contains("lon") || d.getFullName().contains("ni")) {
                             hasLon = true;
                         }
                     }

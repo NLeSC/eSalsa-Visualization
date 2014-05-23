@@ -33,6 +33,7 @@ import nl.esciencecenter.neon.shaders.ShaderProgramLoader;
 import nl.esciencecenter.neon.text.MultiColorText;
 import nl.esciencecenter.neon.text.jogampexperimental.Font;
 import nl.esciencecenter.neon.text.jogampexperimental.FontFactory;
+import nl.esciencecenter.visualization.esalsa.data.DatasetNotFoundException;
 import nl.esciencecenter.visualization.esalsa.data.SurfaceTextureDescription;
 import nl.esciencecenter.visualization.esalsa.data.TextureStorage.TextureCombo;
 import nl.esciencecenter.visualization.esalsa.data.TimedPlayer;
@@ -156,7 +157,12 @@ public class ImauWindow implements GLEventListener {
                 initDatastores(gl);
             }
 
-            displayContext(timer, clickCoords);
+            try {
+                displayContext(timer, clickCoords);
+            } catch (DatasetNotFoundException e) {
+                logger.error(e.getMessage());
+                e.printStackTrace();
+            }
         }
 
         if (timer.isScreenshotNeeded()) {
@@ -170,7 +176,7 @@ public class ImauWindow implements GLEventListener {
         contextOff(drawable);
     }
 
-    private void displayContext(TimedPlayer timer, Float2Vector clickCoords) {
+    private void displayContext(TimedPlayer timer, Float2Vector clickCoords) throws DatasetNotFoundException {
         final int width = GLContext.getCurrent().getGLDrawable().getWidth();
         final int height = GLContext.getCurrent().getGLDrawable().getHeight();
         aspect = (float) width / (float) height;

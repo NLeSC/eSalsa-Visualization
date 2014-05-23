@@ -114,7 +114,7 @@ public class NCDFVariable {
                         }
                     }
 
-                    if (d.getFullName().contains("lat") || d.getFullName().contains("ni")) {
+                    if (d.getFullName().contains("lat") || d.getFullName().contains("nj")) {
                         int currentlatDimensionSize = d.getLength();
                         if (latDimensionSize != currentlatDimensionSize) {
                             if (latDimensionSize == 0) {
@@ -126,7 +126,7 @@ public class NCDFVariable {
                         }
                     }
 
-                    if (d.getFullName().contains("lon") || d.getFullName().contains("nj")) {
+                    if (d.getFullName().contains("lon") || d.getFullName().contains("ni")) {
                         int currentlonDimensionSize = d.getLength();
                         if (lonDimensionSize != currentlonDimensionSize) {
                             if (lonDimensionSize == 0) {
