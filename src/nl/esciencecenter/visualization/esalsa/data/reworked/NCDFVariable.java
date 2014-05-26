@@ -78,7 +78,9 @@ public class NCDFVariable {
     private int latDimensionSize = 0;
     private int lonDimensionSize = 0;
 
-    private float minimumValue, maximumValue, fillValue;
+    private float[] realLatitudeValues, realLongitudeValues;
+
+    private float minimumValue, maximumValue, fillValue, minimumLatitude, maximumLatitude;
 
     private final CacheFileManager cacheAtDataLocation;
     private final CacheFileManager cacheAtProgramLocation;
@@ -131,6 +133,34 @@ public class NCDFVariable {
                         if (lonDimensionSize != currentlonDimensionSize) {
                             if (lonDimensionSize == 0) {
                                 lonDimensionSize = currentlonDimensionSize;
+                                // Variable realLongitudes =
+                                // ncfile.findVariable(d.getFullName());
+                                // if (realLongitudes != null) {
+                                // Array netCDFArray = realLongitudes.read();
+                                // realLongitudeValues = (float[])
+                                // netCDFArray.get1DJavaArray(float.class);
+                                //
+                                // float min = Float.POSITIVE_INFINITY;
+                                // float max = Float.NEGATIVE_INFINITY;
+                                // for (int i = 0; i <
+                                // realLongitudeValues.length; i++) {
+                                // float value = realLongitudeValues[i];
+                                // value = (value + 360.000f) % 360.000f;
+                                // realLongitudeValues[i] = value;
+                                //
+                                // if (value < min) {
+                                // min = value;
+                                // }
+                                // if (value > max) {
+                                // max = value;
+                                // }
+                                // }
+                                //
+                                // logger.debug("longitudes for " +
+                                // variable.getFullName() + " exist between " +
+                                // min
+                                // + " and " + max);
+                                // }
                             } else {
                                 throw new VariableNotCompatibleException("Variable " + variable.getFullName()
                                         + " was found with mismatching dimensions");
@@ -142,6 +172,8 @@ public class NCDFVariable {
                 if (latDimensionSize > 0 && lonDimensionSize > 0) {
                     // Since we didnt get an exception yet, it seems it's
                     // mappable, so we need to do our thing
+
+                    determineLatBounds(ncfile, variableInThisFile);
 
                     // Loop over the dimensions to see if there's a time
                     // dimension
@@ -173,6 +205,82 @@ public class NCDFVariable {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+
+    private void determineLatBounds(NetcdfFile ncfile, Variable variableInFile) throws IOException {
+        float latMin = cacheAtDataLocation.readLatMin(variable.getFullName());
+        float latMax = cacheAtDataLocation.readLatMax(variable.getFullName());
+        if (Float.isNaN(latMin) || Float.isNaN(latMax)) {
+            latMin = cacheAtProgramLocation.readLatMin(variable.getFullName());
+            latMax = cacheAtProgramLocation.readLatMax(variable.getFullName());
+        }
+        if (Float.isNaN(latMin) || Float.isNaN(latMax)) {
+            List<Attribute> attributes = variableInFile.getAttributes();
+            Variable latitudes = null;
+            for (Attribute a : attributes) {
+                if (a.getFullName().compareTo("coordinates") == 0) {
+                    String[] coords = a.getStringValue().split("[ ]");
+                    for (String c : coords) {
+                        if (c.contains("lat") || c.contains("LAT") || c.contains("ni")) {
+                            Variable potentialLatitudes = ncfile.findVariable(c);
+                            if (potentialLatitudes != null) {
+                                latitudes = potentialLatitudes;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (latitudes == null) {
+                for (Dimension d : variableInFile.getDimensions()) {
+                    if (d.getFullName().contains("lat") || d.getFullName().contains("LAT")
+                            || d.getFullName().contains("nj")) {
+                        Variable potentialLatitudes = ncfile.findVariable(d.getFullName());
+                        if (potentialLatitudes != null) {
+                            latitudes = potentialLatitudes;
+                        }
+                    }
+                }
+            }
+
+            if (latitudes != null) {
+                float fillValue = Float.NEGATIVE_INFINITY;
+                for (Attribute a : latitudes.getAttributes()) {
+                    if (a.getFullName().compareTo("_FillValue") == 0) {
+                        fillValue = a.getNumericValue().floatValue();
+                    }
+                }
+
+                Array netCDFArray = latitudes.read();
+                realLatitudeValues = (float[]) netCDFArray.get1DJavaArray(float.class);
+
+                float min = Float.POSITIVE_INFINITY;
+                float max = Float.NEGATIVE_INFINITY;
+                for (float value : realLatitudeValues) {
+                    if (value != fillValue) {
+                        if (value < min) {
+                            min = value;
+                        }
+                        if (value > max) {
+                            max = value;
+                        }
+                    }
+                }
+                minimumLatitude = min;
+                maximumLatitude = max;
+
+                cacheAtDataLocation.writeLatMin(variableInFile.getFullName(), min);
+                cacheAtProgramLocation.writeLatMin(variableInFile.getFullName(), min);
+                cacheAtDataLocation.writeLatMax(variableInFile.getFullName(), max);
+                cacheAtProgramLocation.writeLatMax(variableInFile.getFullName(), max);
+            } else {
+                minimumLatitude = -90f;
+                maximumLatitude = 90f;
+            }
+        }
+
+        logger.debug("latitudes for " + variable.getFullName() + " exist between " + minimumLatitude + " and "
+                + maximumLatitude);
     }
 
     private void analyseBounds() throws NoSuchSequenceNumberException, InvalidRangeException, IOException {
@@ -404,6 +512,14 @@ public class NCDFVariable {
 
     public synchronized String getUnits() {
         return variable.getUnitsString();
+    }
+
+    public float getMinLatitude() {
+        return minimumLatitude;
+    }
+
+    public float getMaxLatitude() {
+        return maximumLatitude;
     }
 
 }

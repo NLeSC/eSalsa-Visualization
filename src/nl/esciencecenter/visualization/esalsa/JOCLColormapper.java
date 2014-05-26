@@ -233,9 +233,9 @@ public class JOCLColormapper {
 
         // Same Program Setup for Logarithmic scale colormapper
         source = readFile("kernels/LogColormapper.cl");
-        cpProgram = clCreateProgramWithSource(context, 1, new String[] { source }, null, null);
-        clBuildProgram(cpProgram, 0, null, "-cl-mad-enable", null, null);
-        logKernel = clCreateKernel(cpProgram, "mapColors", null);
+        cl_program cpProgram2 = clCreateProgramWithSource(context, 1, new String[] { source }, null, null);
+        clBuildProgram(cpProgram2, 0, null, "-cl-mad-enable", null, null);
+        logKernel = clCreateKernel(cpProgram2, "mapColors", null);
     }
 
     /**
@@ -601,6 +601,30 @@ public class JOCLColormapper {
                 0, null, null);
 
         return pixels;
+    }
+
+    public void dispose() {
+        System.out.println("NOW RELEASING JOCL MEMORY");
+
+        for (ReservedMemoryConstruct memoryConstruct : reservedMemory) {
+            CL.clReleaseMemObject(memoryConstruct.getDataMem());
+            CL.clReleaseMemObject(memoryConstruct.getOutputMem());
+        }
+        reservedMemory.clear();
+
+        CL.clReleaseKernel(kernel);
+        CL.clReleaseKernel(logKernel);
+
+        CL.clReleaseMemObject(colorMapMem);
+
+        CL.clReleaseCommandQueue(commandQueue);
+        CL.clReleaseContext(context);
+
+        kernel = null;
+        logKernel = null;
+        colorMapMem = null;
+        commandQueue = null;
+        context = null;
     }
 
     public ByteBuffer getColormapForLegendTexture(String colormapName) {
