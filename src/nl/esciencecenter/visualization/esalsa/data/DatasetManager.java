@@ -149,7 +149,13 @@ public class DatasetManager {
                 for (TexturedataStorage tds : textureDatastorageList) {
                     if (tds.getWidth() == ncdfVar.getLonDimensionSize()
                             && tds.getHeight() == ncdfVar.getLatDimensionSize()) {
-                        tds.getTexStorage().setImageCombo(desc, pixelArray, legendBuf);
+                        float topTexCoord = 0.0f + (ncdfVar.getMaxLatitude() / 90f);
+                        float bottomTexCoord = 1.0f - (ncdfVar.getMinLatitude() / -90f);
+                        // System.out.println("topTexCoord: " + topTexCoord);
+                        // System.out.println("bottomTexCoord: " +
+                        // bottomTexCoord);
+                        tds.getTexStorage().setImageCombo(desc, pixelArray, legendBuf, 1, 0);// topTexCoord,
+                                                                                             // bottomTexCoord);
                     }
                 }
             } catch (DatasetNotFoundException e) {
@@ -264,6 +270,7 @@ public class DatasetManager {
     }
 
     public synchronized void shutdown() {
+        mapper.dispose();
         executor.shutdown();
 
         while (!executor.isTerminated()) {

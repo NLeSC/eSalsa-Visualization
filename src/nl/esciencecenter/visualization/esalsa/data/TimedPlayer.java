@@ -101,6 +101,10 @@ public class TimedPlayer implements Runnable {
         timeBar.setValue(0);
         frameCounter.setValue(0);
         timeBar.setMaximum(0);
+
+        if (dsManager != null) {
+            dsManager.shutdown();
+        }
     }
 
     public synchronized void init(File[] files) {

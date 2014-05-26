@@ -163,4 +163,94 @@ public class CacheFileManager {
             e.printStackTrace();
         }
     }
+
+    public float readLatMin(String variableName) {
+        float result = Float.NaN;
+
+        // Check if we have made a cacheFileManager file earlier
+        if (cacheFile.exists()) {
+            BufferedReader in;
+            String str;
+
+            try {
+                in = new BufferedReader(new FileReader(cacheFile));
+                while ((str = in.readLine()) != null) {
+                    String[] substrings = str.split(" ");
+                    if (substrings[0].compareTo(variableName) == 0 && substrings[1].compareTo("latMin") == 0) {
+                        result = Float.parseFloat(substrings[2]);
+                    }
+                }
+                in.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return result;
+    }
+
+    public void writeLatMin(String variableName, float value) {
+        if (!cacheFile.exists()) {
+            try {
+                cacheFile.createNewFile();
+            } catch (IOException e) {
+
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(cacheFile, true)));
+            out.println(variableName + " latMin " + value);
+
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public float readLatMax(String variableName) {
+        float result = Float.NaN;
+
+        // Check if we have made a cacheFileManager file earlier
+        if (cacheFile.exists()) {
+            BufferedReader in;
+            String str;
+
+            try {
+                in = new BufferedReader(new FileReader(cacheFile));
+                while ((str = in.readLine()) != null) {
+                    String[] substrings = str.split(" ");
+                    if (substrings[0].compareTo(variableName) == 0 && substrings[1].compareTo("latMax") == 0) {
+                        result = Float.parseFloat(substrings[2]);
+                    }
+                }
+                in.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return result;
+    }
+
+    public void writeLatMax(String variableName, float value) {
+        if (!cacheFile.exists()) {
+            try {
+                cacheFile.createNewFile();
+            } catch (IOException e) {
+
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(cacheFile, true)));
+            out.println(variableName + " latMax " + value);
+
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

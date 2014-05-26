@@ -38,10 +38,16 @@ public class TextureStorage {
         private final Texture2D surfaceTexture;
         private final Texture2D legendTexture;
 
-        public TextureCombo(SurfaceTextureDescription description, Texture2D surfaceTexture, Texture2D legendTexture) {
+        private final float topTexCoord;
+        private final float bottomTexCoord;
+
+        public TextureCombo(SurfaceTextureDescription description, Texture2D surfaceTexture, Texture2D legendTexture,
+                float topTexCoord, float bottomTexCoord) {
             this.description = description;
             this.surfaceTexture = surfaceTexture;
             this.legendTexture = legendTexture;
+            this.topTexCoord = topTexCoord;
+            this.bottomTexCoord = bottomTexCoord;
         }
 
         public SurfaceTextureDescription getDescription() {
@@ -54,6 +60,14 @@ public class TextureStorage {
 
         public Texture2D getLegendTexture() {
             return legendTexture;
+        }
+
+        public float getTopTexCoords() {
+            return topTexCoord;
+        }
+
+        public float getBottomTexCoords() {
+            return bottomTexCoord;
         }
     }
 
@@ -103,7 +117,7 @@ public class TextureStorage {
             }
         }
 
-        return new TextureCombo(null, EMPTY_SURFACE_BUFFER, EMPTY_LEGEND_BUFFER);
+        return new TextureCombo(null, EMPTY_SURFACE_BUFFER, EMPTY_LEGEND_BUFFER, 0f, 1f);
     }
 
     public synchronized boolean isRequested(SurfaceTextureDescription desc) {
@@ -182,25 +196,29 @@ public class TextureStorage {
         return oldTextures;
     }
 
-    public synchronized void setImageCombo(SurfaceTextureDescription desc, ByteBuffer surfaceData, ByteBuffer legendData) {
-        boolean failure = true;
+    // public synchronized void setImageCombo(SurfaceTextureDescription desc,
+    // ByteBuffer surfaceData, ByteBuffer legendData) {
+    // boolean failure = true;
+    //
+    // // Only add this surface texture if it is still needed.
+    // for (int i = 0; i < newScreenA.length; i++) {
+    // if (newScreenA[i] == desc) {
+    // failure = false;
+    // }
+    // }
+    //
+    // if (!failure) {
+    // storage.add(new TextureCombo(desc, new
+    // ByteBufferTexture(surfaceMultiTexUnit, surfaceData, width, height),
+    // new ByteBufferTexture(legendMultiTexUnit, legendData,
+    // LEGEND_TEXTURE_WIDTH, LEGEND_TEXTURE_HEIGHT), ));
+    // } else {
+    // logger.error("FAILURE in setImageCombo, " + desc);
+    // }
+    // }
 
-        // Only add this surface texture if it is still needed.
-        for (int i = 0; i < newScreenA.length; i++) {
-            if (newScreenA[i] == desc) {
-                failure = false;
-            }
-        }
-
-        if (!failure) {
-            storage.add(new TextureCombo(desc, new ByteBufferTexture(surfaceMultiTexUnit, surfaceData, width, height),
-                    new ByteBufferTexture(legendMultiTexUnit, legendData, LEGEND_TEXTURE_WIDTH, LEGEND_TEXTURE_HEIGHT)));
-        } else {
-            logger.error("FAILURE in setImageCombo, " + desc);
-        }
-    }
-
-    public synchronized void setImageCombo(SurfaceTextureDescription desc, int[] surfaceData, ByteBuffer legendData) {
+    public synchronized void setImageCombo(SurfaceTextureDescription desc, int[] surfaceData, ByteBuffer legendData,
+            float topTexCoord, float bottomTexCoord) {
         boolean failure = true;
 
         // Only add this surface texture if it is still needed.
@@ -212,7 +230,8 @@ public class TextureStorage {
 
         if (!failure) {
             storage.add(new TextureCombo(desc, new IntArrayTexture(surfaceMultiTexUnit, surfaceData, width, height),
-                    new ByteBufferTexture(legendMultiTexUnit, legendData, LEGEND_TEXTURE_WIDTH, LEGEND_TEXTURE_HEIGHT)));
+                    new ByteBufferTexture(legendMultiTexUnit, legendData, LEGEND_TEXTURE_WIDTH, LEGEND_TEXTURE_HEIGHT),
+                    topTexCoord, bottomTexCoord));
         } else {
             logger.error("FAILURE in setImageCombo, " + desc);
         }

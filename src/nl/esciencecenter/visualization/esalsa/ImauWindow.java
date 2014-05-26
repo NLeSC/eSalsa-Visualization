@@ -93,6 +93,9 @@ public class ImauWindow implements GLEventListener {
     private final Texture2D[] cachedSurfaceTextures;
     private final Texture2D[] cachedLegendTextures;
 
+    private final float[] topTexCoords;
+    private final float[] bottomTexCoords;
+
     public ImauWindow(InputHandler inputHandler) {
         this.loader = new ShaderProgramLoader();
         this.inputHandler = inputHandler;
@@ -110,6 +113,9 @@ public class ImauWindow implements GLEventListener {
 
         cachedSurfaceTextures = new Texture2D[cachedScreens];
         cachedLegendTextures = new Texture2D[cachedScreens];
+
+        topTexCoords = new float[cachedScreens];
+        bottomTexCoords = new float[cachedScreens];
     }
 
     public static void contextOn(GLAutoDrawable drawable) {
@@ -246,6 +252,9 @@ public class ImauWindow implements GLEventListener {
                             cachedSurfaceTextures[i].init(gl);
                             cachedLegendTextures[i].init(gl);
 
+                            topTexCoords[i] = result.getTopTexCoords();
+                            bottomTexCoords[i] = result.getBottomTexCoords();
+
                             // And set the appropriate text to accompany it.
                             String variableName = currentDesc.getVarName();
                             String fancyName = variableName;
@@ -277,7 +286,8 @@ public class ImauWindow implements GLEventListener {
         for (int i = 0; i < cachedScreens; i++) {
             if (cachedLegendTextures[i] != null && cachedSurfaceTextures[i] != null) {
                 drawSingleWindow(width, height, gl, mv, cachedLegendTextures[i], cachedSurfaceTextures[i], varNames[i],
-                        dates[i], dataSets[i], legendTextsMin[i], legendTextsMax[i], cachedFBOs[i], clickCoords);
+                        dates[i], dataSets[i], legendTextsMin[i], legendTextsMax[i], cachedFBOs[i], clickCoords,
+                        topTexCoords[i], bottomTexCoords[i]);
             }
         }
         // logger.debug("Tiling windows");
@@ -287,7 +297,7 @@ public class ImauWindow implements GLEventListener {
     private void drawSingleWindow(final int width, final int height, final GL3 gl, Float4Matrix mv, Texture2D legend,
             Texture2D globe, MultiColorText varNameText, MultiColorText dateText, MultiColorText datasetText,
             MultiColorText legendTextMin, MultiColorText legendTextMax, FrameBufferObject target,
-            Float2Vector clickCoords) {
+            Float2Vector clickCoords, float topTexCoord, float bottomTexCoord) {
         // logger.debug("Drawing Text");
         drawHUDText(gl, width, height, varNameText, dateText, datasetText, legendTextMin, legendTextMax, hudTextFBO);
 
@@ -295,7 +305,7 @@ public class ImauWindow implements GLEventListener {
         drawHUDLegend(gl, width, height, legend, legendTextureFBO);
 
         // logger.debug("Drawing Sphere");
-        drawSphere(gl, mv, globe, sphereTextureFBO, clickCoords);
+        drawSphere(gl, mv, globe, sphereTextureFBO, clickCoords, topTexCoord, bottomTexCoord);
 
         // logger.debug("Flattening Layers");
         flattenLayers(gl, hudTextFBO, legendTextureFBO, sphereTextureFBO, atmosphereFBO, target);
@@ -340,6 +350,8 @@ public class ImauWindow implements GLEventListener {
 
             // Draw legend texture
             legendTexture.use(gl);
+            shaderProgram_Legend.setUniform("top_texCoord", 1f);
+            shaderProgram_Legend.setUniform("bottom_texCoord", 0f);
             shaderProgram_Legend.setUniform("texture_map", legendTexture.getMultitexNumber());
             shaderProgram_Legend.setUniformMatrix("MVMatrix", new Float4Matrix());
             shaderProgram_Legend.setUniformMatrix("PMatrix", new Float4Matrix());
@@ -354,7 +366,7 @@ public class ImauWindow implements GLEventListener {
     }
 
     private void drawSphere(GL3 gl, Float4Matrix mv, Texture2D surfaceTexture, FrameBufferObject target,
-            Float2Vector clickCoords) {
+            Float2Vector clickCoords, float topTexCoord, float bottomTexCoord) {
         try {
             target.bind(gl);
             gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
@@ -365,6 +377,8 @@ public class ImauWindow implements GLEventListener {
             shaderProgram_Sphere.setUniformMatrix("PMatrix", p);
 
             surfaceTexture.use(gl);
+            shaderProgram_Sphere.setUniform("top_texCoord", topTexCoord);
+            shaderProgram_Sphere.setUniform("bottom_texCoord", bottomTexCoord);
             shaderProgram_Sphere.setUniform("texture_map", surfaceTexture.getMultitexNumber());
 
             shaderProgram_Sphere.use(gl);
