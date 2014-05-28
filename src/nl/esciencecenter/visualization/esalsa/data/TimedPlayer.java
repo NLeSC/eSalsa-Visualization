@@ -232,10 +232,11 @@ public class TimedPlayer implements Runnable {
                             try {
                                 newFrameNumber = dsManager.getNextFrameNumber(frameNumber);
                                 updateFrame(newFrameNumber, false);
-
-                            } catch (IOException e) {
+                            } catch (IndexOutOfBoundsException e) {
                                 logger.debug("Waiting on frame after " + frameNumber);
                                 currentState = states.WAITINGONFRAME;
+                            } catch (IOException e) {
+                                logger.debug("IOException " + e);
                             }
                         }
 

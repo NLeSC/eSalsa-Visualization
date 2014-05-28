@@ -309,15 +309,11 @@ public class DatasetManager {
         }
     }
 
-    public synchronized long getNextFrameNumber(long frameNumber) throws IOException {
+    public synchronized long getNextFrameNumber(long frameNumber) throws IndexOutOfBoundsException, IOException {
         if (masterTimeList.contains(frameNumber)) {
             int indexOfFrameNumber = masterTimeList.indexOf(frameNumber);
+            return masterTimeList.get(indexOfFrameNumber + 1);
 
-            try {
-                return masterTimeList.get(indexOfFrameNumber + 1);
-            } catch (ArrayIndexOutOfBoundsException e) {
-                return frameNumber;
-            }
         } else {
             throw new IOException("Given frame number not valid: " + frameNumber);
         }

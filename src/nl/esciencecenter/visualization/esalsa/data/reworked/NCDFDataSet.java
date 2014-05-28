@@ -27,7 +27,7 @@ public class NCDFDataSet {
 
             List<Variable> fileVariables = ncfile.getVariables();
             for (Variable v : fileVariables) {
-                if (v.getShape().length > 2) {
+                if (v.getShape().length > 1) {
                     boolean hasLat = false;
                     boolean hasLon = false;
                     for (Dimension d : v.getDimensions()) {
