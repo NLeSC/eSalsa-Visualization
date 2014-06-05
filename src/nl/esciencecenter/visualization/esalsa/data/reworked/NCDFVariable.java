@@ -270,8 +270,9 @@ public class NCDFVariable {
                 maximumLatitude = max;
 
                 cacheAtDataLocation.writeLatMin(variableInFile.getFullName(), min);
-                cacheAtProgramLocation.writeLatMin(variableInFile.getFullName(), min);
                 cacheAtDataLocation.writeLatMax(variableInFile.getFullName(), max);
+                
+                cacheAtProgramLocation.writeLatMin(variableInFile.getFullName(), min);
                 cacheAtProgramLocation.writeLatMax(variableInFile.getFullName(), max);
             } else {
                 minimumLatitude = -90f;

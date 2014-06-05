@@ -8,7 +8,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import nl.esciencecenter.visualization.esalsa.data.reworked.NCDFVariable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class CacheFileManager {
+    private final static Logger logger = LoggerFactory.getLogger(CacheFileManager.class);
     private final File cacheFile;
 
     public CacheFileManager(String path) {
@@ -33,7 +39,7 @@ public class CacheFileManager {
                 }
                 in.close();
             } catch (IOException e) {
-                e.printStackTrace();
+            	logger.debug("IOException caught in cache: "+e.getMessage());
             }
         }
 
@@ -45,8 +51,7 @@ public class CacheFileManager {
             try {
                 cacheFile.createNewFile();
             } catch (IOException e) {
-
-                e.printStackTrace();
+            	logger.debug("IOException caught in cache: "+e.getMessage());
             }
         }
 
@@ -56,7 +61,7 @@ public class CacheFileManager {
 
             out.close();
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.debug("IOException caught in cache: "+e.getMessage());
         }
     }
 
@@ -90,7 +95,7 @@ public class CacheFileManager {
             try {
                 cacheFile.createNewFile();
             } catch (IOException e) {
-                e.printStackTrace();
+            	logger.debug("IOException caught in cache: "+e.getMessage());
             }
         }
 
@@ -100,7 +105,7 @@ public class CacheFileManager {
 
             out.close();
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.debug("IOException caught in cache: "+e.getMessage());
         }
     }
 
@@ -122,7 +127,7 @@ public class CacheFileManager {
                 }
                 in.close();
             } catch (IOException e) {
-                e.printStackTrace();
+            	logger.debug("IOException caught in cache: "+e.getMessage());
             }
         }
 
@@ -134,33 +139,11 @@ public class CacheFileManager {
             if (!cacheFile.exists()) {
                 cacheFile.createNewFile();
             }
-
-            // if (readColormap(variableName).compareTo("") != 0) {
-            // BufferedReader in;
-            // String str;
-            //
-            // PrintWriter out = new PrintWriter(new BufferedWriter(new
-            // FileWriter(cacheFile, false)));
-            //
-            // in = new BufferedReader(new FileReader(cacheFile));
-            // while ((str = in.readLine()) != null) {
-            // String toBeWritten = str;
-            // if (str.contains(variableName) && str.contains("colormap")) {
-            // String[] substrings = str.split(" ");
-            // toBeWritten = substrings[0] + " colormap " + value;
-            // }
-            // out.println(toBeWritten);
-            // }
-            // in.close();
-            //
-            // out.close();
-            // } else {
             PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(cacheFile, true)));
             out.println(variableName + " colormap " + value);
             out.close();
-            // }
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.debug("IOException caught in cache: "+e.getMessage());
         }
     }
 
@@ -182,7 +165,7 @@ public class CacheFileManager {
                 }
                 in.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.debug("IOException caught in cache: "+e.getMessage());
             }
         }
 
@@ -194,8 +177,7 @@ public class CacheFileManager {
             try {
                 cacheFile.createNewFile();
             } catch (IOException e) {
-
-                e.printStackTrace();
+            	logger.debug("IOException caught in cache: "+e.getMessage());
             }
         }
 
@@ -205,7 +187,7 @@ public class CacheFileManager {
 
             out.close();
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.debug("IOException caught in cache: "+e.getMessage());
         }
     }
 
@@ -227,7 +209,7 @@ public class CacheFileManager {
                 }
                 in.close();
             } catch (IOException e) {
-                e.printStackTrace();
+            	logger.debug("IOException caught in cache: "+e.getMessage());
             }
         }
 
@@ -239,8 +221,7 @@ public class CacheFileManager {
             try {
                 cacheFile.createNewFile();
             } catch (IOException e) {
-
-                e.printStackTrace();
+            	logger.debug("IOException caught in cache: "+e.getMessage());
             }
         }
 
@@ -250,7 +231,7 @@ public class CacheFileManager {
 
             out.close();
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.debug("IOException caught in cache: "+e.getMessage());
         }
     }
 }

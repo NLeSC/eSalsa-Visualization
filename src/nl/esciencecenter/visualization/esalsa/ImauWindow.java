@@ -268,9 +268,12 @@ public class ImauWindow implements GLEventListener {
                                 min = Float.toString(settings.getCurrentVarMin(currentDesc.getVarName()));
                                 max = Float.toString(settings.getCurrentVarMax(currentDesc.getVarName()));
                             }
-                            dates[i].setString(gl, settings.getFancyDate(currentDesc.getFrameNumber()), Color4.WHITE,
+                            
+                            
+                            
+                            dates[i].setString(gl, "Frame: "+((float)currentDesc.getFrameNumber())/10000f, Color4.WHITE,
                                     fontSize);
-                            dataSets[i].setString(gl, currentDesc.verbalizeDataMode(), Color4.WHITE, fontSize);
+                            dataSets[i].setString(gl, "", Color4.WHITE, fontSize);
                             legendTextsMin[i].setString(gl, min, Color4.WHITE, fontSize);
                             legendTextsMax[i].setString(gl, max, Color4.WHITE, fontSize);
                         }
