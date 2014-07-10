@@ -31,14 +31,19 @@ __kernel void mapColors(
     } else if (inputValue > maxValue){
 	    int colorIndex = colorMapSize-1;
 	    output[outputIndex] = colorMap[colorIndex];
-    } else {    
-    	minValue = log(minValue + 1.0);
-    	maxValue = log(maxValue + 1.0);
-    	inputValue = log(inputValue + 1.0);
+    } else {
+    	float diff = maxValue - minValue;
     	
-	    float diff = maxValue - minValue;	    
-	    float alpha = (inputValue - minValue)/diff;
-	    int colorIndex = (int)(alpha * colorMapSize);
-	    output[outputIndex] = colorMap[colorIndex];
+    	if (diff > 0.0) {            	
+	    	float newMinValue = 0.0;
+	    	float newMaxValue = log(1.0 + diff);
+	    	float newInputValue = log(1.0 + inputValue);
+		    	    
+		    float alpha = newInputValue/newMaxValue;
+		    int colorIndex = (int)(alpha * colorMapSize);
+		    output[outputIndex] = colorMap[colorIndex];
+	    } else {
+	    	output[outputIndex] = 0.0;
+	    }
     }
 }

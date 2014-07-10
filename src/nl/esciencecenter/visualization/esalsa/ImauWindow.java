@@ -160,6 +160,7 @@ public class ImauWindow implements GLEventListener {
 
             int currentScreens = settings.getNumScreensRows() * settings.getNumScreensCols();
             if (currentScreens != cachedScreens) {
+            	initFBOs(gl);
                 initDatastores(gl);
             }
 
@@ -466,6 +467,16 @@ public class ImauWindow implements GLEventListener {
         }
     }
 
+    private void initFBOs(GL3 gl) {
+    	for (int i = 0; i < cachedScreens; i++) {
+    		if (cachedFBOs[i] != null) {
+                cachedFBOs[i].delete(gl);
+            }
+            cachedFBOs[i] = new FrameBufferObject(canvasWidth, canvasHeight, (GL.GL_TEXTURE6 + i));
+            cachedFBOs[i].init(gl);
+    	}
+    }
+
     private void initDatastores(GL3 gl) {
         cachedScreens = settings.getNumScreensRows() * settings.getNumScreensCols();
 
@@ -479,13 +490,6 @@ public class ImauWindow implements GLEventListener {
 
         for (int i = 0; i < cachedScreens; i++) {
             cachedTextureDescriptions[i] = settings.getSurfaceDescription(i);
-
-            if (cachedFBOs[i] != null) {
-                cachedFBOs[i].delete(gl);
-            }
-            cachedFBOs[i] = new FrameBufferObject(canvasWidth, canvasHeight, (GL.GL_TEXTURE6 + i));
-            cachedFBOs[i].init(gl);
-
             varNames[i] = new MultiColorText(font);
             legendTextsMin[i] = new MultiColorText(font);
             legendTextsMin[i] = new MultiColorText(font);
@@ -527,7 +531,7 @@ public class ImauWindow implements GLEventListener {
         legendTextureFBO.init(gl);
         sphereTextureFBO.init(gl);
 
-        initDatastores(gl);
+        initFBOs(gl);
 
         finalPBO.delete(gl);
         finalPBO = new IntPixelBufferObject(canvasWidth, canvasHeight);
@@ -624,6 +628,7 @@ public class ImauWindow implements GLEventListener {
         atmModel.init(gl);
 
         initDatastores(gl);
+        initFBOs(gl);
 
         inputHandler.setViewDist(-130f);
 
