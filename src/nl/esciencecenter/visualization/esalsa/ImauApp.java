@@ -6,9 +6,13 @@ import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.ArrayList;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import nl.esciencecenter.neon.NeonNewtWindow;
 import nl.esciencecenter.neon.input.InputHandler;
@@ -24,7 +28,7 @@ public class ImauApp {
     private static ImauPanel imauPanel;
     private static ImauWindow imauWindow;
 
-    public static void main(String[] arguments) {
+    public static void main(final String[] arguments) {
         // Create the Swing interface elements
         imauPanel = new ImauPanel();
 
@@ -54,6 +58,26 @@ public class ImauApp {
             public void run() {
                 try {
                     frame.getContentPane().add(imauPanel);
+                    
+                    if (arguments.length > 1 && arguments[0].compareTo("-i") ==0) {
+                    	File dir = new File(arguments[1]);
+                    	if (!dir.isDirectory()) {
+                    		return;
+                    	}
+                    	
+                		imauPanel.handleFiles(dir.listFiles(new FilenameFilter() {
+                			FileNameExtensionFilter fnef = new FileNameExtensionFilter("nc", "nc");
+							@Override
+							public boolean accept(File dir, String name) {								
+								File f = new File(dir.getAbsolutePath() + "/"+name);
+								if (!f.isDirectory()) {
+									System.out.println(f.getAbsolutePath()+ " : "+ fnef.accept(f));
+									return fnef.accept(f);
+								}
+								return false;
+							}
+						}));
+                    }
                 } catch (final Exception e) {
                     e.printStackTrace(System.err);
                     System.exit(1);
