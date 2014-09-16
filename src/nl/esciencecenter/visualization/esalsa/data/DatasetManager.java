@@ -154,8 +154,7 @@ public class DatasetManager {
                         // System.out.println("topTexCoord: " + topTexCoord);
                         // System.out.println("bottomTexCoord: " +
                         // bottomTexCoord);
-                        tds.getTexStorage().setImageCombo(desc, pixelArray, legendBuf, 1, 0);// topTexCoord,
-                                                                                             // bottomTexCoord);
+                        tds.getTexStorage().setImageCombo(desc, pixelArray, legendBuf, topTexCoord, bottomTexCoord);
                     }
                 }
             } catch (DatasetNotFoundException e) {

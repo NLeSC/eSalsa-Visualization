@@ -277,7 +277,10 @@ public class NCDFVariable {
             } else {
                 minimumLatitude = -90f;
                 maximumLatitude = 90f;
-            }
+            }            
+        } else {
+        	maximumLatitude = latMax;
+        	minimumLatitude = latMin;
         }
 
         logger.debug("latitudes for " + variable.getFullName() + " exist between " + minimumLatitude + " and "

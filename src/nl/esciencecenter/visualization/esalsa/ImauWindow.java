@@ -310,6 +310,7 @@ public class ImauWindow implements GLEventListener {
 
         // logger.debug("Drawing Sphere");
         drawSphere(gl, mv, globe, sphereTextureFBO, clickCoords, topTexCoord, bottomTexCoord);
+        //drawSecondSphere(gl, mv, globe, sphereTextureFBO, clickCoords, topTexCoord, bottomTexCoord);
 
         // logger.debug("Flattening Layers");
         flattenLayers(gl, hudTextFBO, legendTextureFBO, sphereTextureFBO, atmosphereFBO, target);
@@ -384,6 +385,34 @@ public class ImauWindow implements GLEventListener {
             shaderProgram_Sphere.setUniform("top_texCoord", topTexCoord);
             shaderProgram_Sphere.setUniform("bottom_texCoord", bottomTexCoord);
             shaderProgram_Sphere.setUniform("texture_map", surfaceTexture.getMultitexNumber());
+            shaderProgram_Sphere.setUniform("opacity", 1f);
+
+            shaderProgram_Sphere.use(gl);
+            sphereModel.draw(gl, shaderProgram_Sphere);
+
+            target.unBind(gl);
+        } catch (UninitializedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void drawSecondSphere(GL3 gl, Float4Matrix mv, Texture2D surfaceTexture, FrameBufferObject target,
+            Float2Vector clickCoords, float topTexCoord, float bottomTexCoord) {
+        try {
+            target.bind(gl);
+            gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
+
+            final Float4Matrix p = FloatMatrixMath.perspective(fovy, aspect, zNear, zFar);
+
+            Float4Matrix newMV = new Float4Matrix(mv).mul(FloatMatrixMath.scale(1.05f));
+            shaderProgram_Sphere.setUniformMatrix("MVMatrix", new Float4Matrix(newMV));
+            shaderProgram_Sphere.setUniformMatrix("PMatrix", p);
+
+            surfaceTexture.use(gl);
+            shaderProgram_Sphere.setUniform("top_texCoord", topTexCoord);
+            shaderProgram_Sphere.setUniform("bottom_texCoord", bottomTexCoord);
+            shaderProgram_Sphere.setUniform("texture_map", surfaceTexture.getMultitexNumber());
+            shaderProgram_Sphere.setUniform("opacity", 0.3f);
 
             shaderProgram_Sphere.use(gl);
             sphereModel.draw(gl, shaderProgram_Sphere);

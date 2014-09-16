@@ -500,13 +500,13 @@ public class ImauSettings {
     public synchronized void setDepth(int value) {
         for (int i = 0; i < number_of_screens_col * number_of_screens_row; i++) {
             SurfaceTextureDescription currentState = screenDescriptions[i];
-            screenDescriptions[i] = new SurfaceTextureDescription(currentState.getFrameNumber(), value - 1,
+            screenDescriptions[i] = new SurfaceTextureDescription(currentState.getFrameNumber(), value,
                     currentState.getVarName(), currentState.getColorMap(), currentState.isDynamicDimensions(),
                     currentState.isDiff(), currentState.isSecondSet(), currentState.getLowerBound(),
                     currentState.getUpperBound(), currentState.isLogScale());
         }
 
-        DEPTH_DEF = value - 1;
+        DEPTH_DEF = value;
         setRequestedNewConfiguration(true);
     }
 
