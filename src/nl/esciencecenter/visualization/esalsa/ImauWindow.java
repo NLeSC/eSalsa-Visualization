@@ -360,6 +360,7 @@ public class ImauWindow implements GLEventListener {
             shaderProgram_Legend.setUniform("texture_map", legendTexture.getMultitexNumber());
             shaderProgram_Legend.setUniformMatrix("MVMatrix", new Float4Matrix());
             shaderProgram_Legend.setUniformMatrix("PMatrix", new Float4Matrix());
+            shaderProgram_Legend.setUniform("opacity", 1f);
 
             shaderProgram_Legend.use(gl);
             legendModel.draw(gl, shaderProgram_Legend);
