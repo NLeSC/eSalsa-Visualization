@@ -4,6 +4,8 @@ import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.List;
 
 import javax.media.opengl.GL;
@@ -43,6 +45,7 @@ import org.slf4j.LoggerFactory;
 
 public class ImauWindow implements GLEventListener {
     private final static Logger logger = LoggerFactory.getLogger(ImauWindow.class);
+	private static final int NUM_LEGEND_TEXTS = 5;
     private final ImauSettings settings = ImauSettings.getInstance();
 
     private Quad fsq;
@@ -68,8 +71,7 @@ public class ImauWindow implements GLEventListener {
     private SurfaceTextureDescription[] cachedTextureDescriptions;
     private FrameBufferObject[] cachedFBOs;
     private MultiColorText[] varNames;
-    private MultiColorText[] legendTextsMin;
-    private MultiColorText[] legendTextsMax;
+    private MultiColorText[][] legendTexts;
     private MultiColorText[] dates;
     private MultiColorText[] dataSets;
 
@@ -106,8 +108,7 @@ public class ImauWindow implements GLEventListener {
         cachedTextureDescriptions = new SurfaceTextureDescription[cachedScreens];
         cachedFBOs = new FrameBufferObject[cachedScreens];
         varNames = new MultiColorText[cachedScreens];
-        legendTextsMin = new MultiColorText[cachedScreens];
-        legendTextsMax = new MultiColorText[cachedScreens];
+        legendTexts = new MultiColorText[cachedScreens][NUM_LEGEND_TEXTS];
         dates = new MultiColorText[cachedScreens];
         dataSets = new MultiColorText[cachedScreens];
 
@@ -258,25 +259,39 @@ public class ImauWindow implements GLEventListener {
 
                             // And set the appropriate text to accompany it.
                             String variableName = currentDesc.getVarName();
-                            String fancyName = variableName;
-                            varNames[i].setString(gl, fancyName, Color4.WHITE, fontSize);
-
-                            String min, max;
-                            if (currentDesc.isDiff()) {
-                                min = Float.toString(settings.getCurrentVarDiffMin(currentDesc.getVarName()));
-                                max = Float.toString(settings.getCurrentVarDiffMax(currentDesc.getVarName()));
-                            } else {
-                                min = Float.toString(settings.getCurrentVarMin(currentDesc.getVarName()));
-                                max = Float.toString(settings.getCurrentVarMax(currentDesc.getVarName()));
-                            }
-                            
-                            
+                            String fancyName = timer.getVariableDescription(variableName);
+                            String units = timer.getVariableUnits(variableName);
+                            varNames[i].setString(gl, fancyName+ " in "+ units, Color4.WHITE, fontSize);
                             
                             dates[i].setString(gl, "Frame: "+((float)currentDesc.getFrameNumber())/10000f, Color4.WHITE,
                                     fontSize);
                             dataSets[i].setString(gl, "", Color4.WHITE, fontSize);
-                            legendTextsMin[i].setString(gl, min, Color4.WHITE, fontSize);
-                            legendTextsMax[i].setString(gl, max, Color4.WHITE, fontSize);
+                            
+                            float min, max;
+                            if (currentDesc.isDiff()) {
+                                min = settings.getCurrentVarDiffMin(currentDesc.getVarName());
+                                max = settings.getCurrentVarDiffMax(currentDesc.getVarName());
+                            } else {
+                                min = settings.getCurrentVarMin(currentDesc.getVarName());
+                                max = settings.getCurrentVarMax(currentDesc.getVarName());
+                            }
+                            
+                            NumberFormat formatter = new DecimalFormat("0.####E0");
+                            for (int j = 0; j < NUM_LEGEND_TEXTS; j++) {
+                            	float thisnumber = ((max-min)/5f)*j;
+                            	
+                            	if (currentDesc.isLogScale()) {
+                            		float diff = max - min;
+                            		if (diff > 0.0f) {
+                            	    	float newMaxValue = (float) Math.log(1.0f + diff);
+                            	    	float newInputValue = (float) Math.log(1.0 + thisnumber);
+                            	    	
+                            		    thisnumber = min + (newInputValue / newMaxValue) * diff;
+                            		}
+                            	}
+                            	
+                            	legendTexts[i][j].setString(gl, formatter.format(thisnumber), Color4.WHITE, fontSize);
+                            }
                         }
                     }
                 }
@@ -290,7 +305,7 @@ public class ImauWindow implements GLEventListener {
         for (int i = 0; i < cachedScreens; i++) {
             if (cachedLegendTextures[i] != null && cachedSurfaceTextures[i] != null) {
                 drawSingleWindow(width, height, gl, mv, cachedLegendTextures[i], cachedSurfaceTextures[i], varNames[i],
-                        dates[i], dataSets[i], legendTextsMin[i], legendTextsMax[i], cachedFBOs[i], clickCoords,
+                        dates[i], dataSets[i], legendTexts[i], cachedFBOs[i], clickCoords,
                         topTexCoords[i], bottomTexCoords[i]);
             }
         }
@@ -300,10 +315,10 @@ public class ImauWindow implements GLEventListener {
 
     private void drawSingleWindow(final int width, final int height, final GL3 gl, Float4Matrix mv, Texture2D legend,
             Texture2D globe, MultiColorText varNameText, MultiColorText dateText, MultiColorText datasetText,
-            MultiColorText legendTextMin, MultiColorText legendTextMax, FrameBufferObject target,
+            MultiColorText legendText[], FrameBufferObject target,
             Float2Vector clickCoords, float topTexCoord, float bottomTexCoord) {
         // logger.debug("Drawing Text");
-        drawHUDText(gl, width, height, varNameText, dateText, datasetText, legendTextMin, legendTextMax, hudTextFBO);
+        drawHUDText(gl, width, height, varNameText, dateText, datasetText, legendText, hudTextFBO);
 
         // logger.debug("Drawing HUD");
         drawHUDLegend(gl, width, height, legend, legendTextureFBO);
@@ -317,8 +332,7 @@ public class ImauWindow implements GLEventListener {
     }
 
     private void drawHUDText(GL3 gl, int width, int height, MultiColorText varNameText, MultiColorText dateText,
-            MultiColorText datasetText, MultiColorText legendTextMin, MultiColorText legendTextMax,
-            FrameBufferObject target) {
+            MultiColorText datasetText, MultiColorText legendText[], FrameBufferObject target) {
         try {
             target.bind(gl);
             gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
@@ -326,21 +340,19 @@ public class ImauWindow implements GLEventListener {
             // Draw text
             int textLength = varNameText.toString().length() * fontSize;
 
-            varNameText.drawHudRelative(gl, shaderProgram_Text, width, height, 2 * width - textLength - 150, 40);
+            varNameText.drawHudRelative(gl, shaderProgram_Text, width, height, 10, 2*height*0.9f);
 
             textLength = datasetText.toString().length() * fontSize;
             datasetText.drawHudRelative(gl, shaderProgram_Text, width, height, 10, 1.9f * height);
 
             textLength = dateText.toString().length() * fontSize;
             dateText.drawHudRelative(gl, shaderProgram_Text, width, height, 10, 40);
-
-            textLength = legendTextMin.toString().length() * fontSize;
-            legendTextMin.drawHudRelative(gl, shaderProgram_Text, width, height, 2 * width - textLength - 100,
-                    .2f * height);
-
-            textLength = legendTextMax.toString().length() * fontSize;
-            legendTextMax.drawHudRelative(gl, shaderProgram_Text, width, height, 2 * width - textLength - 100,
-                    1.75f * height);
+            
+            for (int i = 0; i < NUM_LEGEND_TEXTS; i++) {
+            	textLength = legendText[i].toString().length() * fontSize;
+            	legendText[i].drawHudRelative(gl, shaderProgram_Text, width, height, 2 * width - textLength - (0.1f*width),
+                        (.25f+.366f*(i)) * height);
+            }
 
             target.unBind(gl);
         } catch (UninitializedException e) {
@@ -513,17 +525,18 @@ public class ImauWindow implements GLEventListener {
         cachedTextureDescriptions = new SurfaceTextureDescription[cachedScreens];
         cachedFBOs = new FrameBufferObject[cachedScreens];
         varNames = new MultiColorText[cachedScreens];
-        legendTextsMin = new MultiColorText[cachedScreens];
-        legendTextsMax = new MultiColorText[cachedScreens];
+        legendTexts = new MultiColorText[cachedScreens][NUM_LEGEND_TEXTS];
         dates = new MultiColorText[cachedScreens];
         dataSets = new MultiColorText[cachedScreens];
 
         for (int i = 0; i < cachedScreens; i++) {
             cachedTextureDescriptions[i] = settings.getSurfaceDescription(i);
             varNames[i] = new MultiColorText(font);
-            legendTextsMin[i] = new MultiColorText(font);
-            legendTextsMin[i] = new MultiColorText(font);
-            legendTextsMax[i] = new MultiColorText(font);
+                        
+            for (int j = 0; j < NUM_LEGEND_TEXTS; j++) {
+            	legendTexts[i][j] = new MultiColorText(font);
+            }            
+            
             dates[i] = new MultiColorText(font);
             dataSets[i] = new MultiColorText(font);
         }

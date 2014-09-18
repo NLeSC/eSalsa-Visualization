@@ -336,6 +336,12 @@ public class DatasetManager {
         return ncdfVar.getUnits();
     }
 
+	public String getVariableDescription(String varName) throws DatasetNotFoundException {
+        NCDFDataSet dataset = findDataset(varName);
+        NCDFVariable ncdfVar = dataset.getVariable(varName);
+        return ncdfVar.getDescription();
+	}
+
     public synchronized float getMinValueContainedInDataset(String varName) throws DatasetNotFoundException {
         NCDFDataSet dataset = findDataset(varName);
         NCDFVariable ncdfVar = dataset.getVariable(varName);

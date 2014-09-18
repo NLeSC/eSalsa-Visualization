@@ -20,8 +20,8 @@ public class CacheFileManager {
     public CacheFileManager(String path) {
         cacheFile = new File(path + File.separator + ".visualizationCache");
     }
-
-    public float readMin(String variableName) {
+    
+    private float readFloat(String variableName, String toMatch) {
         float result = Float.NaN;
 
         // Check if we have made a cacheFileManager file earlier
@@ -33,7 +33,7 @@ public class CacheFileManager {
                 in = new BufferedReader(new FileReader(cacheFile));
                 while ((str = in.readLine()) != null) {
                     String[] substrings = str.split(" ");
-                    if (substrings[0].compareTo(variableName) == 0 && substrings[1].compareTo("min") == 0) {
+                    if (substrings[0].compareTo(variableName) == 0 && substrings[1].compareTo(toMatch) == 0) {
                         result = Float.parseFloat(substrings[2]);
                     }
                 }
@@ -43,10 +43,10 @@ public class CacheFileManager {
             }
         }
 
-        return result;
+        return result;    	
     }
-
-    public void writeMin(String variableName, float value) {
+    
+    private void writeFloat(String variableName, String toMatch, float value) {
         if (!cacheFile.exists()) {
             try {
                 cacheFile.createNewFile();
@@ -57,56 +57,44 @@ public class CacheFileManager {
 
         try {
             PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(cacheFile, true)));
-            out.println(variableName + " min " + value);
+            out.println(variableName + " "+toMatch+" " + value);
 
             out.close();
         } catch (IOException e) {
         	logger.debug("IOException caught in cache: "+e.getMessage());
-        }
+        }    	
+    }
+
+    public float readMin(String variableName) {
+        return readFloat(variableName, "min");
+    }
+
+    public float readLatMin(String variableName) {
+        return readFloat(variableName, "latMin");
     }
 
     public float readMax(String variableName) {
-        float result = Float.NaN;
+        return readFloat(variableName, "max");
+    }
 
-        // Check if we have made a cacheFileManager file earlier
-        if (cacheFile.exists()) {
-            BufferedReader in;
-            String str;
+    public float readLatMax(String variableName) {
+        return readFloat(variableName, "latMax");
+    }
 
-            try {
-                in = new BufferedReader(new FileReader(cacheFile));
-                while ((str = in.readLine()) != null) {
-                    String[] substrings = str.split(" ");
-                    if (substrings[0].compareTo(variableName) == 0 && substrings[1].compareTo("max") == 0) {
-                        result = Float.parseFloat(substrings[2]);
-                    }
-                }
-                in.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+    public void writeMin(String variableName, float value) {
+    	writeFloat(variableName, "min", value);
+    }
 
-        return result;
+    public void writeLatMin(String variableName, float value) {
+    	writeFloat(variableName, "latMin", value);
     }
 
     public void writeMax(String variableName, float value) {
-        if (!cacheFile.exists()) {
-            try {
-                cacheFile.createNewFile();
-            } catch (IOException e) {
-            	logger.debug("IOException caught in cache: "+e.getMessage());
-            }
-        }
+    	writeFloat(variableName, "max", value);
+    }
 
-        try {
-            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(cacheFile, true)));
-            out.println(variableName + " max " + value);
-
-            out.close();
-        } catch (IOException e) {
-        	logger.debug("IOException caught in cache: "+e.getMessage());
-        }
+    public void writeLatMax(String variableName, float value) {
+    	writeFloat(variableName, "latMax", value);
     }
 
     public String readColormap(String variableName) {
@@ -141,94 +129,6 @@ public class CacheFileManager {
             }
             PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(cacheFile, true)));
             out.println(variableName + " colormap " + value);
-            out.close();
-        } catch (IOException e) {
-        	logger.debug("IOException caught in cache: "+e.getMessage());
-        }
-    }
-
-    public float readLatMin(String variableName) {
-        float result = Float.NaN;
-
-        // Check if we have made a cacheFileManager file earlier
-        if (cacheFile.exists()) {
-            BufferedReader in;
-            String str;
-
-            try {
-                in = new BufferedReader(new FileReader(cacheFile));
-                while ((str = in.readLine()) != null) {
-                    String[] substrings = str.split(" ");
-                    if (substrings[0].compareTo(variableName) == 0 && substrings[1].compareTo("latMin") == 0) {
-                        result = Float.parseFloat(substrings[2]);
-                    }
-                }
-                in.close();
-            } catch (IOException e) {
-                logger.debug("IOException caught in cache: "+e.getMessage());
-            }
-        }
-
-        return result;
-    }
-
-    public void writeLatMin(String variableName, float value) {
-        if (!cacheFile.exists()) {
-            try {
-                cacheFile.createNewFile();
-            } catch (IOException e) {
-            	logger.debug("IOException caught in cache: "+e.getMessage());
-            }
-        }
-
-        try {
-            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(cacheFile, true)));
-            out.println(variableName + " latMin " + value);
-
-            out.close();
-        } catch (IOException e) {
-        	logger.debug("IOException caught in cache: "+e.getMessage());
-        }
-    }
-
-    public float readLatMax(String variableName) {
-        float result = Float.NaN;
-
-        // Check if we have made a cacheFileManager file earlier
-        if (cacheFile.exists()) {
-            BufferedReader in;
-            String str;
-
-            try {
-                in = new BufferedReader(new FileReader(cacheFile));
-                while ((str = in.readLine()) != null) {
-                    String[] substrings = str.split(" ");
-                    if (substrings[0].compareTo(variableName) == 0 && substrings[1].compareTo("latMax") == 0) {
-                        result = Float.parseFloat(substrings[2]);
-                    }
-                }
-                in.close();
-            } catch (IOException e) {
-            	logger.debug("IOException caught in cache: "+e.getMessage());
-            }
-        }
-
-        return result;
-    }
-
-    public void writeLatMax(String variableName, float value) {
-        if (!cacheFile.exists()) {
-            try {
-                cacheFile.createNewFile();
-            } catch (IOException e) {
-            	logger.debug("IOException caught in cache: "+e.getMessage());
-            }
-        }
-
-        try {
-            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(cacheFile, true)));
-            out.println(variableName + " latMax " + value);
-
             out.close();
         } catch (IOException e) {
         	logger.debug("IOException caught in cache: "+e.getMessage());

@@ -133,34 +133,6 @@ public class NCDFVariable {
                         if (lonDimensionSize != currentlonDimensionSize) {
                             if (lonDimensionSize == 0) {
                                 lonDimensionSize = currentlonDimensionSize;
-                                // Variable realLongitudes =
-                                // ncfile.findVariable(d.getFullName());
-                                // if (realLongitudes != null) {
-                                // Array netCDFArray = realLongitudes.read();
-                                // realLongitudeValues = (float[])
-                                // netCDFArray.get1DJavaArray(float.class);
-                                //
-                                // float min = Float.POSITIVE_INFINITY;
-                                // float max = Float.NEGATIVE_INFINITY;
-                                // for (int i = 0; i <
-                                // realLongitudeValues.length; i++) {
-                                // float value = realLongitudeValues[i];
-                                // value = (value + 360.000f) % 360.000f;
-                                // realLongitudeValues[i] = value;
-                                //
-                                // if (value < min) {
-                                // min = value;
-                                // }
-                                // if (value > max) {
-                                // max = value;
-                                // }
-                                // }
-                                //
-                                // logger.debug("longitudes for " +
-                                // variable.getFullName() + " exist between " +
-                                // min
-                                // + " and " + max);
-                                // }
                             } else {
                                 throw new VariableNotCompatibleException("Variable " + variable.getFullName()
                                         + " was found with mismatching dimensions");
@@ -191,7 +163,7 @@ public class NCDFVariable {
                         TimeStep newTimeStep = new TimeStep(file, sequenceNumber, 0, false);
                         timeSteps.add(newTimeStep);
                     }
-                }
+                }                
             }
             ncfile.close();
             sequenceNumber++;
@@ -413,6 +385,10 @@ public class NCDFVariable {
                 // 100;
                 minimumValue = tempMin;
                 logger.debug("Calculated min " + variable.getFullName() + " : " + tempMin);
+
+                cacheAtDataLocation.writeMin(variable.getFullName(), minimumValue);
+                cacheAtProgramLocation.writeMin(variable.getFullName(), minimumValue);
+                
             }
             if (!Float.isNaN(resultMax)) {
                 maximumValue = resultMax;
@@ -422,13 +398,11 @@ public class NCDFVariable {
                 // double result = Math.round(diff * 1.1 * 100) / 100;
                 maximumValue = tempMax;
                 logger.debug("Calculated max " + variable.getFullName() + " : " + tempMax);
+
+                cacheAtDataLocation.writeMax(variable.getFullName(), maximumValue);
+                cacheAtProgramLocation.writeMax(variable.getFullName(), maximumValue);
             }
         }
-
-        cacheAtDataLocation.writeMin(variable.getFullName(), minimumValue);
-        cacheAtDataLocation.writeMax(variable.getFullName(), maximumValue);
-        cacheAtProgramLocation.writeMin(variable.getFullName(), minimumValue);
-        cacheAtProgramLocation.writeMax(variable.getFullName(), maximumValue);
 
         settings.setVarMin(variable.getFullName(), minimumValue);
         settings.setVarMax(variable.getFullName(), maximumValue);
@@ -512,6 +486,10 @@ public class NCDFVariable {
 
     public synchronized String getName() {
         return variable.getFullName();
+    }
+
+    public synchronized String getDescription() {
+        return variable.getDescription();
     }
 
     public synchronized String getUnits() {
