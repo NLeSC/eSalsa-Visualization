@@ -336,6 +336,12 @@ public class DatasetManager {
         return ncdfVar.getUnits();
     }
 
+    public synchronized String getVariableTime(String varName,long frameNumber) throws DatasetNotFoundException {
+        NCDFDataSet dataset = findDataset(varName);
+        NCDFVariable ncdfVar = dataset.getVariable(varName);
+        return ncdfVar.getTime(frameNumber);
+    }
+
 	public String getVariableDescription(String varName) throws DatasetNotFoundException {
         NCDFDataSet dataset = findDataset(varName);
         NCDFVariable ncdfVar = dataset.getVariable(varName);

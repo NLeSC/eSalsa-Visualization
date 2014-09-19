@@ -74,6 +74,7 @@ public class ImauWindow implements GLEventListener {
     private MultiColorText[][] legendTexts;
     private MultiColorText[] dates;
     private MultiColorText[] dataSets;
+    private MultiColorText[] depth;
 
     private int cachedScreens = 1;
 
@@ -111,6 +112,7 @@ public class ImauWindow implements GLEventListener {
         legendTexts = new MultiColorText[cachedScreens][NUM_LEGEND_TEXTS];
         dates = new MultiColorText[cachedScreens];
         dataSets = new MultiColorText[cachedScreens];
+        depth = new MultiColorText[cachedScreens];
 
         cachedSurfaceTextures = new Texture2D[cachedScreens];
         cachedLegendTextures = new Texture2D[cachedScreens];
@@ -262,8 +264,8 @@ public class ImauWindow implements GLEventListener {
                             String fancyName = timer.getVariableDescription(variableName);
                             String units = timer.getVariableUnits(variableName);
                             varNames[i].setString(gl, fancyName+ " in "+ units, Color4.WHITE, fontSize);
-                            
-                            dates[i].setString(gl, "Frame: "+((float)currentDesc.getFrameNumber())/10000f, Color4.WHITE,
+                                                        
+                            dates[i].setString(gl, "Date: "+ timer.getVariableTime(variableName), Color4.WHITE,
                                     fontSize);
                             dataSets[i].setString(gl, "", Color4.WHITE, fontSize);
                             

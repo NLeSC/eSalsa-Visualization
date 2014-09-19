@@ -2,8 +2,12 @@ package nl.esciencecenter.visualization.esalsa.data.reworked;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import nl.esciencecenter.visualization.esalsa.CacheFileManager;
@@ -28,12 +32,14 @@ public class NCDFVariable {
         File file;
         int fileSequenceNumber;
         int timeStepWithinFile;
+        double timeInMetadata;
         boolean hasTimesteps;
 
-        public TimeStep(File file, int fileSequenceNumber, int timeStepWithinFile, boolean hasTimesteps) {
+        public TimeStep(File file, int fileSequenceNumber, int timeStepWithinFile, double timeInMetadata, boolean hasTimesteps) {
             this.file = file;
             this.fileSequenceNumber = fileSequenceNumber;
             this.timeStepWithinFile = timeStepWithinFile;
+            this.timeInMetadata = timeInMetadata;
             this.hasTimesteps = hasTimesteps;
         }
 
@@ -47,6 +53,10 @@ public class NCDFVariable {
 
         public int getTimeStepWithinFile() {
             return timeStepWithinFile;
+        }
+
+        public double getTimeInMetadata() {
+            return timeInMetadata;
         }
 
         @Override
@@ -152,15 +162,18 @@ public class NCDFVariable {
                     boolean timeStepsInFile = false;
                     for (Dimension d : variableInThisFile.getDimensions()) {
                         if (d.getFullName().contains("time")) {
+                        	Array timeArray = ncfile.findVariable("time").read();
                             for (int t = 0; t < d.getLength(); t++) {
-                                TimeStep newTimeStep = new TimeStep(file, sequenceNumber, t, true);
+                            	double timeInFile = timeArray.getDouble(t);
+                            	
+                                TimeStep newTimeStep = new TimeStep(file, sequenceNumber, t, timeInFile, true);
                                 timeSteps.add(newTimeStep);
                                 timeStepsInFile = true;
                             }
                         }
                     }
                     if (!timeStepsInFile) {
-                        TimeStep newTimeStep = new TimeStep(file, sequenceNumber, 0, false);
+                        TimeStep newTimeStep = new TimeStep(file, sequenceNumber, 0, 0.0, false);
                         timeSteps.add(newTimeStep);
                     }
                 }                
@@ -494,6 +507,26 @@ public class NCDFVariable {
 
     public synchronized String getUnits() {
         return variable.getUnitsString();
+    }
+
+    public synchronized String getTime(long sequenceNumber) {
+    	TimeStep wantedTimestep = null;
+        for (TimeStep t : timeSteps) {
+            if ((long) t.getFileSequenceNumber() * (long) MAX_TIMESTEPS_IN_SINGLE_FILE + t.getTimeStepWithinFile() == sequenceNumber) {
+                wantedTimestep = t;
+            }
+        }
+    	
+        Calendar epoch = new GregorianCalendar(01,01,0000);
+    	int days = (int) wantedTimestep.getTimeInMetadata();
+    	epoch.add(Calendar.DAY_OF_MONTH, days);
+    	
+    	NumberFormat formatter = new DecimalFormat("0000");
+    	String yearString = formatter.format(epoch.get(Calendar.YEAR));
+    	formatter = new DecimalFormat("00");
+    	String monthString = formatter.format(epoch.get(Calendar.MONTH));
+    	String dayString = formatter.format(epoch.get(Calendar.DAY_OF_MONTH));
+        return "" + monthString + "-" + dayString + "-" + yearString;
     }
 
     public float getMinLatitude() {
