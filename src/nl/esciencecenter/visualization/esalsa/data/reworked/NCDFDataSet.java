@@ -28,9 +28,13 @@ public class NCDFDataSet {
             List<Variable> fileVariables = ncfile.getVariables();
             for (Variable v : fileVariables) {
                 if (v.getShape().length > 1) {
+                	boolean hasTime = false;
                     boolean hasLat = false;
-                    boolean hasLon = false;
+                    boolean hasLon = false;                    
                     for (Dimension d : v.getDimensions()) {
+                        if (d.getFullName().contains("time")) {
+                            hasTime = true;
+                        }
                         if (d.getFullName().contains("lat") || d.getFullName().contains("nj")) {
                             hasLat = true;
                         }
@@ -40,7 +44,7 @@ public class NCDFDataSet {
                         }
                     }
 
-                    if (hasLon && hasLat) {
+                    if (hasTime && hasLon && hasLat) {
                         logger.debug("Variable " + v.getFullName());
 
                         boolean alreadyAnalysed = false;

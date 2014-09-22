@@ -93,12 +93,12 @@ public class NCDFVariable {
     private float minimumValue, maximumValue, fillValue, minimumLatitude, maximumLatitude;
 
     private final CacheFileManager cacheAtDataLocation;
-    private final CacheFileManager cacheAtProgramLocation;
+//    private final CacheFileManager cacheAtProgramLocation;
 
     public NCDFVariable(Variable variable, List<File> filesToBeAnalysed) throws VariableNotCompatibleException,
             IOException {
         cacheAtDataLocation = settings.getCacheFileManagerAtDataLocation();
-        cacheAtProgramLocation = settings.getCacheFileManagerAtProgramLocation();
+//        cacheAtProgramLocation = settings.getCacheFileManagerAtProgramLocation();
 
         timeSteps = new ArrayList<TimeStep>();
         this.variable = variable;
@@ -173,8 +173,9 @@ public class NCDFVariable {
                         }
                     }
                     if (!timeStepsInFile) {
-                        TimeStep newTimeStep = new TimeStep(file, sequenceNumber, 0, 0.0, false);
-                        timeSteps.add(newTimeStep);
+//                        TimeStep newTimeStep = new TimeStep(file, sequenceNumber, 0, 0.0, false);
+//                        timeSteps.add(newTimeStep);
+                    	logger.warn("No Timesteps in file, file skipped.");
                     }
                 }                
             }
@@ -195,10 +196,10 @@ public class NCDFVariable {
     private void determineLatBounds(NetcdfFile ncfile, Variable variableInFile) throws IOException {
         float latMin = cacheAtDataLocation.readLatMin(variable.getFullName());
         float latMax = cacheAtDataLocation.readLatMax(variable.getFullName());
-        if (Float.isNaN(latMin) || Float.isNaN(latMax)) {
-            latMin = cacheAtProgramLocation.readLatMin(variable.getFullName());
-            latMax = cacheAtProgramLocation.readLatMax(variable.getFullName());
-        }
+//        if (Float.isNaN(latMin) || Float.isNaN(latMax)) {
+//            latMin = cacheAtProgramLocation.readLatMin(variable.getFullName());
+//            latMax = cacheAtProgramLocation.readLatMax(variable.getFullName());
+//        }
         if (Float.isNaN(latMin) || Float.isNaN(latMax)) {
             List<Attribute> attributes = variableInFile.getAttributes();
             Variable latitudes = null;
@@ -257,8 +258,8 @@ public class NCDFVariable {
                 cacheAtDataLocation.writeLatMin(variableInFile.getFullName(), min);
                 cacheAtDataLocation.writeLatMax(variableInFile.getFullName(), max);
                 
-                cacheAtProgramLocation.writeLatMin(variableInFile.getFullName(), min);
-                cacheAtProgramLocation.writeLatMax(variableInFile.getFullName(), max);
+//                cacheAtProgramLocation.writeLatMin(variableInFile.getFullName(), min);
+//                cacheAtProgramLocation.writeLatMax(variableInFile.getFullName(), max);
             } else {
                 minimumLatitude = -90f;
                 maximumLatitude = 90f;
@@ -314,21 +315,21 @@ public class NCDFVariable {
             }
         }
 
-        if (Float.isNaN(resultMin)) {
-            float cacheMin = cacheAtProgramLocation.readMin(variable.getFullName());
-            if (!Float.isNaN(cacheMin)) {
-                resultMin = cacheMin;
-                logger.debug("Cache hit for min " + variable.getFullName() + " : " + resultMin);
-            }
-        }
-
-        if (Float.isNaN(resultMax)) {
-            float cacheMax = cacheAtProgramLocation.readMax(variable.getFullName());
-            if (!Float.isNaN(cacheMax)) {
-                resultMax = cacheMax;
-                logger.debug("Cache hit for max " + variable.getFullName() + " : " + resultMax);
-            }
-        }
+//        if (Float.isNaN(resultMin)) {
+//            float cacheMin = cacheAtProgramLocation.readMin(variable.getFullName());
+//            if (!Float.isNaN(cacheMin)) {
+//                resultMin = cacheMin;
+//                logger.debug("Cache hit for min " + variable.getFullName() + " : " + resultMin);
+//            }
+//        }
+//
+//        if (Float.isNaN(resultMax)) {
+//            float cacheMax = cacheAtProgramLocation.readMax(variable.getFullName());
+//            if (!Float.isNaN(cacheMax)) {
+//                resultMax = cacheMax;
+//                logger.debug("Cache hit for max " + variable.getFullName() + " : " + resultMax);
+//            }
+//        }
 
         // If we have both covered by now, we're done and don't need to read the
         // file.
@@ -392,28 +393,21 @@ public class NCDFVariable {
             if (!Float.isNaN(resultMin)) {
                 minimumValue = resultMin;
             } else {
-                // Round to 10 percent below the diff
-                // double diff = tempMax - tempMin;
-                // double result = Math.round((tempMin - (diff * 0.1)) * 100) /
-                // 100;
                 minimumValue = tempMin;
                 logger.debug("Calculated min " + variable.getFullName() + " : " + tempMin);
 
                 cacheAtDataLocation.writeMin(variable.getFullName(), minimumValue);
-                cacheAtProgramLocation.writeMin(variable.getFullName(), minimumValue);
+//                cacheAtProgramLocation.writeMin(variable.getFullName(), minimumValue);
                 
             }
             if (!Float.isNaN(resultMax)) {
                 maximumValue = resultMax;
             } else {
-                // Round to 10 percent above the diff
-                // double diff = tempMax - tempMin;
-                // double result = Math.round(diff * 1.1 * 100) / 100;
                 maximumValue = tempMax;
                 logger.debug("Calculated max " + variable.getFullName() + " : " + tempMax);
 
                 cacheAtDataLocation.writeMax(variable.getFullName(), maximumValue);
-                cacheAtProgramLocation.writeMax(variable.getFullName(), maximumValue);
+//                cacheAtProgramLocation.writeMax(variable.getFullName(), maximumValue);
             }
         }
 

@@ -149,11 +149,10 @@ public class DatasetManager {
                 for (TexturedataStorage tds : textureDatastorageList) {
                     if (tds.getWidth() == ncdfVar.getLonDimensionSize()
                             && tds.getHeight() == ncdfVar.getLatDimensionSize()) {
-                        float topTexCoord = 0.0f + (ncdfVar.getMaxLatitude() / 90f);
-                        float bottomTexCoord = 1.0f - (ncdfVar.getMinLatitude() / -90f);
-                        // System.out.println("topTexCoord: " + topTexCoord);
-                        // System.out.println("bottomTexCoord: " +
-                        // bottomTexCoord);
+                        float topTexCoord = .5f + 0.5f*(ncdfVar.getMaxLatitude() / 90f);
+                        float bottomTexCoord = .5f - 0.5f*(ncdfVar.getMinLatitude() / -90f);
+                         System.out.println("topTexCoord: " + topTexCoord);
+                         System.out.println("bottomTexCoord: " + bottomTexCoord);
                         tds.getTexStorage().setImageCombo(desc, pixelArray, legendBuf, topTexCoord, bottomTexCoord);
                     }
                 }
