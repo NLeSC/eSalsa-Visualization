@@ -8,14 +8,12 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FilenameFilter;
-import java.util.ArrayList;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import nl.esciencecenter.neon.NeonNewtWindow;
-import nl.esciencecenter.neon.input.InputHandler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +31,7 @@ public class ImauApp {
         imauPanel = new ImauPanel();
 
         // Create the GLEventListener
-        imauWindow = new ImauWindow(InputHandler.getInstance());
+        imauWindow = new ImauWindow(ImauInputHandler.getInstance());
 
         NeonNewtWindow window = new NeonNewtWindow(true, imauWindow.getInputHandler(), imauWindow,
                 settings.getDefaultScreenWidth(), settings.getDefaultScreenHeight(), "eSalsa Visualization");

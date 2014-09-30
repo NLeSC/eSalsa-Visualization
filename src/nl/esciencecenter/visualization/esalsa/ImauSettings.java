@@ -121,6 +121,8 @@ public class ImauSettings {
     private CacheFileManager cacheFileManagerAtDataLocation;
     private CacheFileManager cacheFileManagerAtProgramLocation;
 
+    private int numberOfScreenshotsPerTimeStep = 6;
+
     private boolean requestedNewConfiguration;
 
     private ImauSettings() {
@@ -403,7 +405,7 @@ public class ImauSettings {
     }
 
     private synchronized void initializeScreenDescriptions() {
-        screenDescriptions = new SurfaceTextureDescription[number_of_screens_col * number_of_screens_row];
+        screenDescriptions = new SurfaceTextureDescription[number_of_screens_col * number_of_screens_row];        
     }
 
     public synchronized void setWaittimeBeforeRetry(long value) {
@@ -486,7 +488,7 @@ public class ImauSettings {
         return DEPTH_DEF;
     }
 
-    public synchronized void setFrameNumber(long newFrameNumber) {
+    public synchronized void setFrameNumber(int newFrameNumber) {
         for (int i = 0; i < number_of_screens_col * number_of_screens_row; i++) {
             SurfaceTextureDescription currentState = screenDescriptions[i];
             screenDescriptions[i] = new SurfaceTextureDescription(newFrameNumber, currentState.getDepth(),
@@ -494,6 +496,7 @@ public class ImauSettings {
                     currentState.isDiff(), currentState.isSecondSet(), currentState.getLowerBound(),
                     currentState.getUpperBound(), currentState.isLogScale());
         }
+        
         setRequestedNewConfiguration(true);
     }
 
@@ -507,6 +510,7 @@ public class ImauSettings {
         }
 
         DEPTH_DEF = value;
+        
         setRequestedNewConfiguration(true);
     }
 
@@ -520,9 +524,14 @@ public class ImauSettings {
 
     public synchronized void setWindowSelection(int i) {
         WINDOW_SELECTION = i;
+
+        setRequestedNewConfiguration(true);
     }
 
     public synchronized int getWindowSelection() {
+    	if (number_of_screens_col * number_of_screens_row == 1) {
+    		return 1;
+    	}
         return WINDOW_SELECTION;
     }
 
@@ -548,6 +557,7 @@ public class ImauSettings {
                 state.getColorMap(), dynamic, diff, secondSet, state.getLowerBound(), state.getUpperBound(),
                 state.isLogScale());
         screenDescriptions[screenNumber] = result;
+        
         setRequestedNewConfiguration(true);
     }
 
@@ -557,6 +567,7 @@ public class ImauSettings {
                 variable, getCurrentColormap(variable), state.isDynamicDimensions(), state.isDiff(),
                 state.isSecondSet(), state.getLowerBound(), state.getUpperBound(), state.isLogScale());
         screenDescriptions[screenNumber] = result;
+        
         setRequestedNewConfiguration(true);
     }
 
@@ -572,12 +583,13 @@ public class ImauSettings {
         screenDescriptions[screenNumber] = result;
         currentColormap.put(state.getVarName(), selectedColorMap);
 
-        if (cacheFileManagerAtDataLocation != null) {
-            cacheFileManagerAtDataLocation.writeColormap(state.getVarName(), selectedColorMap);
-        }
-        if (cacheFileManagerAtProgramLocation != null) {
-            cacheFileManagerAtProgramLocation.writeColormap(state.getVarName(), selectedColorMap);
-        }
+//        if (cacheFileManagerAtDataLocation != null) {
+//            cacheFileManagerAtDataLocation.writeColormap(state.getVarName(), selectedColorMap);
+//        }
+//        if (cacheFileManagerAtProgramLocation != null) {
+//            cacheFileManagerAtProgramLocation.writeColormap(state.getVarName(), selectedColorMap);
+//        }
+        
         setRequestedNewConfiguration(true);
     }
 
@@ -827,6 +839,7 @@ public class ImauSettings {
                 state.getVarName(), state.getColorMap(), state.isDynamicDimensions(), state.isDiff(),
                 state.isSecondSet(), minFloatValue, maxFloatValue, state.isLogScale());
         screenDescriptions[screenNumber] = result;
+        
         setRequestedNewConfiguration(true);
     }
 
@@ -973,33 +986,45 @@ public class ImauSettings {
     public synchronized void setVarMin(String key, float currentMin) {
         minValues.put(key, currentMin);
         currentMinValues.put(key, currentMin);
+        
         setRequestedNewConfiguration(true);
     }
 
     public synchronized void setVarMax(String key, float currentMax) {
         maxValues.put(key, currentMax);
         currentMaxValues.put(key, currentMax);
+        
         setRequestedNewConfiguration(true);
-
     }
 
-    public synchronized void initDefaultVariables(ArrayList<String> variables, long l) {
+    public synchronized void initDefaultVariables(ArrayList<String> variables, int frameNumber) {
         screenDescriptions = new SurfaceTextureDescription[number_of_screens_col * number_of_screens_row];
 
         if (variables.size() != 0) {
             for (int j = 0; j < number_of_screens_col * number_of_screens_row; j++) {
-                String var;
-                if (j < variables.size()) {
-                    var = variables.get(j);
-                } else {
-                    var = variables.get(0);
-                }
-                screenDescriptions[j] = new SurfaceTextureDescription(l, 0, var, getCurrentColormap(var), false, false,
-                        false, getCurrentVarMin(var), getCurrentVarMax(var), false);
-
-                logger.debug(screenDescriptions[j].toString());
+            	if (cacheFileManagerAtDataLocation != null) {
+	            	String presetVar = cacheFileManagerAtDataLocation.readString("onScreen", "scr#"+j);
+	            	if (presetVar.compareTo("") != 0) {
+	            		screenDescriptions[j] = new SurfaceTextureDescription(frameNumber, 0, presetVar, getCurrentColormap(presetVar), false, false,
+		                        false, getCurrentVarMin(presetVar), getCurrentVarMax(presetVar), false);	            		
+	            	}
+            	}
+            	if (screenDescriptions[j] == null) {            	
+	                String var;
+	                if (j < variables.size()) {
+	                    var = variables.get(j);
+	                } else {
+	                    var = variables.get(0);
+	                }
+	                screenDescriptions[j] = new SurfaceTextureDescription(frameNumber, 0, var, getCurrentColormap(var), false, false,
+	                        false, getCurrentVarMin(var), getCurrentVarMax(var), false);
+            	}
+            	
+                logger.debug(screenDescriptions[j].toString());                
             }
         }
+            
+        setRequestedNewConfiguration(true);
     }
 
     public synchronized void setLogScale(int screenNumber, boolean selected) {
@@ -1008,6 +1033,7 @@ public class ImauSettings {
                 state.getVarName(), state.getColorMap(), state.isDynamicDimensions(), state.isDiff(),
                 state.isSecondSet(), state.getLowerBound(), state.getUpperBound(), selected);
         screenDescriptions[screenNumber] = result;
+        
         setRequestedNewConfiguration(true);
     }
 
@@ -1033,5 +1059,13 @@ public class ImauSettings {
 
     public synchronized CacheFileManager getCacheFileManagerAtProgramLocation() {
         return cacheFileManagerAtProgramLocation;
+    }
+
+    public synchronized int getNumberOfScreenshotsPerTimeStep() {
+        return numberOfScreenshotsPerTimeStep;
+    }
+
+    public synchronized void setNumberOfScreenshotsPerTimeStep(int numberOfScreenshotsPerTimeStep) {
+        this.numberOfScreenshotsPerTimeStep = numberOfScreenshotsPerTimeStep;
     }
 }

@@ -19,7 +19,6 @@ import nl.esciencecenter.neon.datastructures.FrameBufferObject;
 import nl.esciencecenter.neon.datastructures.IntPixelBufferObject;
 import nl.esciencecenter.neon.exceptions.CompilationFailedException;
 import nl.esciencecenter.neon.exceptions.UninitializedException;
-import nl.esciencecenter.neon.input.InputHandler;
 import nl.esciencecenter.neon.math.Color4;
 import nl.esciencecenter.neon.math.Float2Vector;
 import nl.esciencecenter.neon.math.Float3Vector;
@@ -51,7 +50,7 @@ public class ImauWindow implements GLEventListener {
     private Quad fsq;
 
     protected final ShaderProgramLoader loader;
-    protected final InputHandler inputHandler;
+    protected final ImauInputHandler inputHandler;
 
     private ShaderProgram shaderProgram_Sphere, shaderProgram_Legend, shaderProgram_Atmosphere,
             shaderProgram_FlattenLayers, shaderProgram_PostProcess, shaderProgram_Text;
@@ -96,10 +95,11 @@ public class ImauWindow implements GLEventListener {
     private final Texture2D[] cachedSurfaceTextures;
     private final Texture2D[] cachedLegendTextures;
 
+    private final float[] texLonOffsets;
     private final float[] topTexCoords;
     private final float[] bottomTexCoords;
 
-    public ImauWindow(InputHandler inputHandler) {
+    public ImauWindow(ImauInputHandler inputHandler) {
         this.loader = new ShaderProgramLoader();
         this.inputHandler = inputHandler;
         this.font = FontFactory.get(fontSet).getDefault();
@@ -117,6 +117,7 @@ public class ImauWindow implements GLEventListener {
         cachedSurfaceTextures = new Texture2D[cachedScreens];
         cachedLegendTextures = new Texture2D[cachedScreens];
 
+        texLonOffsets = new float[cachedScreens];
         topTexCoords = new float[cachedScreens];
         bottomTexCoords = new float[cachedScreens];
     }
@@ -144,7 +145,7 @@ public class ImauWindow implements GLEventListener {
 
     @Override
     public void display(GLAutoDrawable drawable) {
-        contextOn(drawable);
+        //contextOn(drawable);
 
         final GL3 gl = drawable.getContext().getGL().getGL3();
 
@@ -176,14 +177,13 @@ public class ImauWindow implements GLEventListener {
         }
 
         if (timer.isScreenshotNeeded()) {
-            finalPBO.makeScreenshotPNG(gl, timer.getScreenshotFileName());
-
-            timer.setScreenshotNeeded(false);
+            finalPBO.makeScreenshotPNG(gl, timer.getScreenshotFileName());            
         }
+        timer.setScreenshotNeeded(false);
 
         reshaped = false;
 
-        contextOff(drawable);
+        //contextOff(drawable);
     }
 
     private void displayContext(TimedPlayer timer, Float2Vector clickCoords) throws DatasetNotFoundException {
@@ -208,98 +208,23 @@ public class ImauWindow implements GLEventListener {
         drawAtmosphere(gl, mv, atmosphereFBO);
 
         if (settings.isRequestedNewConfiguration()) {
-            SurfaceTextureDescription currentDesc;
-
+            int windowSelection = settings.getWindowSelection();
+                        
             boolean allRequestsFullfilled = true;
-            for (int i = 0; i < cachedScreens; i++) {
-                // Get the currently needed description from the settings
-                // manager
-                currentDesc = settings.getSurfaceDescription(i);
-
-                if (currentDesc != null) {
-                    // Ask the TextureStorage for the currently displayed/ready
-                    // image
-                    TextureCombo result = timer.getTextureStorage(currentDesc.getVarName()).getImages(i);
-
-                    if (result.getDescription() != currentDesc) {
-                        // Check if we need to request new images, or if we are
-                        // waiting for new images
-                        if (!timer.getTextureStorage(currentDesc.getVarName()).isRequested(currentDesc)) {
-                            // We need to request new ones
-                            logger.debug("requesting: " + currentDesc.toString());
-
-                            List<Texture2D> oldTextures = timer.getTextureStorage(currentDesc.getVarName())
-                                    .requestNewConfiguration(i, currentDesc);
-                            // Remove all of the (now unused) textures
-                            for (Texture2D tex : oldTextures) {
-                                try {
-                                    tex.delete(gl);
-                                } catch (UninitializedException e) {
-                                    // TODO Auto-generated catch block
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-                        // We are waiting for images to be generated
-                        allRequestsFullfilled = false;
-                    } else {
-                        // We might have received a new request here
-                        if (cachedSurfaceTextures[i] != result.getSurfaceTexture()
-                                || cachedLegendTextures[i] != result.getLegendTexture()) {
-                            logger.debug("adding new texture for screen " + i + " to opengl: " + currentDesc);
-
-                            // Apparently a new image was just created for us,
-                            // so lets store it
-                            cachedSurfaceTextures[i] = result.getSurfaceTexture();
-                            cachedLegendTextures[i] = result.getLegendTexture();
-
-                            cachedSurfaceTextures[i].init(gl);
-                            cachedLegendTextures[i].init(gl);
-
-                            topTexCoords[i] = result.getTopTexCoords();
-                            bottomTexCoords[i] = result.getBottomTexCoords();
-
-                            // And set the appropriate text to accompany it.
-                            String variableName = currentDesc.getVarName();
-                            String fancyName = timer.getVariableDescription(variableName);
-                            String units = timer.getVariableUnits(variableName);
-                            varNames[i].setString(gl, fancyName+ " in "+ units, Color4.WHITE, fontSize);
-                                                        
-                            dates[i].setString(gl, "Date: "+ timer.getVariableTime(variableName), Color4.WHITE,
-                                    fontSize);
-                            dataSets[i].setString(gl, "", Color4.WHITE, fontSize);
-                            
-                            float min, max;
-                            if (currentDesc.isDiff()) {
-                                min = settings.getCurrentVarDiffMin(currentDesc.getVarName());
-                                max = settings.getCurrentVarDiffMax(currentDesc.getVarName());
-                            } else {
-                                min = settings.getCurrentVarMin(currentDesc.getVarName());
-                                max = settings.getCurrentVarMax(currentDesc.getVarName());
-                            }
-                            
-                            NumberFormat formatter = new DecimalFormat("0.####E0");
-                            for (int j = 0; j < NUM_LEGEND_TEXTS; j++) {
-                            	float thisnumber = ((max-min)/5f)*j;
-                            	
-                            	if (currentDesc.isLogScale()) {
-                            		float diff = max - min;
-                            		if (diff > 0.0f) {
-                            	    	float newMaxValue = (float) Math.log(1.0f + diff);
-                            	    	float newInputValue = (float) Math.log(1.0 + thisnumber);
-                            	    	
-                            		    thisnumber = min + (newInputValue / newMaxValue) * diff;
-                            		}
-                            	}
-                            	
-                            	legendTexts[i][j].setString(gl, formatter.format(thisnumber), Color4.WHITE, fontSize);
-                            }
-                        }
-                    }
-                }
+            
+            if (windowSelection == 0) {
+            	boolean requestFullfilled = false;
+	            for (int i = 0; i < cachedScreens; i++) {
+	            	requestFullfilled = loadScreen(gl, i);
+	            	if (!requestFullfilled) {
+	            		allRequestsFullfilled = false;
+	            	}
+	            }
+            } else {
+            	allRequestsFullfilled = loadScreen(gl, windowSelection-1);
             }
-
-            if (allRequestsFullfilled) {
+            
+        	if (allRequestsFullfilled) {
                 settings.setRequestedNewConfiguration(false);
             }
         }
@@ -308,17 +233,129 @@ public class ImauWindow implements GLEventListener {
             if (cachedLegendTextures[i] != null && cachedSurfaceTextures[i] != null) {
                 drawSingleWindow(width, height, gl, mv, cachedLegendTextures[i], cachedSurfaceTextures[i], varNames[i],
                         dates[i], dataSets[i], legendTexts[i], cachedFBOs[i], clickCoords,
-                        topTexCoords[i], bottomTexCoords[i]);
+                        texLonOffsets[i], topTexCoords[i], bottomTexCoords[i]);
             }
         }
         // logger.debug("Tiling windows");
         renderTexturesToScreen(gl, width, height);
     }
+    
+    private boolean loadScreen(GL3 gl, int screenNumber) throws DatasetNotFoundException {
+    	// Get the currently needed description from the settings manager
+        SurfaceTextureDescription currentDesc = settings.getSurfaceDescription(screenNumber);
+        
+        if (currentDesc != null) {
+            // Ask the TextureStorage for the currently displayed/ready image
+            TextureCombo result = timer.getTextureStorage(currentDesc.getVarName()).getImages(screenNumber);
+
+            if (result.getDescription() != currentDesc) {
+                // Check if we need to request new images, or if we are
+                // waiting for new images
+                if (!timer.getTextureStorage(currentDesc.getVarName()).isRequested(currentDesc)) {
+                    // We need to request new ones
+                    logger.debug("requesting: " + currentDesc.toString());
+
+                    List<Texture2D> oldTextures = timer.getTextureStorage(currentDesc.getVarName())
+                            .requestNewConfiguration(screenNumber, currentDesc);
+                    
+                    // Remove all of the (now unused) textures
+                    for (Texture2D tex : oldTextures) {
+                        try {
+                            tex.delete(gl);
+                        } catch (UninitializedException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                // We are waiting for images to be generated
+                return false;
+            } else {
+                // We might have received a new request here
+                if (cachedSurfaceTextures[screenNumber] != result.getSurfaceTexture()
+                        || cachedLegendTextures[screenNumber] != result.getLegendTexture()) {
+                    logger.debug("adding new texture for screen " + screenNumber + " to opengl: " + currentDesc);
+
+                    // Apparently a new image was just created for us,
+                    // so lets store it
+                    cachedSurfaceTextures[screenNumber] = result.getSurfaceTexture();
+                    cachedLegendTextures[screenNumber] = result.getLegendTexture();
+
+                    cachedSurfaceTextures[screenNumber].init(gl);
+                    cachedLegendTextures[screenNumber].init(gl);
+                    
+                    float offset = 0;
+                    if (currentDesc.getVarName().compareTo("PRECC") ==0|| currentDesc.getVarName().compareTo("PRECL") ==0 || currentDesc.getVarName().compareTo("V") ==0 || currentDesc.getVarName().compareTo("U") ==0){
+                    	offset = 110f / 360f; //((-78.47286103059815f+360.0f) % 360.0f) / 360.0f;
+                	}
+                    texLonOffsets[screenNumber] = offset;
+                    topTexCoords[screenNumber] = result.getTopTexCoords();
+                    bottomTexCoords[screenNumber] = result.getBottomTexCoords();
+
+                    // And set the appropriate text to accompany it.
+                    String variableName = currentDesc.getVarName();
+                    String fancyName = timer.getVariableDescription(variableName);
+                    String units = timer.getVariableUnits(variableName);
+                    varNames[screenNumber].setString(gl, fancyName+ " in "+ units, Color4.WHITE, fontSize);
+                                                
+                    dates[screenNumber].setString(gl, "Date: "+ timer.getVariableTime(variableName), Color4.WHITE,
+                            fontSize);
+                    dataSets[screenNumber].setString(gl, "", Color4.WHITE, fontSize);
+                    
+                    float min, max;
+                    if (currentDesc.isDiff()) {
+                        min = settings.getCurrentVarDiffMin(currentDesc.getVarName());
+                        max = settings.getCurrentVarDiffMax(currentDesc.getVarName());
+                    } else {
+                        min = settings.getCurrentVarMin(currentDesc.getVarName());
+                        max = settings.getCurrentVarMax(currentDesc.getVarName());
+                    }
+                                        
+                    for (int j = 0; j < NUM_LEGEND_TEXTS; j++) {
+                    	float thisnumber = min + ((max-min)/5f)*j;
+                    	
+                    	if (currentDesc.isLogScale()) {
+                    		float diff = max - min;
+                    		if (diff > 0.0f) {
+                    	    	float newMaxValue = (float) Math.log(1.0f + diff);
+                    	    	float newInputValue = (float) Math.log(1.0 + thisnumber);
+                    	    	
+                    		    thisnumber = min + (newInputValue / newMaxValue) * diff;
+                    		}
+                    	}
+                    	
+                    	NumberFormat formatter;
+                    	if (thisnumber < 0 && thisnumber > 0.0001) {
+                    		formatter = new DecimalFormat("-0.####E0");
+                    	} else if (thisnumber > 0 && thisnumber < 0.0001) {
+                    		formatter = new DecimalFormat("0.####E0");
+                    	} else if (thisnumber < 0 && thisnumber > -1.0) {
+                    		formatter = new DecimalFormat("-0.###");
+                    	} else if (thisnumber > 0 && thisnumber < 1.0) {
+                    		formatter = new DecimalFormat("0.###");
+                    	} else if (thisnumber < 0 && thisnumber > -10000.0) {
+                    		formatter = new DecimalFormat("-###0.0");
+                    	} else if (thisnumber > 0 && thisnumber < 10000.0) {
+                    		formatter = new DecimalFormat("###0.0");
+                    	} else if (thisnumber > -0.0000001 && thisnumber < 0.0000001) {
+                    		formatter = new DecimalFormat("0");
+                    	} else {
+                    		formatter = new DecimalFormat("-0.0000E0");
+                    	}
+                    	
+                    	legendTexts[screenNumber][j].setString(gl, formatter.format(thisnumber), Color4.WHITE, fontSize);
+                    }
+                }
+            }
+        }
+        
+        return true;
+    }
 
     private void drawSingleWindow(final int width, final int height, final GL3 gl, Float4Matrix mv, Texture2D legend,
             Texture2D globe, MultiColorText varNameText, MultiColorText dateText, MultiColorText datasetText,
             MultiColorText legendText[], FrameBufferObject target,
-            Float2Vector clickCoords, float topTexCoord, float bottomTexCoord) {
+            Float2Vector clickCoords, float texLonOffset, float topTexCoord, float bottomTexCoord) {
         // logger.debug("Drawing Text");
         drawHUDText(gl, width, height, varNameText, dateText, datasetText, legendText, hudTextFBO);
 
@@ -326,7 +363,8 @@ public class ImauWindow implements GLEventListener {
         drawHUDLegend(gl, width, height, legend, legendTextureFBO);
 
         // logger.debug("Drawing Sphere");
-        drawSphere(gl, mv, globe, sphereTextureFBO, clickCoords, topTexCoord, bottomTexCoord);
+        
+        drawSphere(gl, mv, globe, sphereTextureFBO, clickCoords, texLonOffset, topTexCoord, bottomTexCoord);
         //drawSecondSphere(gl, mv, globe, sphereTextureFBO, clickCoords, topTexCoord, bottomTexCoord);
 
         // logger.debug("Flattening Layers");
@@ -369,6 +407,7 @@ public class ImauWindow implements GLEventListener {
 
             // Draw legend texture
             legendTexture.use(gl);
+            shaderProgram_Legend.setUniform("texLonOffset", 0f);
             shaderProgram_Legend.setUniform("top_texCoord", 1f);
             shaderProgram_Legend.setUniform("bottom_texCoord", 0f);
             shaderProgram_Legend.setUniform("texture_map", legendTexture.getMultitexNumber());
@@ -386,7 +425,7 @@ public class ImauWindow implements GLEventListener {
     }
 
     private void drawSphere(GL3 gl, Float4Matrix mv, Texture2D surfaceTexture, FrameBufferObject target,
-            Float2Vector clickCoords, float topTexCoord, float bottomTexCoord) {
+            Float2Vector clickCoords, float texLonOffset, float topTexCoord, float bottomTexCoord) {
         try {
             target.bind(gl);
             gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
@@ -397,7 +436,8 @@ public class ImauWindow implements GLEventListener {
             shaderProgram_Sphere.setUniformMatrix("PMatrix", p);
 
             surfaceTexture.use(gl);
-            shaderProgram_Sphere.setUniform("top_texCoord", topTexCoord);
+            shaderProgram_Sphere.setUniform("texLonOffset", texLonOffset);
+            shaderProgram_Sphere.setUniform("top_texCoord", .9f);//topTexCoord);
             shaderProgram_Sphere.setUniform("bottom_texCoord", bottomTexCoord);
             shaderProgram_Sphere.setUniform("texture_map", surfaceTexture.getMultitexNumber());
             shaderProgram_Sphere.setUniform("opacity", 1f);
@@ -742,7 +782,7 @@ public class ImauWindow implements GLEventListener {
         return result;
     }
 
-    public InputHandler getInputHandler() {
+    public ImauInputHandler getInputHandler() {
         return inputHandler;
     }
 }

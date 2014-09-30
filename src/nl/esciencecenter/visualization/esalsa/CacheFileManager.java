@@ -56,8 +56,82 @@ public class CacheFileManager {
         }
 
         try {
-            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(cacheFile, true)));
-            out.println(variableName + " "+toMatch+" " + value);
+        	BufferedReader in = new BufferedReader(new FileReader(cacheFile));
+        	String newtextFileContent = "";
+        	String str;
+        	
+            while ((str = in.readLine()) != null) {            	
+                String[] substrings = str.split(" ");
+                if (substrings[0].compareTo(variableName) == 0) {
+                	newtextFileContent += variableName + " " + toMatch + " " + value + "\n";
+                } else {
+                	newtextFileContent += str + "\n";                	
+                }
+            }
+            in.close();
+            
+            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(cacheFile, false)));            
+            out.print(newtextFileContent);
+
+            out.close();
+        } catch (IOException e) {
+        	logger.debug("IOException caught in cache: "+e.getMessage());
+        }    	
+    }
+
+    public String readString(String variableName, String toMatch) {
+        String result = "";
+
+        // Check if we have made a cacheFileManager file earlier
+        if (cacheFile.exists()) {
+            BufferedReader in;
+            String str;
+
+            try {
+                in = new BufferedReader(new FileReader(cacheFile));
+                while ((str = in.readLine()) != null) {
+                    String[] substrings = str.split(" ");
+                    if (substrings[0].compareTo(variableName) == 0 && substrings[1].compareTo(toMatch) == 0) {
+                        result = substrings[2];
+                    }
+                }
+                in.close();
+            } catch (IOException e) {
+            	logger.debug("IOException caught in cache: "+e.getMessage());
+            }
+        } else {
+        	System.out.println("Cache file nonexistent.");
+        }
+
+        return result;
+    }
+    
+    private void writeString(String variableName, String toMatch, String value) {
+        if (!cacheFile.exists()) {
+            try {
+                cacheFile.createNewFile();
+            } catch (IOException e) {
+            	logger.debug("IOException caught in cache: "+e.getMessage());
+            }
+        }
+
+        try {
+        	BufferedReader in = new BufferedReader(new FileReader(cacheFile));
+        	String newtextFileContent = "";
+        	String str;
+        	
+            while ((str = in.readLine()) != null) {            	
+                String[] substrings = str.split(" ");
+                if (substrings[0].compareTo(variableName) == 0) {
+                	newtextFileContent += variableName + " " + toMatch + " " + value + "\n";
+                } else {
+                	newtextFileContent += str + "\n";                	
+                }
+            }
+            in.close();
+            
+            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(cacheFile, false)));            
+            out.print(newtextFileContent);
 
             out.close();
         } catch (IOException e) {
@@ -97,41 +171,11 @@ public class CacheFileManager {
     	writeFloat(variableName, "latMax", value);
     }
 
-    public String readColormap(String variableName) {
-        String result = "";
-
-        // Check if we have made a cacheFileManager file earlier
-        if (cacheFile.exists()) {
-            BufferedReader in;
-            String str;
-
-            try {
-                in = new BufferedReader(new FileReader(cacheFile));
-                while ((str = in.readLine()) != null) {
-                    String[] substrings = str.split(" ");
-                    if (substrings[0].compareTo(variableName) == 0 && substrings[1].compareTo("colormap") == 0) {
-                        result = substrings[2];
-                    }
-                }
-                in.close();
-            } catch (IOException e) {
-            	logger.debug("IOException caught in cache: "+e.getMessage());
-            }
-        }
-
-        return result;
+    public String readColormap(String variableName) {        
+        return readString(variableName, "colormap");
     }
 
     public void writeColormap(String variableName, String value) {
-        try {
-            if (!cacheFile.exists()) {
-                cacheFile.createNewFile();
-            }
-            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(cacheFile, true)));
-            out.println(variableName + " colormap " + value);
-            out.close();
-        } catch (IOException e) {
-        	logger.debug("IOException caught in cache: "+e.getMessage());
-        }
+        writeString(variableName, "colormap", value);
     }
 }

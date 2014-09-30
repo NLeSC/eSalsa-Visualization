@@ -1,7 +1,7 @@
 package nl.esciencecenter.visualization.esalsa.data;
 
 public class SurfaceTextureDescription {
-    protected final long frameNumber;
+    protected final int frameNumber;
     protected final int depth;
     protected final String varName;
     protected final String colorMap;
@@ -12,7 +12,7 @@ public class SurfaceTextureDescription {
     protected final float upperBound;
     protected final boolean logScale;
 
-    public SurfaceTextureDescription(long newFrameNumber, int depth, String varName, String colorMap,
+    public SurfaceTextureDescription(int newFrameNumber, int depth, String varName, String colorMap,
             boolean dynamicDimensions, boolean diff, boolean secondSet, float lowerBound, float upperBound,
             boolean logScale) {
         this.frameNumber = newFrameNumber;
@@ -27,7 +27,7 @@ public class SurfaceTextureDescription {
         this.logScale = logScale;
     }
 
-    public long getFrameNumber() {
+    public int getFrameNumber() {
         return frameNumber;
     }
 

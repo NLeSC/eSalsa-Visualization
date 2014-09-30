@@ -13,6 +13,8 @@ import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 
 import javax.media.opengl.awt.GLCanvas;
@@ -32,11 +34,13 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicSliderUI;
 
 import nl.esciencecenter.neon.NeonInterfacePanel;
+import nl.esciencecenter.neon.math.Float3Vector;
 import nl.esciencecenter.neon.swing.CustomJSlider;
 import nl.esciencecenter.neon.swing.GoggleSwing;
 import nl.esciencecenter.neon.swing.RangeSlider;
@@ -53,6 +57,63 @@ public class ImauPanel extends NeonInterfacePanel {
         NONE, DATA, VISUAL, MOVIE
     }
 
+    public class KeyFrame {
+        private Component uiElement;
+        private final int frameNumber;
+        private Float3Vector rotation;
+        private float viewDist;
+
+        public KeyFrame(int frameNumber) {
+            this.frameNumber = frameNumber;
+        }
+
+        public Component getUiElement() {
+            return uiElement;
+        }
+
+        public void setUiElement(Component uiElement) {
+            this.uiElement = uiElement;
+        }
+
+        public int getFrameNumber() {
+            return frameNumber;
+        }
+
+        public Float3Vector getRotation() {
+            return rotation;
+        }
+
+        public void setRotation(Float3Vector rotation) {
+            this.rotation = rotation;
+        }
+
+        public float getViewDist() {
+            return viewDist;
+        }
+
+        public void setViewDist(float viewDist) {
+            this.viewDist = viewDist;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 1;
+            hash = (int) (hash * 17 + frameNumber);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other instanceof KeyFrame && ((KeyFrame) other).hashCode() == this.hashCode()) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    private final ArrayList<KeyFrame> keyFrames;
+
     private final ImauSettings settings = ImauSettings.getInstance();
     private final static Logger logger = LoggerFactory.getLogger(ImauPanel.class);
 
@@ -63,9 +124,9 @@ public class ImauPanel extends NeonInterfacePanel {
     protected JFormattedTextField frameCounter, stepSizeField;
     private TweakState currentConfigState = TweakState.DATA;
 
-    private final JPanel configPanel;
+    private JTabbedPane configPanel;
 
-    private final JPanel dataConfig, visualConfig, movieConfig;
+    private final JPanel dataConfig, visualConfig, recordingConfig;
 
     private static TimedPlayer timer;
 
@@ -74,9 +135,13 @@ public class ImauPanel extends NeonInterfacePanel {
     protected GLCanvas glCanvas;
 
     private final boolean demomode = false;
+    
+    private ImauInputHandler inputHandler = ImauInputHandler.getInstance();
 
     public ImauPanel() {
         setLayout(new BorderLayout(0, 0));
+
+        keyFrames = new ArrayList<KeyFrame>();
 
         variables = new ArrayList<String>();
 
@@ -108,21 +173,21 @@ public class ImauPanel extends NeonInterfacePanel {
         menuBar.add(file);
         menuBar.add(Box.createHorizontalGlue());
 
-        if (!demomode) {
-            final JMenu options = new JMenu("Options");
-            final JMenuItem showDataTweakPanel = new JMenuItem("Show data configuration panel.");
-            showDataTweakPanel.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent arg0) {
-                    setTweakState(TweakState.DATA);
-                }
-            });
-            options.add(showDataTweakPanel);
+//        if (!demomode) {
+//            final JMenu options = new JMenu("Options");
+//            final JMenuItem showDataTweakPanel = new JMenuItem("Show data configuration panel.");
+//            showDataTweakPanel.addActionListener(new ActionListener() {
+//                @Override
+//                public void actionPerformed(ActionEvent arg0) {
+//                    setTweakState(TweakState.DATA);
+//                }
+//            });
+//            options.add(showDataTweakPanel);
 
-            menuBar.add(options);
-
-            menuBar.add(Box.createHorizontalGlue());
-        }
+//            menuBar.add(options);
+//
+//            menuBar.add(Box.createHorizontalGlue());
+//        }
 
         final JMenuBar menuBar2 = new JMenuBar();
 
@@ -165,24 +230,47 @@ public class ImauPanel extends NeonInterfacePanel {
         final JPanel bottomPanel = createBottomPanel();
 
         // Add the tweaks panels
-        configPanel = new JPanel();
-        add(configPanel, BorderLayout.WEST);
-        configPanel.setLayout(new BoxLayout(configPanel, BoxLayout.Y_AXIS));
-        configPanel.setPreferredSize(new Dimension(200, 0));
-        configPanel.setVisible(false);
+//        configPanel = new JTabbedPane();
+//        add(configPanel, BorderLayout.WEST);
+//        configPanel.setLayout(new BoxLayout(configPanel, BoxLayout.Y_AXIS));
+//        configPanel.setPreferredSize(new Dimension(200, 0));
+//        configPanel.setVisible(false);
+//
+//        dataConfig = new JPanel();
+//        dataConfig.setLayout(new BoxLayout(dataConfig, BoxLayout.Y_AXIS));
+//        dataConfig.setMinimumSize(configPanel.getPreferredSize());
+//        createDataTweakPanel();
+//
+//        visualConfig = new JPanel();
 
-        dataConfig = new JPanel();
-        dataConfig.setLayout(new BoxLayout(dataConfig, BoxLayout.Y_AXIS));
-        dataConfig.setMinimumSize(configPanel.getPreferredSize());
-        createDataTweakPanel();
+        // Add the tweaks panels
+        configPanel = new JTabbedPane();
+        add(configPanel, BorderLayout.WEST);
+        configPanel.setPreferredSize(new Dimension(240, 10));
+
+		dataConfig = new JPanel();
+		dataConfig.setLayout(new BoxLayout(dataConfig, BoxLayout.Y_AXIS));
+		dataConfig.setMinimumSize(configPanel.getPreferredSize());
+		createDataTweakPanel();
+        configPanel.addTab("Data", dataConfig);
+
+        recordingConfig = new JPanel();
+        recordingConfig.setLayout(new BoxLayout(recordingConfig, BoxLayout.Y_AXIS));
+        recordingConfig.setMinimumSize(configPanel.getPreferredSize());
+        createRecordingPanel(recordingConfig);
+        configPanel.addTab("Recording", recordingConfig);
 
         visualConfig = new JPanel();
+        visualConfig.setLayout(new BoxLayout(visualConfig, BoxLayout.Y_AXIS));
+        visualConfig.setMinimumSize(configPanel.getPreferredSize());
+		createVisualTweakPanel();
+        configPanel.addTab("Visual", visualConfig);
 
-        movieConfig = new JPanel();
+        configPanel.setVisible(true);
 
         add(bottomPanel, BorderLayout.SOUTH);
 
-        setTweakState(TweakState.DATA);
+//        setTweakState(TweakState.DATA);
 
         setVisible(true);
     }
@@ -327,8 +415,7 @@ public class ImauPanel extends NeonInterfacePanel {
                 if (source.hasFocus()) {
                     if (source == frameCounter) {
                         if (timer.isInitialized()) {
-                            timer.setFrameByIndex(((Number) frameCounter.getValue()).intValue() - timeBar.getMinimum(),
-                                    false);
+                            timer.setFrame(((Number) frameCounter.getValue()).intValue() - timeBar.getMinimum(), false);
                         }
                         playButton.setIcon(playIcon);
                         playButton.invalidate();
@@ -344,7 +431,7 @@ public class ImauPanel extends NeonInterfacePanel {
             public void stateChanged(ChangeEvent e) {
                 final JSlider source = (JSlider) e.getSource();
                 if (source.hasFocus()) {
-                    timer.setFrameByIndex(timeBar.getValue() - timeBar.getMinimum(), false);
+                    timer.setFrame(timeBar.getValue() - timeBar.getMinimum(), false);
                     playButton.setIcon(playIcon);
                     playButton.invalidate();
                 }
@@ -358,49 +445,92 @@ public class ImauPanel extends NeonInterfacePanel {
         return bottomPanel;
     }
 
-    private void createMovieTweakPanel() {
-        movieConfig.removeAll();
-
-        final ItemListener listener = new ItemListener() {
+    private void createRecordingPanel(JPanel targetPanel) {
+        ActionListener addKeyFrameListener = new ActionListener() {
             @Override
-            public void itemStateChanged(ItemEvent arg0) {
-                setTweakState(TweakState.NONE);
-            }
-        };
-        movieConfig.add(GoggleSwing.titleBox("Movie Creator", listener));
+            public void actionPerformed(ActionEvent e) {
+            	int frameNumber = settings.getSurfaceDescription(0).getFrameNumber();
+                final KeyFrame newKeyFrame = new KeyFrame(frameNumber);
 
-        final ItemListener checkBoxListener = new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                settings.setMovieRotate(e.getStateChange());
-                timer.redraw();
-            }
-        };
-        movieConfig.add(GoggleSwing.checkboxBox("", new GoggleSwing.CheckBoxItem("Rotation", settings.getMovieRotate(),
-                checkBoxListener)));
-
-        final JLabel rotationSetting = new JLabel("" + settings.getMovieRotationSpeedDef());
-        final ChangeListener movieRotationSpeedListener = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                final JSlider source = (JSlider) e.getSource();
-                if (source.hasFocus()) {
-                    settings.setMovieRotationSpeed(source.getValue() * .25f);
-                    rotationSetting.setText("" + settings.getMovieRotationSpeedDef());
+                if (keyFrames.contains(newKeyFrame)) {
+                    keyFrames.remove(newKeyFrame);
                 }
-            }
-        };
-        movieConfig.add(GoggleSwing.sliderBox("Rotation Speed", movieRotationSpeedListener,
-                (int) (settings.getMovieRotationSpeedMin() * 4f), (int) (settings.getMovieRotationSpeedMax() * 4f), 1,
-                (int) (settings.getMovieRotationSpeedDef() * 4f), rotationSetting));
 
-        movieConfig.add(GoggleSwing.buttonBox("", new GoggleSwing.ButtonBoxItem("Start Recording",
-                new ActionListener() {
+                ActionListener removeKeyFrameListener = new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        timer.movieMode();
+                        keyFrames.remove(newKeyFrame);
+                        recordingConfig.removeAll();
+                        createRecordingPanel(recordingConfig);
+                        validate();
+                        repaint();
                     }
-                })));
+                };
+
+                ArrayList<Component> axesVboxList = new ArrayList<Component>();
+                ArrayList<Component> axesHboxList2 = new ArrayList<Component>();
+
+                Float3Vector rotation = new Float3Vector(inputHandler.getRotation());
+                newKeyFrame.setRotation(rotation);
+                float viewDist = inputHandler.getViewDist();
+                newKeyFrame.setViewDist(viewDist);
+                NumberFormat formatter = new DecimalFormat("000");
+                axesHboxList2.add(new JLabel("#: " + formatter.format(newKeyFrame.getFrameNumber()) + " Axes: " + formatter.format(newKeyFrame.getRotation().getX())+"/"+formatter.format(newKeyFrame.getRotation().getY()) + " VD: " + formatter.format(newKeyFrame.getViewDist())));
+                axesHboxList2.add(Box.createHorizontalGlue());
+                JButton removeButton = new JButton(new ImageIcon("images/RemoveIcon15.png"));
+                removeButton.addActionListener(removeKeyFrameListener);
+                axesHboxList2.add(removeButton);
+
+                axesVboxList.add(GoggleSwing.hBoxedComponents(axesHboxList2, false));
+                newKeyFrame.setUiElement(GoggleSwing.vBoxedComponents(axesVboxList, true));
+
+                keyFrames.add(newKeyFrame);
+
+                recordingConfig.removeAll();
+                createRecordingPanel(recordingConfig);
+                validate();
+                repaint();
+            }
+        };
+
+        ActionListener playSequenceListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                timer.setKeyFrames(keyFrames);
+                timer.startSequence(false);
+            }
+        };
+
+        ActionListener recordSequenceListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                timer.setKeyFrames(keyFrames);
+                timer.startSequence(true);
+            }
+        };
+
+        ActionListener clearListListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                keyFrames.clear();
+                timer.setKeyFrames(keyFrames);
+                
+                recordingConfig.removeAll();
+                createRecordingPanel(recordingConfig);
+                validate();
+                repaint();
+            }
+        };
+
+        for (KeyFrame keyFrame : keyFrames) {
+            targetPanel.add(keyFrame.getUiElement());
+        }
+
+        targetPanel.add(GoggleSwing.buttonBox("", new GoggleSwing.ButtonBoxItem("Add current", addKeyFrameListener),
+                new GoggleSwing.ButtonBoxItem("Play Sequence", playSequenceListener), new GoggleSwing.ButtonBoxItem(
+                        "Record Sequence", recordSequenceListener), new GoggleSwing.ButtonBoxItem("Clear All",
+                        clearListListener)));
+
     }
 
     private void createDataTweakPanel() {
@@ -408,13 +538,13 @@ public class ImauPanel extends NeonInterfacePanel {
 
         if (timer.isInitialized()) {
 
-            final ItemListener listener = new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent arg0) {
-                    setTweakState(TweakState.NONE);
-                }
-            };
-            dataConfig.add(GoggleSwing.titleBox("Configuration", listener));
+//            final ItemListener listener = new ItemListener() {
+//                @Override
+//                public void itemStateChanged(ItemEvent arg0) {
+//                    setTweakState(TweakState.NONE);
+//                }
+//            };
+//            dataConfig.add(GoggleSwing.titleBox("Configuration", listener));
 
             if (!demomode) {
                 final JLabel depthSetting = new JLabel("" + settings.getDepthDef());
@@ -442,8 +572,14 @@ public class ImauPanel extends NeonInterfacePanel {
 
             String[] screenSelection = new String[1 + settings.getNumScreensRows() * settings.getNumScreensCols()];
             screenSelection[0] = "All Screens";
-            for (int i = 0; i < settings.getNumScreensRows() * settings.getNumScreensCols(); i++) {
-                screenSelection[i + 1] = "Screen Number " + i;
+            
+            if (settings.getNumScreensRows() * settings.getNumScreensCols() ==4) {
+            	screenSelection[1] = "Left Bottom";
+            	screenSelection[2] = "Right Bottom";
+            	screenSelection[3] = "Left Top";
+            	screenSelection[4] = "Right Top";
+            } else {
+            	screenSelection[1] = "Center";
             }
 
             final JComboBox<String> comboBox = new JComboBox<String>(screenSelection);
@@ -468,8 +604,19 @@ public class ImauPanel extends NeonInterfacePanel {
                 final int currentScreen = i;
 
                 final ArrayList<Component> screenVcomponents = new ArrayList<Component>();
-
-                JLabel screenLabel = new JLabel("Screen " + currentScreen);
+                
+                JLabel screenLabel = new JLabel("Center");
+                if (settings.getNumScreensRows() * settings.getNumScreensCols() == 4) {
+                	if (i == 0) {
+                		screenLabel = new JLabel("Left Bottom");
+                	} else if (i == 1) {
+                		screenLabel = new JLabel("Right Bottom");
+                	}  else if (i == 2) {
+                		screenLabel = new JLabel("Left Top");
+                	}  else if (i == 3) {
+                		screenLabel = new JLabel("Right Top");
+                	} 
+                }
                 screenVcomponents.add(screenLabel);
 
                 SurfaceTextureDescription selectionDescription = settings.getSurfaceDescription(currentScreen);
@@ -576,6 +723,9 @@ public class ImauPanel extends NeonInterfacePanel {
             }
             dataConfig.add(Box.createVerticalGlue());
         }
+
+        validate();
+        repaint();
     }
 
     private void createVisualTweakPanel() {
@@ -596,6 +746,9 @@ public class ImauPanel extends NeonInterfacePanel {
         visualConfig.add(GoggleSwing.sliderBox("Height Distortion", heightDistortionListener,
                 settings.getHeightDistortionMin(), settings.getHeightDistortionMax(), heightDistortionSpacing,
                 settings.getHeightDistortion(), heightDistortionSetting));
+
+        validate();
+        repaint();
 
     }
 
@@ -628,15 +781,21 @@ public class ImauPanel extends NeonInterfacePanel {
 
             settings.initDefaultVariables(variables, timer.getInitialFrameNumber());
 
-            createDataTweakPanel();
+//            createDataTweakPanel();
 
             final String path = files[0].getParent() + "screenshots/";
 
             settings.setScreenshotPath(path);
 
+
+            dataConfig.removeAll();
+            createDataTweakPanel();
+            validate();
+            repaint();
+            
             new Thread(timer).start();
 
-            setTweakState(TweakState.DATA);
+//            setTweakState(TweakState.DATA);
         } else {
             final JOptionPane pane = new JOptionPane();
             pane.setMessage("Tried to open invalid file type.");
@@ -661,18 +820,18 @@ public class ImauPanel extends NeonInterfacePanel {
     }
 
     // Callback methods for the various ui actions and listeners
-    public void setTweakState(TweakState newState) {
-        configPanel.setVisible(false);
-        configPanel.remove(dataConfig);
-
-        currentConfigState = newState;
-
-        if (currentConfigState == TweakState.NONE) {
-        } else if (currentConfigState == TweakState.DATA) {
-            configPanel.setVisible(true);
-            configPanel.add(dataConfig, BorderLayout.WEST);
-        }
-    }
+//    public void setTweakState(TweakState newState) {
+//        configPanel.setVisible(false);
+//        configPanel.remove(dataConfig);
+//
+//        currentConfigState = newState;
+//
+//        if (currentConfigState == TweakState.NONE) {
+//        } else if (currentConfigState == TweakState.DATA) {
+//            configPanel.setVisible(true);
+//            configPanel.add(dataConfig, BorderLayout.WEST);
+//        }
+//    }
 
     public static TimedPlayer getTimer() {
         return timer;

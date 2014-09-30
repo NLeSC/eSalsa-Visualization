@@ -30,25 +30,17 @@ public class NCDFVariable {
 
     private class TimeStep implements Comparable<TimeStep> {
         File file;
-        int fileSequenceNumber;
         int timeStepWithinFile;
         double timeInMetadata;
-        boolean hasTimesteps;
 
-        public TimeStep(File file, int fileSequenceNumber, int timeStepWithinFile, double timeInMetadata, boolean hasTimesteps) {
+        public TimeStep(File file, int timeStepWithinFile, double timeInMetadata) {
             this.file = file;
-            this.fileSequenceNumber = fileSequenceNumber;
             this.timeStepWithinFile = timeStepWithinFile;
             this.timeInMetadata = timeInMetadata;
-            this.hasTimesteps = hasTimesteps;
         }
 
         public File getFile() {
             return file;
-        }
-
-        public int getFileSequenceNumber() {
-            return fileSequenceNumber;
         }
 
         public int getTimeStepWithinFile() {
@@ -61,23 +53,13 @@ public class NCDFVariable {
 
         @Override
         public int compareTo(TimeStep other) {
-            if (fileSequenceNumber < other.getFileSequenceNumber()) {
+            if (timeInMetadata < other.getTimeInMetadata()) {
                 return -1;
-            } else if (fileSequenceNumber > other.getFileSequenceNumber()) {
+            } else if (timeInMetadata > other.getTimeInMetadata()) {
                 return 1;
-            } else {
-                if (timeStepWithinFile < other.getTimeStepWithinFile()) {
-                    return -1;
-                } else if (timeStepWithinFile < other.getTimeStepWithinFile()) {
-                    return 1;
-                }
             }
 
             return 0;
-        }
-
-        public boolean hasTimesteps() {
-            return hasTimesteps;
         }
     }
 
@@ -88,7 +70,8 @@ public class NCDFVariable {
     private int latDimensionSize = 0;
     private int lonDimensionSize = 0;
 
-    private float[] realLatitudeValues, realLongitudeValues;
+    private float[] realLatitudeValues;
+    private float[] realCoordinates;
 
     private float minimumValue, maximumValue, fillValue, minimumLatitude, maximumLatitude;
 
@@ -104,7 +87,6 @@ public class NCDFVariable {
         this.variable = variable;
 
         // Loop over the files to see if the variable is in there
-        int sequenceNumber = 0;
         for (File file : filesToBeAnalysed) {
             NetcdfFile ncfile = NetcdfFile.open(file.getAbsolutePath());
 
@@ -154,33 +136,26 @@ public class NCDFVariable {
                 if (latDimensionSize > 0 && lonDimensionSize > 0) {
                     // Since we didnt get an exception yet, it seems it's
                     // mappable, so we need to do our thing
-
                     determineLatBounds(ncfile, variableInThisFile);
 
                     // Loop over the dimensions to see if there's a time
                     // dimension
-                    boolean timeStepsInFile = false;
                     for (Dimension d : variableInThisFile.getDimensions()) {
                         if (d.getFullName().contains("time")) {
                         	Array timeArray = ncfile.findVariable("time").read();
-                            for (int t = 0; t < d.getLength(); t++) {
+                            for (int t = 0; t < d.getLength(); t++) {                            	
                             	double timeInFile = timeArray.getDouble(t);
-                            	
-                                TimeStep newTimeStep = new TimeStep(file, sequenceNumber, t, timeInFile, true);
-                                timeSteps.add(newTimeStep);
-                                timeStepsInFile = true;
+                            	if (variable.getFullName().compareTo("PRECC") ==0|| variable.getFullName().compareTo("PRECL") ==0 || variable.getFullName().compareTo("V") ==0 || variable.getFullName().compareTo("U") ==0){
+                            		timeInFile += 365.0;
+                            	}
+                                TimeStep newTimeStep = new TimeStep(file, t, timeInFile);
+                                timeSteps.add(newTimeStep);                                
                             }
                         }
-                    }
-                    if (!timeStepsInFile) {
-//                        TimeStep newTimeStep = new TimeStep(file, sequenceNumber, 0, 0.0, false);
-//                        timeSteps.add(newTimeStep);
-                    	logger.warn("No Timesteps in file, file skipped.");
                     }
                 }                
             }
             ncfile.close();
-            sequenceNumber++;
         }
 
         Collections.sort(timeSteps);
@@ -191,6 +166,11 @@ public class NCDFVariable {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+    
+    private void determineLatitudes(NetcdfFile ncfile, Variable variableInFile) throws IOException {
+    	List<Attribute> attributes = variableInFile.getAttributes();
+    	
     }
 
     private void determineLatBounds(NetcdfFile ncfile, Variable variableInFile) throws IOException {
@@ -255,8 +235,8 @@ public class NCDFVariable {
                 minimumLatitude = min;
                 maximumLatitude = max;
 
-                cacheAtDataLocation.writeLatMin(variableInFile.getFullName(), min);
-                cacheAtDataLocation.writeLatMax(variableInFile.getFullName(), max);
+//                cacheAtDataLocation.writeLatMin(variableInFile.getFullName(), min);
+//                cacheAtDataLocation.writeLatMax(variableInFile.getFullName(), max);
                 
 //                cacheAtProgramLocation.writeLatMin(variableInFile.getFullName(), min);
 //                cacheAtProgramLocation.writeLatMax(variableInFile.getFullName(), max);
@@ -340,7 +320,7 @@ public class NCDFVariable {
             // One of these is not in settings, not in cache, so we need to
             // determine the bounds by hand.
             float tempMin = Float.POSITIVE_INFINITY, tempMax = Float.NEGATIVE_INFINITY;
-            for (long t : getSequenceNumbers()) {
+            for (double t : getTimes()) {
                 if (heightDimensionSize == 0) {
                     float[] dataSlice = getData(t, 0);
                     for (int i = 0; i < dataSlice.length; i++) {
@@ -396,7 +376,7 @@ public class NCDFVariable {
                 minimumValue = tempMin;
                 logger.debug("Calculated min " + variable.getFullName() + " : " + tempMin);
 
-                cacheAtDataLocation.writeMin(variable.getFullName(), minimumValue);
+//                cacheAtDataLocation.writeMin(variable.getFullName(), minimumValue);
 //                cacheAtProgramLocation.writeMin(variable.getFullName(), minimumValue);
                 
             }
@@ -406,7 +386,7 @@ public class NCDFVariable {
                 maximumValue = tempMax;
                 logger.debug("Calculated max " + variable.getFullName() + " : " + tempMax);
 
-                cacheAtDataLocation.writeMax(variable.getFullName(), maximumValue);
+//                cacheAtDataLocation.writeMax(variable.getFullName(), maximumValue);
 //                cacheAtProgramLocation.writeMax(variable.getFullName(), maximumValue);
             }
         }
@@ -415,18 +395,18 @@ public class NCDFVariable {
         settings.setVarMax(variable.getFullName(), maximumValue);
     }
 
-    public synchronized float[] getData(long sequenceNumber, int requestedDepth) throws NoSuchSequenceNumberException,
+    public synchronized float[] getData(double time, int requestedDepth) throws NoSuchSequenceNumberException,
             InvalidRangeException, IOException {
         File wantedFile = null;
         TimeStep wantedTimestep = null;
         for (TimeStep t : timeSteps) {
-            if ((long) t.getFileSequenceNumber() * (long) MAX_TIMESTEPS_IN_SINGLE_FILE + t.getTimeStepWithinFile() == sequenceNumber) {
+            if (t.getTimeInMetadata() == time) {
                 wantedFile = t.getFile();
                 wantedTimestep = t;
             }
         }
         if (wantedFile == null || wantedTimestep == null) {
-            throw new NoSuchSequenceNumberException("Sequence number " + sequenceNumber
+            throw new NoSuchSequenceNumberException("Time " + time
                     + " requested but not available.");
         }
 
@@ -436,23 +416,15 @@ public class NCDFVariable {
         float[] data = null;
 
         Array netCDFArray = null;
-        if (wantedTimestep.hasTimesteps()) {
-            if (heightDimensionSize > 0) {
-                netCDFArray = fileVariable.slice(0, wantedTimestep.getTimeStepWithinFile()).slice(0, requestedDepth)
-                        .read();
-            } else {
-                netCDFArray = fileVariable.slice(0, wantedTimestep.getTimeStepWithinFile()).read();
-            }
+        if (heightDimensionSize > 0) {
+            netCDFArray = fileVariable.slice(0, wantedTimestep.getTimeStepWithinFile()).slice(0, requestedDepth)
+                    .read();
         } else {
-            if (heightDimensionSize > 0) {
-                netCDFArray = fileVariable.slice(0, requestedDepth).read();
-            } else {
-                netCDFArray = fileVariable.read();
-            }
+            netCDFArray = fileVariable.slice(0, wantedTimestep.getTimeStepWithinFile()).read();
         }
 
         data = (float[]) netCDFArray.get1DJavaArray(float.class);
-
+          
         netcdfFile.close();
 
         return data;
@@ -470,11 +442,10 @@ public class NCDFVariable {
         return lonDimensionSize;
     }
 
-    public synchronized List<Long> getSequenceNumbers() {
-        List<Long> result = new ArrayList<Long>();
+    public synchronized List<Double> getTimes() {
+        List<Double> result = new ArrayList<Double>();
         for (TimeStep t : timeSteps) {
-            result.add((long) t.getFileSequenceNumber() * (long) MAX_TIMESTEPS_IN_SINGLE_FILE
-                    + t.getTimeStepWithinFile());
+            result.add(t.getTimeInMetadata());
         }
         return result;
     }
@@ -503,10 +474,10 @@ public class NCDFVariable {
         return variable.getUnitsString();
     }
 
-    public synchronized String getTime(long sequenceNumber) {
+    public synchronized String getTime(double time) {
     	TimeStep wantedTimestep = null;
         for (TimeStep t : timeSteps) {
-            if ((long) t.getFileSequenceNumber() * (long) MAX_TIMESTEPS_IN_SINGLE_FILE + t.getTimeStepWithinFile() == sequenceNumber) {
+            if (t.getTimeInMetadata() == time) {
                 wantedTimestep = t;
             }
         }
@@ -520,7 +491,7 @@ public class NCDFVariable {
     	formatter = new DecimalFormat("00");
     	String monthString = formatter.format(epoch.get(Calendar.MONTH));
     	String dayString = formatter.format(epoch.get(Calendar.DAY_OF_MONTH));
-        return "" + monthString + "-" + dayString + "-" + yearString;
+        return  "" + dayString + "-" + monthString + "-" + yearString;
     }
 
     public float getMinLatitude() {

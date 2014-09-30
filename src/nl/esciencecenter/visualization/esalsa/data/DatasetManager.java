@@ -31,13 +31,13 @@ public class DatasetManager {
 
     private final List<NCDFDataSet> datasets;
     private final ExecutorService executor;
-    private final List<Long> masterTimeList;
+    private final List<Double> masterTimeList;
 
     private final LinkedList<CachedData> cachedData;
 
     private class CachedData {
         private final String varname;
-        private final long frameNumber;
+        private final int frameNumber;
         private final int depth;
 
         private float[] data;
@@ -54,7 +54,7 @@ public class DatasetManager {
             return varname;
         }
 
-        public synchronized long getFrameNumber() {
+        public synchronized int getFrameNumber() {
             return frameNumber;
         }
 
@@ -151,8 +151,8 @@ public class DatasetManager {
                             && tds.getHeight() == ncdfVar.getLatDimensionSize()) {
                         float topTexCoord = .5f + 0.5f*(ncdfVar.getMaxLatitude() / 90f);
                         float bottomTexCoord = .5f - 0.5f*(ncdfVar.getMinLatitude() / -90f);
-                         System.out.println("topTexCoord: " + topTexCoord);
-                         System.out.println("bottomTexCoord: " + bottomTexCoord);
+//                         System.out.println("topTexCoord: " + topTexCoord);
+//                         System.out.println("bottomTexCoord: " + bottomTexCoord);
                         tds.getTexStorage().setImageCombo(desc, pixelArray, legendBuf, topTexCoord, bottomTexCoord);
                     }
                 }
@@ -163,14 +163,14 @@ public class DatasetManager {
         }
 
         private float[] getDataCached(SurfaceTextureDescription desc, NCDFVariable ncdfVar) {
-            float[] result = null;
+            float[] result = new float[0];
             if (cachedData.contains(desc)) {
                 return cachedData.get(cachedData.indexOf(desc)).getData();
             } else {
-                long frameNumber = desc.getFrameNumber();
+                double time = masterTimeList.get(desc.getFrameNumber());
                 int requestedDepth = desc.getDepth();
                 try {
-                    result = ncdfVar.getData(frameNumber, requestedDepth);
+                    result = ncdfVar.getData(time, requestedDepth);
                     cachedData.addLast(new CachedData(desc, result));
                     while (cachedData.size() > (settings.getNumScreensCols() * settings.getNumScreensRows())) {
                         cachedData.removeFirst();
@@ -191,7 +191,7 @@ public class DatasetManager {
         cachedData = new LinkedList<CachedData>();
         executor = Executors.newFixedThreadPool(4);
 
-        masterTimeList = new ArrayList<Long>();
+        masterTimeList = new ArrayList<Double>();
         textureDatastorageList = new ArrayList<TexturedataStorage>();
 
         List<List<File>> filesets = new ArrayList<List<File>>();
@@ -251,8 +251,8 @@ public class DatasetManager {
                         textureDatastorageList.add(new TexturedataStorage(this, varWidth, varHeight));
                     }
 
-                    List<Long> times = ncdfVar.getSequenceNumbers();
-                    for (long time : times) {
+                    List<Double> times = ncdfVar.getTimes();
+                    for (double time : times) {
                         if (!masterTimeList.contains(time)) {
                             masterTimeList.add(time);
                         }
@@ -293,25 +293,17 @@ public class DatasetManager {
         return null;
     }
 
-    public synchronized long getPreviousFrameNumber(long frameNumber) throws IOException {
-        if (masterTimeList.contains(frameNumber)) {
-            int indexOfFrameNumber = masterTimeList.indexOf(frameNumber);
-
-            try {
-                return masterTimeList.get(indexOfFrameNumber - 1);
-            } catch (ArrayIndexOutOfBoundsException e) {
-                return frameNumber;
-            }
+    public synchronized int getPreviousFrameNumber(int frameNumber) throws IOException {
+        if (frameNumber < masterTimeList.size() - 1 && frameNumber > 0) {
+        	return frameNumber - 1;
         } else {
             throw new IOException("Given frame number not valid: " + frameNumber);
         }
     }
 
-    public synchronized long getNextFrameNumber(long frameNumber) throws IndexOutOfBoundsException, IOException {
-        if (masterTimeList.contains(frameNumber)) {
-            int indexOfFrameNumber = masterTimeList.indexOf(frameNumber);
-            return masterTimeList.get(indexOfFrameNumber + 1);
-
+    public synchronized int getNextFrameNumber(int frameNumber) throws IndexOutOfBoundsException, IOException {
+    	if (frameNumber < masterTimeList.size() - 2 && frameNumber >= 0) {
+        	return frameNumber + 1;
         } else {
             throw new IOException("Given frame number not valid: " + frameNumber);
         }
@@ -335,10 +327,10 @@ public class DatasetManager {
         return ncdfVar.getUnits();
     }
 
-    public synchronized String getVariableTime(String varName,long frameNumber) throws DatasetNotFoundException {
+    public synchronized String getVariableTime(String varName, int frameNumber) throws DatasetNotFoundException {
         NCDFDataSet dataset = findDataset(varName);
         NCDFVariable ncdfVar = dataset.getVariable(varName);
-        return ncdfVar.getTime(frameNumber);
+        return ncdfVar.getTime(masterTimeList.get(frameNumber));
     }
 
 	public String getVariableDescription(String varName) throws DatasetNotFoundException {
@@ -359,14 +351,7 @@ public class DatasetManager {
         return ncdfVar.getMaximumValue();
     }
 
-    public long getFirstFrameNumber() {
-        return masterTimeList.get(0);
-    }
-
-    public int getIndexOfFrameNumber(long frameNumber) {
-        if (masterTimeList.contains(frameNumber)) {
-            return masterTimeList.indexOf(frameNumber);
-        }
+    public int getFirstFrameNumber() {
         return 0;
     }
 
