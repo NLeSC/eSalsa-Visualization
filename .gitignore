@@ -4,3 +4,5 @@
 /dist
 /build
 /bin
+/.visualizationCache
+/.visualizationCache.bak
