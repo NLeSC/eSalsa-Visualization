@@ -4,6 +4,7 @@ import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.FloatBuffer;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
@@ -17,14 +18,17 @@ import javax.media.opengl.GLException;
 
 import nl.esciencecenter.neon.datastructures.FrameBufferObject;
 import nl.esciencecenter.neon.datastructures.IntPixelBufferObject;
+import nl.esciencecenter.neon.examples.realisticearth.ImageTexture;
 import nl.esciencecenter.neon.exceptions.CompilationFailedException;
 import nl.esciencecenter.neon.exceptions.UninitializedException;
 import nl.esciencecenter.neon.math.Color4;
+import nl.esciencecenter.neon.math.Float2Matrix;
 import nl.esciencecenter.neon.math.Float2Vector;
 import nl.esciencecenter.neon.math.Float3Vector;
 import nl.esciencecenter.neon.math.Float4Matrix;
 import nl.esciencecenter.neon.math.Float4Vector;
 import nl.esciencecenter.neon.math.FloatMatrixMath;
+import nl.esciencecenter.neon.math.FloatVectorMath;
 import nl.esciencecenter.neon.math.Point4;
 import nl.esciencecenter.neon.models.GeoSphere;
 import nl.esciencecenter.neon.models.Model;
@@ -98,6 +102,8 @@ public class ImauWindow implements GLEventListener {
     private final float[] texLonOffsets;
     private final float[] topTexCoords;
     private final float[] bottomTexCoords;
+	private Texture2D[] cachedLatTexMap;
+	private Texture2D[] cachedLonTexMap;
 
     public ImauWindow(ImauInputHandler inputHandler) {
         this.loader = new ShaderProgramLoader();
@@ -120,6 +126,8 @@ public class ImauWindow implements GLEventListener {
         texLonOffsets = new float[cachedScreens];
         topTexCoords = new float[cachedScreens];
         bottomTexCoords = new float[cachedScreens];
+        cachedLatTexMap = new Texture2D[cachedScreens];
+        cachedLonTexMap = new Texture2D[cachedScreens];
     }
 
     public static void contextOn(GLAutoDrawable drawable) {
@@ -233,7 +241,7 @@ public class ImauWindow implements GLEventListener {
             if (cachedLegendTextures[i] != null && cachedSurfaceTextures[i] != null) {
                 drawSingleWindow(width, height, gl, mv, cachedLegendTextures[i], cachedSurfaceTextures[i], varNames[i],
                         dates[i], dataSets[i], legendTexts[i], cachedFBOs[i], clickCoords,
-                        texLonOffsets[i], topTexCoords[i], bottomTexCoords[i]);
+                        texLonOffsets[i], topTexCoords[i], bottomTexCoords[i], cachedLatTexMap[i], cachedLonTexMap[i]);
             }
         }
         // logger.debug("Tiling windows");
@@ -285,7 +293,7 @@ public class ImauWindow implements GLEventListener {
                     cachedLegendTextures[screenNumber].init(gl);
                     
                     float offset = 0;
-                    if (currentDesc.getVarName().compareTo("PRECC") ==0|| currentDesc.getVarName().compareTo("PRECL") ==0 || currentDesc.getVarName().compareTo("V") ==0 || currentDesc.getVarName().compareTo("U") ==0){
+                    if (currentDesc.getVarName().compareTo("PREC") ==0 || currentDesc.getVarName().compareTo("PRECC") ==0|| currentDesc.getVarName().compareTo("PRECL") ==0 || currentDesc.getVarName().compareTo("V") ==0 || currentDesc.getVarName().compareTo("U") ==0){
                     	offset = 110f / 360f; //((-78.47286103059815f+360.0f) % 360.0f) / 360.0f;
                 	}
                     texLonOffsets[screenNumber] = offset;
@@ -296,11 +304,16 @@ public class ImauWindow implements GLEventListener {
                     String variableName = currentDesc.getVarName();
                     String fancyName = timer.getVariableDescription(variableName);
                     String units = timer.getVariableUnits(variableName);
+                    
                     varNames[screenNumber].setString(gl, fancyName+ " in "+ units, Color4.WHITE, fontSize);
                                                 
                     dates[screenNumber].setString(gl, "Date: "+ timer.getVariableTime(variableName), Color4.WHITE,
                             fontSize);
                     dataSets[screenNumber].setString(gl, "", Color4.WHITE, fontSize);
+                    
+                    cachedLatTexMap[screenNumber] = timer.getVariableLatTexMap(variableName);
+                    cachedLonTexMap[screenNumber] = timer.getVariableLonTexMap(variableName);
+                   
                     
                     float min, max;
                     if (currentDesc.isDiff()) {
@@ -355,7 +368,7 @@ public class ImauWindow implements GLEventListener {
     private void drawSingleWindow(final int width, final int height, final GL3 gl, Float4Matrix mv, Texture2D legend,
             Texture2D globe, MultiColorText varNameText, MultiColorText dateText, MultiColorText datasetText,
             MultiColorText legendText[], FrameBufferObject target,
-            Float2Vector clickCoords, float texLonOffset, float topTexCoord, float bottomTexCoord) {
+            Float2Vector clickCoords, float texLonOffset, float topTexCoord, float bottomTexCoord, Texture2D latTexMap, Texture2D lonTexMap) {
         // logger.debug("Drawing Text");
         drawHUDText(gl, width, height, varNameText, dateText, datasetText, legendText, hudTextFBO);
 
@@ -364,7 +377,7 @@ public class ImauWindow implements GLEventListener {
 
         // logger.debug("Drawing Sphere");
         
-        drawSphere(gl, mv, globe, sphereTextureFBO, clickCoords, texLonOffset, topTexCoord, bottomTexCoord);
+        drawSphere(gl, mv, globe, sphereTextureFBO, clickCoords, texLonOffset, topTexCoord, bottomTexCoord, latTexMap, lonTexMap);
         //drawSecondSphere(gl, mv, globe, sphereTextureFBO, clickCoords, topTexCoord, bottomTexCoord);
 
         // logger.debug("Flattening Layers");
@@ -425,7 +438,7 @@ public class ImauWindow implements GLEventListener {
     }
 
     private void drawSphere(GL3 gl, Float4Matrix mv, Texture2D surfaceTexture, FrameBufferObject target,
-            Float2Vector clickCoords, float texLonOffset, float topTexCoord, float bottomTexCoord) {
+            Float2Vector clickCoords, float texLonOffset, float topTexCoord, float bottomTexCoord, Texture2D latTexMap, Texture2D lonTexMap ) {
         try {
             target.bind(gl);
             gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
@@ -436,6 +449,13 @@ public class ImauWindow implements GLEventListener {
             shaderProgram_Sphere.setUniformMatrix("PMatrix", p);
 
             surfaceTexture.use(gl);
+            
+//            if (latTexMap != null && lonTexMap != null) {
+//            	latTexMap.init(gl);
+//            	lonTexMap.init(gl);
+//	            shaderProgram_Sphere.setUniform("netcdfLatTexMap", latTexMap.getMultitexNumber());
+//	            shaderProgram_Sphere.setUniform("netcdfLonTexMap", lonTexMap.getMultitexNumber());
+//            }
             shaderProgram_Sphere.setUniform("texLonOffset", texLonOffset);
             shaderProgram_Sphere.setUniform("top_texCoord", .9f);//topTexCoord);
             shaderProgram_Sphere.setUniform("bottom_texCoord", bottomTexCoord);

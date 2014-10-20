@@ -1006,7 +1006,7 @@ public class ImauSettings {
 	            	String presetVar = cacheFileManagerAtDataLocation.readString("onScreen", "scr#"+j);
 	            	if (presetVar.compareTo("") != 0) {
 	            		screenDescriptions[j] = new SurfaceTextureDescription(frameNumber, 0, presetVar, getCurrentColormap(presetVar), false, false,
-		                        false, getCurrentVarMin(presetVar), getCurrentVarMax(presetVar), false);	            		
+		                        false, getCurrentVarMin(presetVar), getCurrentVarMax(presetVar), false);
 	            	}
             	}
             	if (screenDescriptions[j] == null) {            	

@@ -787,7 +787,6 @@ public class ImauPanel extends NeonInterfacePanel {
 
             settings.setScreenshotPath(path);
 
-
             dataConfig.removeAll();
             createDataTweakPanel();
             validate();

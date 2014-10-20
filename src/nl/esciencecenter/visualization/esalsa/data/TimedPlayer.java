@@ -11,6 +11,7 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JSlider;
 
 import nl.esciencecenter.neon.exceptions.UninitializedException;
+import nl.esciencecenter.neon.math.Float2Vector;
 import nl.esciencecenter.neon.math.Float3Vector;
 import nl.esciencecenter.neon.math.Float4Vector;
 import nl.esciencecenter.neon.math.FloatVectorMath;
@@ -18,6 +19,7 @@ import nl.esciencecenter.neon.swing.CustomJSlider;
 import nl.esciencecenter.visualization.esalsa.ImauInputHandler;
 import nl.esciencecenter.visualization.esalsa.ImauPanel.KeyFrame;
 import nl.esciencecenter.visualization.esalsa.ImauSettings;
+import nl.esciencecenter.visualization.esalsa.Texture2D;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -386,6 +388,14 @@ public class TimedPlayer implements Runnable {
         return dsManager.getVariableTime(varName, frameNumber);
     }
 
+    public synchronized Texture2D getVariableLatTexMap(String varName) throws DatasetNotFoundException {
+        return dsManager.getVariableLatTexMap(varName, frameNumber);
+    }
+
+    public synchronized Texture2D getVariableLonTexMap(String varName) throws DatasetNotFoundException {
+        return dsManager.getVariableLonTexMap(varName, frameNumber);
+    }
+
     public synchronized String getVariableDescription(String varName) throws DatasetNotFoundException {
         return dsManager.getVariableDescription(varName);
     }
@@ -469,99 +479,6 @@ public class TimedPlayer implements Runnable {
 	            reviewMode();
 	        }
         }
-    }
-
-    /**
-     * Bezier curve interpolation for _rotation_ between two points with control
-     * vectors (this could be particle speed at the points). Outputs a number of
-     * degrees for rotations.
-     * 
-     * @param steps
-     *            The number of steps on the bezier curve to calculate.
-     * @param startLocation
-     *            The starting point for this bezier curve.
-     * @param startControl
-     *            The starting point's control vector.
-     * @param endControl
-     *            The end point for this bezier curve.
-     * @param endLocation
-     *            The end point's control vector.
-     * @return The array of points on the new bezier curve.
-     */
-    public static Float3Vector[] degreesBezierCurve(int steps, Float3Vector startLocation, Float3Vector endLocation) {
-        Float3Vector[] newBezierPoints = new Float3Vector[steps];
-        for (int i = 0; i < steps; i++) {
-            newBezierPoints[i] = new Float3Vector();
-        }
-
-        float t = 1f / steps;
-        float temp = t * t;
-        
-//        float sx = startLocation.getX();
-//        float sy = startLocation.getY();
-//        float sz = startLocation.getZ();
-//        float ex = endLocation.getX();
-//        float ey = endLocation.getY();
-//        float ez = endLocation.getZ();
-//        if (sx < 360f) startLocation.setX(sx+360f);
-//        if (sy < 360f) startLocation.setY(sy+360f);
-//        if (sz < 360f) startLocation.setZ(sz+360f);
-//        if (ex < 360f) endLocation.setX(ex+360f);
-//        if (ey < 360f) endLocation.setY(ey+360f);
-//        if (ez < 360f) endLocation.setZ(ez+360f);        
-
-        for (int coord = 0; coord < 3; coord++) {
-            float p[] = new float[4];
-            if (coord == 0) {
-        		p[0] = startLocation.getX();
-        		p[1] = startLocation.getX();
-        		p[2] = endLocation.getX();
-        		p[3] = endLocation.getX();
-            } else if (coord == 1) {            	
-                p[0] = startLocation.getY();
-                p[1] = startLocation.getY();
-                p[2] = endLocation.getY();
-                p[3] = endLocation.getY();            	
-            } else if (coord == 2) {
-                p[0] = startLocation.getZ();
-                p[1] = startLocation.getZ();
-                p[2] = endLocation.getZ();
-                p[3] = endLocation.getZ();
-            }
- 
-            // The algorithm itself begins here ==
-            float f, fd, fdd, fddd, fdd_per_2, fddd_per_2, fddd_per_6; // NOSONAR
-
-            // I've tried to optimize the amount of
-            // multiplications here, but these are exactly
-            // the same formulas that were derived earlier
-            // for f(0), f'(0)*t etc.
-            f = p[0];
-            fd = 3f * (p[1] - p[0]) * t;
-            fdd_per_2 = 3f * (p[0] - 2f * p[1] + p[2]) * temp;
-            fddd_per_2 = 3f * (3f * (p[1] - p[2]) + p[3] - p[0]) * temp * t;
-
-            fddd = fddd_per_2 + fddd_per_2;
-            fdd = fdd_per_2 + fdd_per_2;
-            fddd_per_6 = fddd_per_2 * (1f / 3f);
-
-            for (int loop = 0; loop < steps; loop++) {
-                if (coord == 0) {
-                    newBezierPoints[loop].setX(f % 360f);
-                } else if (coord == 1) {
-                    newBezierPoints[loop].setY(f % 360f);
-                } else if (coord == 2) {
-                    newBezierPoints[loop].setZ(f % 360f);
-                }
-
-                f = f + fd + fdd_per_2 + fddd_per_6;
-                fd = fd + fdd + fddd_per_2;
-                fdd = fdd + fddd;
-                fdd_per_2 = fdd_per_2 + fddd_per_2;
-            }
-        }
-
-        return newBezierPoints;
     }
     
     public static Float3Vector[] cosineInterpolate(int steps, Float3Vector startLocation, Float3Vector endLocation) {

@@ -10,11 +10,14 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.media.opengl.GL;
 import javax.media.opengl.GL3;
 
+import nl.esciencecenter.neon.math.Float2Vector;
 import nl.esciencecenter.neon.swing.ColormapInterpreter.Dimensions;
 import nl.esciencecenter.visualization.esalsa.ImauSettings;
 import nl.esciencecenter.visualization.esalsa.JOCLColormapper;
+import nl.esciencecenter.visualization.esalsa.Texture2D;
 import nl.esciencecenter.visualization.esalsa.data.reworked.NCDFDataSet;
 import nl.esciencecenter.visualization.esalsa.data.reworked.NCDFVariable;
 import nl.esciencecenter.visualization.esalsa.data.reworked.NoSuchSequenceNumberException;
@@ -101,7 +104,7 @@ public class DatasetManager {
             this.width = width;
             this.height = height;
             texStorage = new TextureStorage(manager, settings.getNumScreensRows() * settings.getNumScreensCols(),
-                    width, height, GL3.GL_TEXTURE4, GL3.GL_TEXTURE5);
+                    width, height, GL.GL_TEXTURE4, GL.GL_TEXTURE5);
         }
 
         public synchronized int getWidth() {
@@ -159,7 +162,6 @@ public class DatasetManager {
             } catch (DatasetNotFoundException e) {
                 e.printStackTrace();
             }
-
         }
 
         private float[] getDataCached(SurfaceTextureDescription desc, NCDFVariable ncdfVar) {
@@ -332,6 +334,19 @@ public class DatasetManager {
         NCDFVariable ncdfVar = dataset.getVariable(varName);
         return ncdfVar.getTime(masterTimeList.get(frameNumber));
     }
+
+    public synchronized Texture2D getVariableLatTexMap(String varName, int frameNumber) throws DatasetNotFoundException {
+        NCDFDataSet dataset = findDataset(varName);
+        NCDFVariable ncdfVar = dataset.getVariable(varName); 
+        return ncdfVar.getLatTexMap();
+    }
+
+    public synchronized Texture2D getVariableLonTexMap(String varName, int frameNumber) throws DatasetNotFoundException {
+        NCDFDataSet dataset = findDataset(varName);
+        NCDFVariable ncdfVar = dataset.getVariable(varName); 
+        return ncdfVar.getLonTexMap();
+    }
+
 
 	public String getVariableDescription(String varName) throws DatasetNotFoundException {
         NCDFDataSet dataset = findDataset(varName);
