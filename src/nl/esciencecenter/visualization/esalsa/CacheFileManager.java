@@ -60,15 +60,21 @@ public class CacheFileManager {
         	String newtextFileContent = "";
         	String str;
         	
+        	boolean written = false;
             while ((str = in.readLine()) != null) {            	
                 String[] substrings = str.split(" ");
-                if (substrings[0].compareTo(variableName) == 0) {
+                if (substrings[0].compareTo(variableName) == 0 && substrings[1].compareTo(toMatch) == 0) {
                 	newtextFileContent += variableName + " " + toMatch + " " + value + "\n";
+                	written = true;
                 } else {
                 	newtextFileContent += str + "\n";                	
                 }
             }
             in.close();
+            
+            if (!written) {
+            	newtextFileContent += variableName + " " + toMatch + " " + value + "\n";
+            }
             
             PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(cacheFile, false)));            
             out.print(newtextFileContent);
@@ -120,20 +126,25 @@ public class CacheFileManager {
         	String newtextFileContent = "";
         	String str;
         	
+        	boolean written = false;
             while ((str = in.readLine()) != null) {            	
                 String[] substrings = str.split(" ");
-                if (substrings[0].compareTo(variableName) == 0) {
+                if (substrings[0].compareTo(variableName) == 0 && substrings[1].compareTo(toMatch) == 0) {
                 	newtextFileContent += variableName + " " + toMatch + " " + value + "\n";
+                	written = true;
                 } else {
                 	newtextFileContent += str + "\n";                	
                 }
             }
             in.close();
             
-            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(cacheFile, false)));            
-            out.print(newtextFileContent);
-
-            out.close();
+            if (!written) {
+            	newtextFileContent += variableName + " " + toMatch + " " + value + "\n";
+            }     
+            
+        	PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(cacheFile, false)));            
+        	out.print(newtextFileContent);
+        	out.close();
         } catch (IOException e) {
         	logger.debug("IOException caught in cache: "+e.getMessage());
         }    	

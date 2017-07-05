@@ -370,10 +370,10 @@ public class ImauWindow implements GLEventListener {
             MultiColorText legendText[], FrameBufferObject target,
             Float2Vector clickCoords, float texLonOffset, float topTexCoord, float bottomTexCoord, Texture2D latTexMap, Texture2D lonTexMap) {
         // logger.debug("Drawing Text");
-        drawHUDText(gl, width, height, varNameText, dateText, datasetText, legendText, hudTextFBO);
+        //drawHUDText(gl, width, height, varNameText, dateText, datasetText, legendText, hudTextFBO);
 
         // logger.debug("Drawing HUD");
-        drawHUDLegend(gl, width, height, legend, legendTextureFBO);
+        //drawHUDLegend(gl, width, height, legend, legendTextureFBO);
 
         // logger.debug("Drawing Sphere");
         

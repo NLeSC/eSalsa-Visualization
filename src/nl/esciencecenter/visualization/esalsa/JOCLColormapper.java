@@ -57,8 +57,6 @@ import org.jocl.cl_program;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jogamp.common.nio.Buffers;
-
 /**
  * A class that uses a simple OpenCL kernel to compute a colormapped image
  */
@@ -453,7 +451,7 @@ public class JOCLColormapper {
      *            The colors for the map
      */
     private static ByteBuffer initColorMapToSetSizeForLegendTexture(int finalSize, ArrayList<Color> colors) {
-        ByteBuffer colorMap = Buffers.newDirectByteBuffer(finalSize * 4);
+        ByteBuffer colorMap = ByteBuffer.allocateDirect(finalSize * 4);
         int cmEntries = colors.size();
 
         for (int i = finalSize - 1; i >= 0; i--) {

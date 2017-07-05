@@ -43,8 +43,8 @@ public class NCDFVariable {
 
 	private final static String[] timeStrings = { "time", "TIME" };
 	private final static String[] heightStrings = { "z_t", "lev", "depth", "Z_T", "LEV", "DEPTH" };
-	private final static String[] latStrings = { "lat", "LAT", "nj", "NJ" };
-	private final static String[] lonStrings = { "lon", "LON", "ni", "NI" };
+	private final static String[] latStrings = { "lat", "LAT", "nj", "NJ", "j" };
+	private final static String[] lonStrings = { "lon", "LON", "ni", "NI", "i" };
 
 	private class TimeStep implements Comparable<TimeStep> {
 		File file;
@@ -346,10 +346,10 @@ public class NCDFVariable {
 				minimumLatitude = min;
 				maximumLatitude = max;
 
-				// cacheAtDataLocation.writeLatMin(variableInFile.getFullName(),
-				// min);
-				// cacheAtDataLocation.writeLatMax(variableInFile.getFullName(),
-				// max);
+				 cacheAtDataLocation.writeLatMin(variableInFile.getFullName(),
+				 min);
+				 cacheAtDataLocation.writeLatMax(variableInFile.getFullName(),
+				 max);
 
 				// cacheAtProgramLocation.writeLatMin(variableInFile.getFullName(),
 				// min);
@@ -505,8 +505,8 @@ public class NCDFVariable {
 				logger.debug("Calculated min " + variable.getFullName() + " : "
 						+ tempMin);
 
-				// cacheAtDataLocation.writeMin(variable.getFullName(),
-				// minimumValue);
+				 cacheAtDataLocation.writeMin(variable.getFullName(),
+				 minimumValue);
 				// cacheAtProgramLocation.writeMin(variable.getFullName(),
 				// minimumValue);
 
@@ -518,8 +518,8 @@ public class NCDFVariable {
 				logger.debug("Calculated max " + variable.getFullName() + " : "
 						+ tempMax);
 
-				// cacheAtDataLocation.writeMax(variable.getFullName(),
-				// maximumValue);
+				 cacheAtDataLocation.writeMax(variable.getFullName(),
+				 maximumValue);
 				// cacheAtProgramLocation.writeMax(variable.getFullName(),
 				// maximumValue);
 			}

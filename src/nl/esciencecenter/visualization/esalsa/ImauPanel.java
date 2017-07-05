@@ -573,7 +573,7 @@ public class ImauPanel extends NeonInterfacePanel {
             String[] screenSelection = new String[1 + settings.getNumScreensRows() * settings.getNumScreensCols()];
             screenSelection[0] = "All Screens";
             
-            if (settings.getNumScreensRows() * settings.getNumScreensCols() ==4) {
+            if (settings.getNumScreensRows() * settings.getNumScreensCols() == 4) {
             	screenSelection[1] = "Left Bottom";
             	screenSelection[2] = "Right Bottom";
             	screenSelection[3] = "Left Top";
@@ -620,6 +620,9 @@ public class ImauPanel extends NeonInterfacePanel {
                 screenVcomponents.add(screenLabel);
 
                 SurfaceTextureDescription selectionDescription = settings.getSurfaceDescription(currentScreen);
+                if (selectionDescription == null) {
+                	System.out.println("selectionDescription is null : " + currentScreen);
+                }
 
                 final ArrayList<Component> screenHcomponents = new ArrayList<Component>();
 
@@ -678,7 +681,7 @@ public class ImauPanel extends NeonInterfacePanel {
                 screenVcomponents.add(colorMapsComboBox);
 
                 final RangeSlider selectionLegendSlider = new RangeSlider();
-                ((RangeSliderUI) selectionLegendSlider.getUI()).setRangeColorMap(selectionDescription.getColorMap());
+                //((RangeSliderUI) selectionLegendSlider.getUI()).setRangeColorMap(selectionDescription.getColorMap());
                 selectionLegendSlider.setMinimum(0);
                 selectionLegendSlider.setMaximum(100);
                 selectionLegendSlider.setValue(settings.getRangeSliderLowerValue(currentScreen));
@@ -776,6 +779,7 @@ public class ImauPanel extends NeonInterfacePanel {
 
             variables = new ArrayList<String>();
             for (String v : timer.getVariables()) {
+            	System.out.println("Variable found: " + v);
                 variables.add(v);
             }
 

@@ -115,8 +115,8 @@ public class ImauSettings {
     private final String grid_width_dimension_substring = "lon";
     private final String grid_height_dimension_substring = "lat";
 
-    private int number_of_screens_col = 2;
-    private int number_of_screens_row = 2;
+    private int number_of_screens_col = 1;
+    private int number_of_screens_row = 1;
 
     private CacheFileManager cacheFileManagerAtDataLocation;
     private CacheFileManager cacheFileManagerAtProgramLocation;
