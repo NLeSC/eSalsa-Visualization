@@ -292,7 +292,7 @@ public class ImauWindow implements GLEventListener {
                     cachedSurfaceTextures[screenNumber].init(gl);
                     cachedLegendTextures[screenNumber].init(gl);
                     
-                    float offset = 0;
+                    float offset = 180f / 360f;;
                     if (currentDesc.getVarName().compareTo("PREC") == 0 || 
                     	currentDesc.getVarName().compareTo("PRECC") == 0 || 
                     	currentDesc.getVarName().compareTo("PRECL") == 0 || 
@@ -475,6 +475,7 @@ public class ImauWindow implements GLEventListener {
             shaderProgram_Sphere.setUniformVector("lightPos", rawLightPos);
             
             shaderProgram_Sphere.setUniform("opacity", 1f);
+            shaderProgram_Sphere.setUniform("intensity", .5f);
 
             shaderProgram_Sphere.use(gl);
             sphereModel.draw(gl, shaderProgram_Sphere);
