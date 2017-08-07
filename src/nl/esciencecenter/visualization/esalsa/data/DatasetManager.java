@@ -104,7 +104,7 @@ public class DatasetManager {
             this.width = width;
             this.height = height;
             texStorage = new TextureStorage(manager, settings.getNumScreensRows() * settings.getNumScreensCols(),
-                    width, height, GL.GL_TEXTURE4, GL.GL_TEXTURE5);
+                    width, height, GL3.GL_TEXTURE8, GL3.GL_TEXTURE9);
         }
 
         public synchronized int getWidth() {
@@ -136,6 +136,7 @@ public class DatasetManager {
 
             try {
                 NCDFDataSet dataset = findDataset(varName);
+                
                 NCDFVariable ncdfVar = dataset.getVariable(varName);
 
                 Dimensions colormapDims = new Dimensions(settings.getCurrentVarMin(varName),

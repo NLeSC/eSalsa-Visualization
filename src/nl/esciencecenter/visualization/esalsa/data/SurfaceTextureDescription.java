@@ -73,6 +73,7 @@ public class SurfaceTextureDescription {
         int diffPrime = ((diff ? 3 : 5) + 43) * 313;
         int secondPrime = ((diff ? 5 : 7) + 53) * 313;
         int variablePrime = (varName.hashCode() + 67) * 859;
+        int variableAtmosPrime = (varName.hashCode() + 1543) * 859;
         int frameNumberPrime = (int) ((frameNumber + 131) * 1543);
         int depthPrime = (depth + 251) * 2957;
         int colorMapPrime = (colorMap.hashCode() + 919) * 7883;
@@ -80,8 +81,8 @@ public class SurfaceTextureDescription {
         int upperBoundPrime = (int) ((upperBound + 67) * 2957);
         int logScalePrime = (logScale ? 251 : 43) * 7883;
 
-        int hashCode = frameNumberPrime + dynamicPrime + diffPrime + secondPrime + depthPrime + variablePrime
-                + colorMapPrime + lowerBoundPrime + upperBoundPrime + logScalePrime;
+        int hashCode = frameNumberPrime + dynamicPrime + diffPrime + secondPrime + depthPrime + variablePrime +
+        		variableAtmosPrime + colorMapPrime + lowerBoundPrime + upperBoundPrime + logScalePrime;
 
         return hashCode;
     }
@@ -98,7 +99,8 @@ public class SurfaceTextureDescription {
 
         // now a proper field-by-field evaluation can be made
         return (dynamicDimensions == that.dynamicDimensions && diff == that.diff && secondSet == that.secondSet
-                && varName.compareTo(that.varName) == 0 && frameNumber == that.frameNumber
+                && varName.compareTo(that.varName) == 0
+                && frameNumber == that.frameNumber
                 && lowerBound == that.lowerBound && upperBound == that.upperBound && depth == that.depth
                 && colorMap.compareTo(that.colorMap) == 0 && that.logScale == logScale);
     }

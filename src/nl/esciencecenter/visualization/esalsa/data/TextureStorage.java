@@ -87,7 +87,6 @@ public class TextureStorage {
         ByteBuffer legendBuffer = Buffers.newDirectByteBuffer(LEGEND_TEXTURE_WIDTH * LEGEND_TEXTURE_HEIGHT * 4);
 
         EMPTY_SURFACE_BUFFER = new ByteBufferTexture(surfaceMultiTexUnit, surfaceBuffer, width, height);
-
         EMPTY_LEGEND_BUFFER = new ByteBufferTexture(legendMultiTexUnit, legendBuffer, LEGEND_TEXTURE_WIDTH,
                 LEGEND_TEXTURE_HEIGHT);
 
@@ -229,9 +228,10 @@ public class TextureStorage {
         }
 
         if (!failure) {
-            storage.add(new TextureCombo(desc, new IntArrayTexture(surfaceMultiTexUnit, surfaceData, width, height),
-                    new ByteBufferTexture(legendMultiTexUnit, legendData, LEGEND_TEXTURE_WIDTH, LEGEND_TEXTURE_HEIGHT),
-                    topTexCoord, bottomTexCoord));
+            storage.add(new TextureCombo(desc, 
+            							new IntArrayTexture(surfaceMultiTexUnit, surfaceData, width, height),
+            							new ByteBufferTexture(legendMultiTexUnit, legendData, LEGEND_TEXTURE_WIDTH, LEGEND_TEXTURE_HEIGHT),
+            							topTexCoord, bottomTexCoord));
         } else {
             logger.error("FAILURE in setImageCombo, " + desc);
         }

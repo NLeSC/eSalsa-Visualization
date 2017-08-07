@@ -24,6 +24,7 @@ import nl.esciencecenter.neon.exceptions.UninitializedException;
 import nl.esciencecenter.neon.math.Color4;
 import nl.esciencecenter.neon.math.Float2Matrix;
 import nl.esciencecenter.neon.math.Float2Vector;
+import nl.esciencecenter.neon.math.Float3Matrix;
 import nl.esciencecenter.neon.math.Float3Vector;
 import nl.esciencecenter.neon.math.Float4Matrix;
 import nl.esciencecenter.neon.math.Float4Vector;
@@ -95,7 +96,8 @@ public class ImauWindow implements GLEventListener {
     protected final float fovy = 45.0f;
     protected final float zNear = 0.1f;
     protected final float zFar = 3000.0f;
-
+    
+	private ImageTexture colorTex, specularTex, cityLightsTex, cloudTex, cloudTransparencyTex, normalTex;
     private final Texture2D[] cachedSurfaceTextures;
     private final Texture2D[] cachedLegendTextures;
 
@@ -109,8 +111,6 @@ public class ImauWindow implements GLEventListener {
         this.loader = new ShaderProgramLoader();
         this.inputHandler = inputHandler;
         this.font = FontFactory.get(fontSet).getDefault();
-
-        cachedScreens = settings.getNumScreensRows() * settings.getNumScreensCols();
 
         cachedTextureDescriptions = new SurfaceTextureDescription[cachedScreens];
         cachedFBOs = new FrameBufferObject[cachedScreens];
@@ -164,24 +164,24 @@ public class ImauWindow implements GLEventListener {
             doReshape(gl);
         }
 
+        Float2Vector clickCoords = null;
+
+        int currentScreens = settings.getNumScreensRows() * settings.getNumScreensCols();
+        if (currentScreens != cachedScreens) {
+        	initFBOs(gl);
+            initDatastores(gl);
+        }
+
         TimedPlayer timer = ImauPanel.getTimer();
         if (timer.isInitialized()) {
             this.timer = timer;
+        }
 
-            Float2Vector clickCoords = null;
-
-            int currentScreens = settings.getNumScreensRows() * settings.getNumScreensCols();
-            if (currentScreens != cachedScreens) {
-            	initFBOs(gl);
-                initDatastores(gl);
-            }
-
-            try {
-                displayContext(timer, clickCoords);
-            } catch (DatasetNotFoundException e) {
-                logger.error(e.getMessage());
-                e.printStackTrace();
-            }
+        try {
+            displayContext(clickCoords);
+        } catch (DatasetNotFoundException e) {
+            logger.error(e.getMessage());
+            e.printStackTrace();
         }
 
         if (timer.isScreenshotNeeded()) {
@@ -194,7 +194,7 @@ public class ImauWindow implements GLEventListener {
         //contextOff(drawable);
     }
 
-    private void displayContext(TimedPlayer timer, Float2Vector clickCoords) throws DatasetNotFoundException {
+    private void displayContext(Float2Vector clickCoords) throws DatasetNotFoundException {
         final int width = GLContext.getCurrent().getGLDrawable().getWidth();
         final int height = GLContext.getCurrent().getGLDrawable().getHeight();
         aspect = (float) width / (float) height;
@@ -293,7 +293,11 @@ public class ImauWindow implements GLEventListener {
                     cachedLegendTextures[screenNumber].init(gl);
                     
                     float offset = 0;
-                    if (currentDesc.getVarName().compareTo("PREC") ==0 || currentDesc.getVarName().compareTo("PRECC") ==0|| currentDesc.getVarName().compareTo("PRECL") ==0 || currentDesc.getVarName().compareTo("V") ==0 || currentDesc.getVarName().compareTo("U") ==0){
+                    if (currentDesc.getVarName().compareTo("PREC") == 0 || 
+                    	currentDesc.getVarName().compareTo("PRECC") == 0 || 
+                    	currentDesc.getVarName().compareTo("PRECL") == 0 || 
+                    	currentDesc.getVarName().compareTo("V") == 0 || 
+                    	currentDesc.getVarName().compareTo("U") == 0) {
                     	offset = 110f / 360f; //((-78.47286103059815f+360.0f) % 360.0f) / 360.0f;
                 	}
                     texLonOffsets[screenNumber] = offset;
@@ -447,6 +451,7 @@ public class ImauWindow implements GLEventListener {
 
             shaderProgram_Sphere.setUniformMatrix("MVMatrix", new Float4Matrix(mv));
             shaderProgram_Sphere.setUniformMatrix("PMatrix", p);
+            shaderProgram_Sphere.setUniformMatrix("NMatrix", FloatMatrixMath.getNormalMatrix(mv));
 
             surfaceTexture.use(gl);
             
@@ -457,9 +462,15 @@ public class ImauWindow implements GLEventListener {
 //	            shaderProgram_Sphere.setUniform("netcdfLonTexMap", lonTexMap.getMultitexNumber());
 //            }
             shaderProgram_Sphere.setUniform("texLonOffset", texLonOffset);
-            shaderProgram_Sphere.setUniform("top_texCoord", .9f);//topTexCoord);
+            shaderProgram_Sphere.setUniform("top_texCoord", topTexCoord);
             shaderProgram_Sphere.setUniform("bottom_texCoord", bottomTexCoord);
             shaderProgram_Sphere.setUniform("texture_map", surfaceTexture.getMultitexNumber());
+            
+            shaderProgram_Sphere.setUniform("colorTex", colorTex.getMultitexNumber());
+            shaderProgram_Sphere.setUniform("normalTex", normalTex.getMultitexNumber());
+            shaderProgram_Sphere.setUniform("specularTex", specularTex.getMultitexNumber());
+            shaderProgram_Sphere.setUniform("cityLightsTex", cityLightsTex.getMultitexNumber());
+            
             shaderProgram_Sphere.setUniform("opacity", 1f);
 
             shaderProgram_Sphere.use(gl);
@@ -630,11 +641,27 @@ public class ImauWindow implements GLEventListener {
         hudTextFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE1);
         legendTextureFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE2);
         sphereTextureFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE3);
+        
+        colorTex = 				new ImageTexture("images/Envisat_mosaic_May_-_November_2004.jpg", 0, 0, GL3.GL_TEXTURE4);
+        normalTex = 			new ImageTexture("images/earthNormalMap_2048.png", 0, 0, GL3.GL_TEXTURE5);
+        specularTex = 			new ImageTexture("images/Envisat_mosaic_May_-_November_2004_Specular.jpg", 0, 0, GL3.GL_TEXTURE6);
+        cityLightsTex = 		new ImageTexture("images/earthlights1k.jpg", 0, 0, GL3.GL_TEXTURE7);
+        
+//        cloudTex = 				new ImageTexture("images/earthcloudmap.jpg", 0, 0, GL3.GL_TEXTURE8);
+//        cloudTransparencyTex = 	new ImageTexture("images/earthcloudmaptrans.jpg", 0, 0, GL3.GL_TEXTURE9);
 
         atmosphereFBO.init(gl);
         hudTextFBO.init(gl);
         legendTextureFBO.init(gl);
         sphereTextureFBO.init(gl);
+        
+        colorTex.init(gl);
+        specularTex.init(gl);
+        cityLightsTex.init(gl);
+        normalTex.init(gl);
+        
+//        cloudTex.init(gl);
+//        cloudTransparencyTex.init(gl);
 
         initFBOs(gl);
 
@@ -714,6 +741,22 @@ public class ImauWindow implements GLEventListener {
         hudTextFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE1);
         legendTextureFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE2);
         sphereTextureFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE3);
+        
+        colorTex = 				new ImageTexture("images/Envisat_mosaic_May_-_November_2004.jpg", 0, 0, GL3.GL_TEXTURE4);
+        normalTex = 			new ImageTexture("images/earthNormalMap_2048.png", 0, 0, GL3.GL_TEXTURE5);
+        specularTex = 			new ImageTexture("images/Envisat_mosaic_May_-_November_2004_Specular.jpg", 0, 0, GL3.GL_TEXTURE6);
+        cityLightsTex = 		new ImageTexture("images/earthlights1k.jpg", 0, 0, GL3.GL_TEXTURE7);
+        
+//        cloudTex = 				new ImageTexture("images/earthcloudmap.jpg", 0, 0, GL3.GL_TEXTURE8);
+//        cloudTransparencyTex = 	new ImageTexture("images/earthcloudmaptrans.jpg", 0, 0, GL3.GL_TEXTURE9);
+        
+        colorTex.init(gl);
+        specularTex.init(gl);
+        cityLightsTex.init(gl);
+        normalTex.init(gl);
+        
+//        cloudTex.init(gl);
+//        cloudTransparencyTex.init(gl);
 
         atmosphereFBO.init(gl);
         hudTextFBO.init(gl);
