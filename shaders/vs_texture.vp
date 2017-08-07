@@ -9,15 +9,15 @@ out vec2 tCoord;
 uniform mat4 PMatrix;
 uniform mat4 MVMatrix;
 
-//uniform mat3 NMatrix;
-//out vec3 vTransformedNormal;
-//out vec4 vPosition;
+uniform mat3 NMatrix;
+out vec3 vTransformedNormal;
+out vec4 vPosition;
 
 void main() 
 {
 	tCoord = MCtexCoord.xy;
-	//vTransformedNormal = NMatrix * MCnormal;
-	//vPosition = MVMatrix * MCvertex;
+	vTransformedNormal = NMatrix * MCnormal;
+	vPosition = MVMatrix * MCvertex;
 	
     gl_Position = PMatrix * MVMatrix * MCvertex;
 } 

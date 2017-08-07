@@ -221,7 +221,7 @@ public class NCDFVariable {
 		int[] pixelArray = mapper.makeImage("dry_wet", new Dimensions(-90f,90f), realLatitudeValues, -1f,
 	            false, latitudes.getShape()[0], latitudes.getShape()[1]);
 
-        latitudeTex = new IntArrayTexture(GL3.GL_TEXTURE11, pixelArray, latitudes.getShape()[0], latitudes.getShape()[1]);
+        latitudeTex = new IntArrayTexture(GL3.GL_TEXTURE10, pixelArray, latitudes.getShape()[0], latitudes.getShape()[1]);
 
 		if (longitudes != null) {
 			Array netCDFArray = longitudes.read();
@@ -239,7 +239,7 @@ public class NCDFVariable {
 		int[] pixelArrayLon = mapper.makeImage("dry_wet", new Dimensions(0f,360f), realLongitudeValues, -1f,
 	            false, longitudes.getShape()[0], longitudes.getShape()[1]);
 
-        longitudeTex = new IntArrayTexture(GL3.GL_TEXTURE12, pixelArrayLon, longitudes.getShape()[0], longitudes.getShape()[1]);
+        longitudeTex = new IntArrayTexture(GL3.GL_TEXTURE11, pixelArrayLon, longitudes.getShape()[0], longitudes.getShape()[1]);
         
 //		List<Float2Vector> tCoords = new ArrayList<Float2Vector>();
 //		if (realLatitudeValues.length == realLongitudeValues.length) {	

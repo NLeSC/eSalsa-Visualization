@@ -80,7 +80,7 @@ public class ImauWindow implements GLEventListener {
     private MultiColorText[] dataSets;
     private MultiColorText[] depth;
 
-    private int cachedScreens = 1;
+    private int cachedScreens = 4;
 
     private TimedPlayer timer;
     private float aspect;
@@ -374,10 +374,10 @@ public class ImauWindow implements GLEventListener {
             MultiColorText legendText[], FrameBufferObject target,
             Float2Vector clickCoords, float texLonOffset, float topTexCoord, float bottomTexCoord, Texture2D latTexMap, Texture2D lonTexMap) {
         // logger.debug("Drawing Text");
-        //drawHUDText(gl, width, height, varNameText, dateText, datasetText, legendText, hudTextFBO);
+        drawHUDText(gl, width, height, varNameText, dateText, datasetText, legendText, hudTextFBO);
 
         // logger.debug("Drawing HUD");
-        //drawHUDLegend(gl, width, height, legend, legendTextureFBO);
+        drawHUDLegend(gl, width, height, legend, legendTextureFBO);
 
         // logger.debug("Drawing Sphere");
         
@@ -470,6 +470,9 @@ public class ImauWindow implements GLEventListener {
             shaderProgram_Sphere.setUniform("normalTex", normalTex.getMultitexNumber());
             shaderProgram_Sphere.setUniform("specularTex", specularTex.getMultitexNumber());
             shaderProgram_Sphere.setUniform("cityLightsTex", cityLightsTex.getMultitexNumber());
+            
+            Float4Vector rawLightPos = new Float4Vector(-30.0f, 4.0f, -20.0f, 0f);
+            shaderProgram_Sphere.setUniformVector("lightPos", rawLightPos);
             
             shaderProgram_Sphere.setUniform("opacity", 1f);
 
@@ -587,7 +590,7 @@ public class ImauWindow implements GLEventListener {
     		if (cachedFBOs[i] != null) {
                 cachedFBOs[i].delete(gl);
             }
-            cachedFBOs[i] = new FrameBufferObject(canvasWidth, canvasHeight, (GL.GL_TEXTURE6 + i));
+            cachedFBOs[i] = new FrameBufferObject(canvasWidth, canvasHeight, (GL.GL_TEXTURE8 + i));
             cachedFBOs[i].init(gl);
     	}
     }

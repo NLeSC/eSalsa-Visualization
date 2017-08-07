@@ -104,7 +104,7 @@ public class DatasetManager {
             this.width = width;
             this.height = height;
             texStorage = new TextureStorage(manager, settings.getNumScreensRows() * settings.getNumScreensCols(),
-                    width, height, GL3.GL_TEXTURE8, GL3.GL_TEXTURE9);
+                    width, height, GL3.GL_TEXTURE12, GL3.GL_TEXTURE13);
         }
 
         public synchronized int getWidth() {
