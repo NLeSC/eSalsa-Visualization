@@ -165,25 +165,25 @@ public class DatasetManager {
             }
         }
 
-        private float[] getDataCached(SurfaceTextureDescription desc, NCDFVariable ncdfVar) {
+        private synchronized float[] getDataCached(SurfaceTextureDescription desc, NCDFVariable ncdfVar) {
             float[] result = new float[0];
-            if (cachedData.contains(desc)) {
-                return cachedData.get(cachedData.indexOf(desc)).getData();
-            } else {
+//            if (cachedData.contains(desc)) {
+//                return cachedData.get(cachedData.indexOf(desc)).getData();
+//            } else {
                 double time = masterTimeList.get(desc.getFrameNumber());
                 int requestedDepth = desc.getDepth();
                 try {
                     result = ncdfVar.getData(time, requestedDepth);
-                    cachedData.addLast(new CachedData(desc, result));
-                    while (cachedData.size() > (settings.getNumScreensCols() * settings.getNumScreensRows())) {
-                        cachedData.removeFirst();
-                    }
-                    return result;
+//                    cachedData.addLast(new CachedData(desc, result));
+//                    while (cachedData.size() > (settings.getNumScreensCols() * settings.getNumScreensRows())) {
+//                        cachedData.removeFirst();
+//                    }
+//                    return result;
                 } catch (NoSuchSequenceNumberException | InvalidRangeException | IOException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
-            }
+//            }
 
             return result;
         }
@@ -211,10 +211,14 @@ public class DatasetManager {
                 String[] stringsRef = currentFileset.get(0).getName().split("(?=[0-9])([0-9]*)");
                 String[] strings1 = files[i].getName().split("(?=[0-9])([0-9]*)");
                 boolean sameExceptForNumbers = true;
-                for (int j = 0; j < strings1.length; j++) {
-                    if (strings1[j].compareTo(stringsRef[j]) != 0) {
-                        sameExceptForNumbers = false;
-                    }
+                if (strings1.length == stringsRef.length) {
+                	for (int j = 0; j < strings1.length; j++) {
+                        if (strings1[j].compareTo(stringsRef[j]) != 0) {
+                            sameExceptForNumbers = false;
+                        }
+                    }                	
+                } else {
+                	sameExceptForNumbers = false;
                 }
 
                 if (sameExceptForNumbers) {

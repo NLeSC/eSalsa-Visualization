@@ -96,6 +96,8 @@ public class ImauWindow implements GLEventListener {
     protected final float fovy = 45.0f;
     protected final float zNear = 0.1f;
     protected final float zFar = 3000.0f;
+        
+    private Float4Vector rawLightPos = new Float4Vector(-30.0f, 4.0f, -20.0f, 0f);
     
 	private ImageTexture colorTex, specularTex, cityLightsTex, cloudTex, cloudTransparencyTex, normalTex;
     private final Texture2D[] cachedSurfaceTextures;
@@ -470,9 +472,7 @@ public class ImauWindow implements GLEventListener {
             shaderProgram_Sphere.setUniform("normalTex", normalTex.getMultitexNumber());
             shaderProgram_Sphere.setUniform("specularTex", specularTex.getMultitexNumber());
             shaderProgram_Sphere.setUniform("cityLightsTex", cityLightsTex.getMultitexNumber());
-            
-            Float4Vector rawLightPos = new Float4Vector(-30.0f, 4.0f, -20.0f, 0f);
-            shaderProgram_Sphere.setUniformVector("lightPos", rawLightPos);
+            shaderProgram_Sphere.setUniformVector("lightPos", new Float4Vector(settings.getLightPosX(),settings.getLightPosY(),settings.getLightPosZ(), 1f));
             
             shaderProgram_Sphere.setUniform("opacity", 1f);
             shaderProgram_Sphere.setUniform("intensity", .5f);
@@ -521,7 +521,9 @@ public class ImauWindow implements GLEventListener {
             final Float4Matrix p = FloatMatrixMath.perspective(fovy, aspect, zNear, zFar);
             shaderProgram_Atmosphere.setUniformMatrix("MVMatrix", new Float4Matrix(mv));
             shaderProgram_Atmosphere.setUniformMatrix("PMatrix", p);
-            shaderProgram_Atmosphere.setUniformMatrix("NormalMatrix", FloatMatrixMath.getNormalMatrix(mv));
+            shaderProgram_Atmosphere.setUniformMatrix("NMatrix", FloatMatrixMath.getNormalMatrix(mv));
+
+			shaderProgram_Sphere.setUniformVector("lightPos", new Float4Vector(settings.getLightPosX(),settings.getLightPosY(),settings.getLightPosZ(), 1f));
 
             shaderProgram_Atmosphere.use(gl);
             atmModel.draw(gl, shaderProgram_Atmosphere);

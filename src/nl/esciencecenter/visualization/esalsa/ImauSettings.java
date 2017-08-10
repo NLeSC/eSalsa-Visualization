@@ -105,6 +105,18 @@ public class ImauSettings {
     private float HEIGHT_DISTORION = 0f;
     private final float HEIGHT_DISTORION_MIN = 0f;
     private final float HEIGHT_DISTORION_MAX = .01f;
+    
+	private float LIGHT_POS_X = -30f;
+	private final float LIGHT_POS_X_MIN = -300f;
+	private final float LIGHT_POS_X_MAX = 300f;
+	
+	private float LIGHT_POS_Y = 4f;
+	private final float LIGHT_POS_Y_MIN = -300f;
+	private final float LIGHT_POS_Y_MAX = 300f;
+	
+	private float LIGHT_POS_Z = -20f;
+	private final float LIGHT_POS_Z_MIN = -300f;
+	private final float LIGHT_POS_Z_MAX = 300f;
 
     private String SAGE_DIRECTORY = "/home/maarten/sage-code/sage";
 
@@ -616,6 +628,7 @@ public class ImauSettings {
     public synchronized void setIMAGE_STREAM_GL_ONLY(boolean iMAGE_STREAM_GL_ONLY) {
         IMAGE_STREAM_GL_ONLY = iMAGE_STREAM_GL_ONLY;
     }
+    
 
     public synchronized float getHeightDistortion() {
         return HEIGHT_DISTORION;
@@ -631,6 +644,54 @@ public class ImauSettings {
 
     public synchronized void setHeightDistortion(float value) {
         HEIGHT_DISTORION = value;
+    }
+    
+    public synchronized float getLightPosX() {
+        return LIGHT_POS_X;
+    }
+
+    public synchronized float getLightPosXMin() {
+        return LIGHT_POS_X_MIN;
+    }
+
+    public synchronized float getLightPosXMax() {
+        return LIGHT_POS_X_MAX;
+    }
+
+    public synchronized void setLightPosX(float value) {
+    	LIGHT_POS_X = value;
+    }
+    
+    public synchronized float getLightPosY() {
+        return LIGHT_POS_Y;
+    }
+
+    public synchronized float getLightPosYMin() {
+        return LIGHT_POS_Y_MIN;
+    }
+
+    public synchronized float getLightPosYMax() {
+        return LIGHT_POS_Y_MAX;
+    }
+
+    public synchronized void setLightPosY(float value) {
+    	LIGHT_POS_Y = value;
+    }
+    
+    public synchronized float getLightPosZ() {
+        return LIGHT_POS_Z;
+    }
+
+    public synchronized float getLightPosZMin() {
+        return LIGHT_POS_Z_MIN;
+    }
+
+    public synchronized float getLightPosZMax() {
+        return LIGHT_POS_Z_MAX;
+    }
+
+    public synchronized void setLightPosZ(float value) {
+    	LIGHT_POS_Z = value;
     }
 
     public synchronized boolean isTouchConnected() {

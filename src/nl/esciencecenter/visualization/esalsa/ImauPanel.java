@@ -750,6 +750,65 @@ public class ImauPanel extends NeonInterfacePanel {
                 settings.getHeightDistortionMin(), settings.getHeightDistortionMax(), heightDistortionSpacing,
                 settings.getHeightDistortion(), heightDistortionSetting));
 
+        final float lightPosXspacing = 1f;
+        final float lightPosYspacing = 1f;
+        final float lightPosZspacing = 1f;
+        final JLabel lightPosXsetting = new JLabel("" + settings.getLightPosX());
+        final JLabel lightPosYsetting = new JLabel("" + settings.getLightPosY());
+        final JLabel lightPosZsetting = new JLabel("" + settings.getLightPosZ());
+        
+        final ChangeListener lightPosXListener = new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                final JSlider source = (JSlider) e.getSource();
+                if (source.hasFocus()) {
+                	float min = settings.getLightPosXMin();
+                	float max = settings.getLightPosXMax();
+                	float diff = max - min;
+                    settings.setLightPosX(min + (source.getValue() * diff));
+                    lightPosXsetting.setText("" + settings.getLightPosX());
+                }
+            }
+        };
+        final ChangeListener lightPosYListener = new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                final JSlider source = (JSlider) e.getSource();
+                if (source.hasFocus()) {                	
+                	float min = settings.getLightPosYMin();
+                	float max = settings.getLightPosYMax();
+                	float diff = max - min;
+                    settings.setLightPosY(min + (source.getValue() * diff));
+                    lightPosYsetting.setText("" + settings.getLightPosY());
+                }
+            }
+        };
+        final ChangeListener lightPosZListener = new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                final JSlider source = (JSlider) e.getSource();
+                if (source.hasFocus()) {
+                	float min = settings.getLightPosZMin();
+                	float max = settings.getLightPosZMax();
+                	float diff = max - min;
+                    settings.setLightPosZ(min + (source.getValue() * diff));
+                    lightPosZsetting.setText("" + settings.getLightPosZ());
+                }
+            }
+        };
+        
+        visualConfig.add(GoggleSwing.sliderBox("Light Position X", lightPosXListener,
+                settings.getLightPosXMin(), settings.getLightPosXMax(), lightPosXspacing,
+                settings.getLightPosX(), lightPosXsetting));
+        
+        visualConfig.add(GoggleSwing.sliderBox("Light Position Y", lightPosYListener,
+                settings.getLightPosYMin(), settings.getLightPosYMax(), lightPosYspacing,
+                settings.getLightPosY(), lightPosYsetting));
+        
+        visualConfig.add(GoggleSwing.sliderBox("Light Position Z", lightPosZListener,
+                settings.getLightPosZMin(), settings.getLightPosZMax(), lightPosZspacing,
+                settings.getLightPosZ(), lightPosZsetting));
+
         validate();
         repaint();
 
