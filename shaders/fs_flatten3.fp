@@ -28,9 +28,9 @@ void main() {
 	if (length(cText.rgb) > 0) {
 		color = cText;
 		
-		if (length(cData.rgb) > 0.2) { 
-			color = 1.0 - cText;	
-		}
+		//if (length(cData.rgb) > 0.2) { 
+		//	color = 1.0 - cText;	
+		//}
 	} else if (length(cLegend.rgb) > 0) {
 		color = cLegend;
 	} else if (length(cData.rgb) > 0) {

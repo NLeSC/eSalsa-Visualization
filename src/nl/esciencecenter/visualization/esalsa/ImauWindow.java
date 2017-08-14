@@ -331,10 +331,13 @@ public class ImauWindow implements GLEventListener {
                     }
                                         
                     for (int j = 0; j < NUM_LEGEND_TEXTS; j++) {
-                    	float thisnumber = min + ((max-min)/5f)*j;
+                    	float diff = (max-min) / ((float) NUM_LEGEND_TEXTS -1f);
+                    	float factor = (float) j;
+                    	
+                    	float thisnumber = min + diff * factor;
                     	
                     	if (currentDesc.isLogScale()) {
-                    		float diff = max - min;
+                    		diff = (max-min);
                     		if (diff > 0.0f) {
                     	    	float newMaxValue = (float) Math.log(1.0f + diff);
                     	    	float newInputValue = (float) Math.log(1.0 + thisnumber);
@@ -343,26 +346,9 @@ public class ImauWindow implements GLEventListener {
                     		}
                     	}
                     	
-                    	NumberFormat formatter;
-                    	if (thisnumber < 0 && thisnumber > 0.0001) {
-                    		formatter = new DecimalFormat("-0.####E0");
-                    	} else if (thisnumber > 0 && thisnumber < 0.0001) {
-                    		formatter = new DecimalFormat("0.####E0");
-                    	} else if (thisnumber < 0 && thisnumber > -1.0) {
-                    		formatter = new DecimalFormat("-0.###");
-                    	} else if (thisnumber > 0 && thisnumber < 1.0) {
-                    		formatter = new DecimalFormat("0.###");
-                    	} else if (thisnumber < 0 && thisnumber > -10000.0) {
-                    		formatter = new DecimalFormat("-###0.0");
-                    	} else if (thisnumber > 0 && thisnumber < 10000.0) {
-                    		formatter = new DecimalFormat("###0.0");
-                    	} else if (thisnumber > -0.0000001 && thisnumber < 0.0000001) {
-                    		formatter = new DecimalFormat("0");
-                    	} else {
-                    		formatter = new DecimalFormat("-0.0000E0");
-                    	}
+                    	String thisString = new DecimalFormat("#.##").format(thisnumber);
                     	
-                    	legendTexts[screenNumber][j].setString(gl, formatter.format(thisnumber), Color4.WHITE, fontSize);
+                    	legendTexts[screenNumber][j].setString(gl, thisString, Color4.WHITE, fontSize);
                     }
                 }
             }
@@ -593,7 +579,7 @@ public class ImauWindow implements GLEventListener {
     		if (cachedFBOs[i] != null) {
                 cachedFBOs[i].delete(gl);
             }
-            cachedFBOs[i] = new FrameBufferObject(canvasWidth, canvasHeight, (GL.GL_TEXTURE8 + i));
+            cachedFBOs[i] = new FrameBufferObject(canvasWidth, canvasHeight, (GL.GL_TEXTURE4 + i));
             cachedFBOs[i].init(gl);
     	}
     }
@@ -643,15 +629,15 @@ public class ImauWindow implements GLEventListener {
         legendTextureFBO.delete(gl);
         sphereTextureFBO.delete(gl);
 
-        atmosphereFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE0);
-        hudTextFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE1);
-        legendTextureFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE2);
-        sphereTextureFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE3);
+        atmosphereFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL3.GL_TEXTURE13);
+        hudTextFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL3.GL_TEXTURE1);
+        legendTextureFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL3.GL_TEXTURE2);
+        sphereTextureFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL3.GL_TEXTURE3);
         
-        colorTex = 				new ImageTexture("images/Envisat_mosaic_May_-_November_2004.jpg", 0, 0, GL3.GL_TEXTURE4);
-        normalTex = 			new ImageTexture("images/earthNormalMap_2048.png", 0, 0, GL3.GL_TEXTURE5);
-        specularTex = 			new ImageTexture("images/Envisat_mosaic_May_-_November_2004_Specular.jpg", 0, 0, GL3.GL_TEXTURE6);
-        cityLightsTex = 		new ImageTexture("images/earthlights1k.jpg", 0, 0, GL3.GL_TEXTURE7);
+        colorTex = 				new ImageTexture("images/Envisat_mosaic_May_-_November_2004.jpg", 0, 0, GL3.GL_TEXTURE8);
+        normalTex = 			new ImageTexture("images/earthNormalMap_2048.png", 0, 0, GL3.GL_TEXTURE9);
+        specularTex = 			new ImageTexture("images/Envisat_mosaic_May_-_November_2004_Specular.jpg", 0, 0, GL3.GL_TEXTURE10);
+        cityLightsTex = 		new ImageTexture("images/earthlights1k.jpg", 0, 0, GL3.GL_TEXTURE11);
         
 //        cloudTex = 				new ImageTexture("images/earthcloudmap.jpg", 0, 0, GL3.GL_TEXTURE8);
 //        cloudTransparencyTex = 	new ImageTexture("images/earthcloudmaptrans.jpg", 0, 0, GL3.GL_TEXTURE9);
@@ -660,6 +646,8 @@ public class ImauWindow implements GLEventListener {
         hudTextFBO.init(gl);
         legendTextureFBO.init(gl);
         sphereTextureFBO.init(gl);
+
+        initFBOs(gl);
         
         colorTex.init(gl);
         specularTex.init(gl);
@@ -668,8 +656,6 @@ public class ImauWindow implements GLEventListener {
         
 //        cloudTex.init(gl);
 //        cloudTransparencyTex.init(gl);
-
-        initFBOs(gl);
 
         finalPBO.delete(gl);
         finalPBO = new IntPixelBufferObject(canvasWidth, canvasHeight);
@@ -695,6 +681,11 @@ public class ImauWindow implements GLEventListener {
         sphereModel.delete(gl);
         atmModel.delete(gl);
         legendModel.delete(gl);
+
+        atmosphereFBO.delete(gl);
+        hudTextFBO.delete(gl);
+        legendTextureFBO.delete(gl);
+        sphereTextureFBO.delete(gl);
 
         for (int i = 0; i < cachedScreens; i++) {
             cachedFBOs[i].delete(gl);
@@ -743,15 +734,15 @@ public class ImauWindow implements GLEventListener {
 
         logger.debug("W: " + canvasWidth + ", H: " + canvasHeight);
 
-        atmosphereFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE0);
-        hudTextFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE1);
-        legendTextureFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE2);
-        sphereTextureFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE3);
+        atmosphereFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL3.GL_TEXTURE13);
+        hudTextFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL3.GL_TEXTURE1);
+        legendTextureFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL3.GL_TEXTURE2);
+        sphereTextureFBO = new FrameBufferObject(canvasWidth, canvasHeight, GL3.GL_TEXTURE3);
         
-        colorTex = 				new ImageTexture("images/Envisat_mosaic_May_-_November_2004.jpg", 0, 0, GL3.GL_TEXTURE4);
-        normalTex = 			new ImageTexture("images/earthNormalMap_2048.png", 0, 0, GL3.GL_TEXTURE5);
-        specularTex = 			new ImageTexture("images/Envisat_mosaic_May_-_November_2004_Specular.jpg", 0, 0, GL3.GL_TEXTURE6);
-        cityLightsTex = 		new ImageTexture("images/earthlights1k.jpg", 0, 0, GL3.GL_TEXTURE7);
+        colorTex = 				new ImageTexture("images/Envisat_mosaic_May_-_November_2004.jpg", 0, 0, GL3.GL_TEXTURE8);
+        normalTex = 			new ImageTexture("images/earthNormalMap_2048.png", 0, 0, GL3.GL_TEXTURE9);
+        specularTex = 			new ImageTexture("images/Envisat_mosaic_May_-_November_2004_Specular.jpg", 0, 0, GL3.GL_TEXTURE10);
+        cityLightsTex = 		new ImageTexture("images/earthlights1k.jpg", 0, 0, GL3.GL_TEXTURE11);
         
 //        cloudTex = 				new ImageTexture("images/earthcloudmap.jpg", 0, 0, GL3.GL_TEXTURE8);
 //        cloudTransparencyTex = 	new ImageTexture("images/earthcloudmaptrans.jpg", 0, 0, GL3.GL_TEXTURE9);
