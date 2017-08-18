@@ -384,7 +384,7 @@ public class TimedPlayer implements Runnable {
         return dsManager.getVariableUnits(varName);
     }
 
-    public synchronized String getVariableTime(String varName) throws DatasetNotFoundException {
+    public synchronized Double getVariableTime(String varName) throws DatasetNotFoundException {
         return dsManager.getVariableTime(varName, frameNumber);
     }
 

@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.nio.FloatBuffer;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.time.Duration;
 import java.util.List;
 
 import javax.media.opengl.GL;
@@ -46,6 +47,11 @@ import nl.esciencecenter.visualization.esalsa.data.TimedPlayer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 public class ImauWindow implements GLEventListener {
     private final static Logger logger = LoggerFactory.getLogger(ImauWindow.class);
@@ -312,8 +318,13 @@ public class ImauWindow implements GLEventListener {
                     String units = timer.getVariableUnits(variableName);
                     
                     varNames[screenNumber].setString(gl, fancyName+ " in "+ units, Color4.WHITE, fontSize);
+                    
+                    double hoursPassed = timer.getVariableTime(variableName);
+                    DateTime zeroPointTime = new DateTime(2098, 7, 1, 0, 0, DateTimeZone.UTC);
+                    DateTime newTime = zeroPointTime.plusHours((int)Math.round(hoursPassed));
+                    DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm");
                                                 
-                    dates[screenNumber].setString(gl, "Date: "+ timer.getVariableTime(variableName), Color4.WHITE,
+                    dates[screenNumber].setString(gl, "Date: "+ newTime.toString(fmt), Color4.WHITE,
                             fontSize);
                     dataSets[screenNumber].setString(gl, "", Color4.WHITE, fontSize);
                     

@@ -334,10 +334,10 @@ public class DatasetManager {
         return ncdfVar.getUnits();
     }
 
-    public synchronized String getVariableTime(String varName, int frameNumber) throws DatasetNotFoundException {
+    public synchronized Double getVariableTime(String varName, int frameNumber) throws DatasetNotFoundException {
         NCDFDataSet dataset = findDataset(varName);
         NCDFVariable ncdfVar = dataset.getVariable(varName);
-        return ncdfVar.getTime(masterTimeList.get(frameNumber));
+        return masterTimeList.get(frameNumber);
     }
 
     public synchronized Texture2D getVariableLatTexMap(String varName, int frameNumber) throws DatasetNotFoundException {

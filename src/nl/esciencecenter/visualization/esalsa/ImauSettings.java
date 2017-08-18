@@ -133,7 +133,7 @@ public class ImauSettings {
     private CacheFileManager cacheFileManagerAtDataLocation;
     private CacheFileManager cacheFileManagerAtProgramLocation;
 
-    private int numberOfScreenshotsPerTimeStep = 6;
+    private int numberOfScreenshotsPerTimeStep = 12;
 
     private boolean requestedNewConfiguration;
 
