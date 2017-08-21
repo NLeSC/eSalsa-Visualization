@@ -170,7 +170,13 @@ public class DatasetManager {
 //            if (cachedData.contains(desc)) {
 //                return cachedData.get(cachedData.indexOf(desc)).getData();
 //            } else {
-                double time = masterTimeList.get(desc.getFrameNumber());
+            	double time = 0.0; 
+            	if (masterTimeList.size() > desc.getFrameNumber()) {
+            		time = masterTimeList.get(desc.getFrameNumber());
+            	} else {
+            		time = masterTimeList.get(masterTimeList.size()-1);
+            	}
+                
                 int requestedDepth = desc.getDepth();
                 try {
                     result = ncdfVar.getData(time, requestedDepth);
@@ -336,8 +342,14 @@ public class DatasetManager {
 
     public synchronized Double getVariableTime(String varName, int frameNumber) throws DatasetNotFoundException {
         NCDFDataSet dataset = findDataset(varName);
-        NCDFVariable ncdfVar = dataset.getVariable(varName);
-        return masterTimeList.get(frameNumber);
+        double time = 0.0; 
+    	if (masterTimeList.size() > frameNumber) {
+    		time = masterTimeList.get(frameNumber);
+    	} else {
+    		time = masterTimeList.get(masterTimeList.size()-1);
+    	}
+    	
+        return time;
     }
 
     public synchronized Texture2D getVariableLatTexMap(String varName, int frameNumber) throws DatasetNotFoundException {

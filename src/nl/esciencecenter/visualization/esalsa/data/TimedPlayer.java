@@ -313,7 +313,12 @@ public class TimedPlayer implements Runnable {
                                 logger.debug("Waiting on frame after " + frameNumber);
                                 currentState = states.WAITINGONFRAME;
                             } catch (IOException e) {
-                                logger.debug("IOException " + e);
+                            	if (settings.isRepeat()) {
+                            		newFrameNumber = dsManager.getFirstFrameNumber();
+                                    updateFrame(newFrameNumber, false);
+                            	} else {
+                            		logger.debug("IOException " + e);
+                            	}
                             }
                         }
 

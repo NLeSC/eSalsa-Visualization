@@ -43,6 +43,9 @@ import nl.esciencecenter.neon.NeonInterfacePanel;
 import nl.esciencecenter.neon.math.Float3Vector;
 import nl.esciencecenter.neon.swing.CustomJSlider;
 import nl.esciencecenter.neon.swing.GoggleSwing;
+import nl.esciencecenter.neon.swing.GoggleSwing.CheckBoxItem;
+import nl.esciencecenter.neon.swing.GoggleSwing.DropdownBoxItem;
+import nl.esciencecenter.neon.swing.GoggleSwing.RadioBoxItem;
 import nl.esciencecenter.neon.swing.RangeSlider;
 import nl.esciencecenter.neon.swing.RangeSliderUI;
 import nl.esciencecenter.neon.swing.SimpleImageIcon;
@@ -808,6 +811,19 @@ public class ImauPanel extends NeonInterfacePanel {
         visualConfig.add(GoggleSwing.sliderBox("Light Position Z", lightPosZListener,
                 settings.getLightPosZMin(), settings.getLightPosZMax(), lightPosZspacing,
                 settings.getLightPosZ(), lightPosZsetting));
+        
+        ItemListener repeatListener = new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				final JCheckBox source = (JCheckBox) e.getSource();
+				if (source.hasFocus()) {
+					settings.setRepeat(source.isSelected());
+				}
+			}
+		};
+        
+        CheckBoxItem cbItem = new CheckBoxItem("repeat", settings.isRepeat(), repeatListener);        
+        visualConfig.add(GoggleSwing.checkboxBox("repeat", cbItem));
 
         validate();
         repaint();

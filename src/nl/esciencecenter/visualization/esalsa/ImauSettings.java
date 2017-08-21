@@ -133,9 +133,10 @@ public class ImauSettings {
     private CacheFileManager cacheFileManagerAtDataLocation;
     private CacheFileManager cacheFileManagerAtProgramLocation;
 
-    private int numberOfScreenshotsPerTimeStep = 12;
+    private int numberOfScreenshotsPerTimeStep = 2;
+    private boolean repeat = true;
 
-    private boolean requestedNewConfiguration;
+	private boolean requestedNewConfiguration;
 
     private ImauSettings() {
         super();
@@ -1129,4 +1130,12 @@ public class ImauSettings {
     public synchronized void setNumberOfScreenshotsPerTimeStep(int numberOfScreenshotsPerTimeStep) {
         this.numberOfScreenshotsPerTimeStep = numberOfScreenshotsPerTimeStep;
     }
+
+    public synchronized boolean isRepeat() {
+		return repeat;
+	}
+
+	public synchronized void setRepeat(boolean repeat) {
+		this.repeat = repeat;
+	}
 }
